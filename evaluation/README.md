@@ -57,7 +57,7 @@ Key libraries:
 
 ## Step 1: Download the Benchmark Database
 
-Before running evaluation, download the official SQLite DB file from Hugging Face Hub(`llmsql-bench/llmsql-benchmark-db`). You can do it with the help of script:
+Before running evaluation, download the official SQLite DB file from Hugging Face Hub(`llmsql-bench/llmsql-benchmark`). You can do it with the help of script:
 
 ```bash
 python3 evaluation/download_db.py
@@ -65,7 +65,7 @@ python3 evaluation/download_db.py
 
 Arguments:
 
-* `--repo_id` (optional, default: `llmsql-bench/llmsql-benchmark-db`)
+* `--repo_id` (optional, default: `llmsql-bench/llmsql-benchmark`)
   Hugging Face dataset repository containing the database.
 * `--target_dir` (optional, default: `dataset`)
   Directory where the DB file will be saved.

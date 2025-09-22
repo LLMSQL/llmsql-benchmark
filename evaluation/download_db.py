@@ -3,12 +3,12 @@ Download the official SQLite database required for LLMSQL evaluation.
 
 Usage (example from project root):
     python3 evaluation/download_db.py \
-        --repo_id llmsql-bench/llmsql-benchmark-db \
+        --repo_id llmsql-bench/llmsql-benchmark \
         --target_dir dataset
 
 This script fetches the benchmark database (`sqlite_tables.db`) from the Hugging Face Hub
 and saves it locally. By default, it downloads from the repo:
-    llmsql-bench/llmsql-benchmark-db
+    llmsql-bench/llmsql-benchmark
 into the `dataset/` directory.
 
 After running, the file will be available at:
@@ -64,9 +64,9 @@ if __name__ == "__main__":
     parser.add_argument(
         "--repo_id",
         type=str,
-        default="llmsql-bench/llmsql-benchmark-db",
+        default="llmsql-bench/llmsql-benchmark",
         help="Hugging Face dataset repo ID containing the .db file "
-        "(default: llmsql-bench/llmsql-benchmark-db).",
+        "(default: llmsql-bench/llmsql-benchmark).",
     )
     parser.add_argument(
         "--target_dir",
