@@ -1,0 +1,100 @@
+{"question_id": 15835, "completion": "SELECT \"Position\" FROM \"Table\" WHERE \"School/Club Team\" = \"Butler CC (KS)\";"}
+{"question_id": 15836, "completion": "SELECT COUNT(\"School/Club Team\") FROM \"Table\" WHERE \"No.\" = \"3\";"}
+{"question_id": 15837, "completion": "SELECT \"School/Club Team\" FROM \"Table\" WHERE \"No.\" = \"21\";"}
+{"question_id": 15838, "completion": "SELECT \"Player\" FROM \"Table\" WHERE \"No.\" = \"42\";"}
+{"question_id": 15839, "completion": "SELECT \"Player\" FROM \"Table\" WHERE \"Position\" = \"Guard\" AND \"Years in Toronto\" = \"1996-97\";"}
+{"question_id": 15840, "completion": "SELECT \"Player\" FROM \"Table\" WHERE \"School/Club Team\" = \"Westchester High School\";"}
+{"question_id": 15841, "completion": "SELECT \"School/Club Team\" FROM \"Table\" WHERE \"Player\" = \"Amir Johnson\";"}
+{"question_id": 15842, "completion": "SELECT SUM(\"No.\") FROM \"Table\" WHERE \"Years in Toronto\" = \"2005-06\";"}
+{"question_id": 15843, "completion": "SELECT COUNT(\"Position\") FROM \"Table\" WHERE \"Years in Toronto\" = \"2006-07\";"}
+{"question_id": 15844, "completion": "SELECT \"Nationality\" FROM \"Table\" WHERE \"School/Club Team\" = \"Fresno State\";"}
+{"question_id": 15845, "completion": "SELECT \"School/Club Team\" FROM \"Table\" WHERE \"Player\" = \"Trey Johnson\";"}
+{"question_id": 15846, "completion": "SELECT \"Ended time as senior G8 leader\" FROM \"Table\" WHERE \"Person\" = \"Jacques Chirac\";"}
+{"question_id": 15847, "completion": "SELECT \"Entered office as Head of State or Government\" FROM \"Table\" WHERE \"Office\" = \"Prime Minister of Italy\";"}
+{"question_id": 15848, "completion": "SELECT \"Country ( exonym )\" FROM \"Table\" WHERE \"Official or native language(s) (alphabet/script)\" = \"Dutch Papiamento\";"}
+{"question_id": 15849, "completion": "SELECT \"Official or native language(s) (alphabet/script)\" FROM \"Table\" WHERE \"Capital ( exonym )\" = \"Canberra\";"}
+{"question_id": 15850, "completion": "SELECT \"Capital ( endonym )\" FROM \"Table\" WHERE \"Capital ( exonym )\" = \"Canberra\";"}
+{"question_id": 15851, "completion": "SELECT \"Capital ( endonym )\" FROM \"Table\" WHERE \"Country ( exonym )\" = \"Anguilla\";"}
+{"question_id": 15852, "completion": "SELECT \"Capital ( exonym )\" FROM \"Table\" WHERE \"Capital ( endonym )\" = \"St. John's\";"}
+{"question_id": 15853, "completion": "SELECT COUNT(*) FROM \"Table\" WHERE \"Country ( exonym )\" = \"Australia\";"}
+{"question_id": 15854, "completion": "SELECT \"Original air date\" FROM \"Table\" WHERE \"Production code\" = \"9ABX02\";"}
+{"question_id": 15855, "completion": "SELECT \"No. in series\" FROM \"Table\" WHERE \"Production code\" = \"8ABX15\";"}
+{"question_id": 15856, "completion": "SELECT MIN(\"Ties played\") FROM \"Table\" WHERE \"Years played\" = 6;"}
+{"question_id": 15857, "completion": "SELECT \"Amount of trees, that require replacement\" FROM \"Table\" WHERE \"Prevailing types, %\" = \"Pine — 29.37 Poplar — 26.12 Acer negundo — 13.2\";"}
+{"question_id": 15858, "completion": "SELECT \"Amount of trees, that require replacement\" FROM \"Table\" WHERE \"District\" = \"Leninsky\";"}
+{"question_id": 15859, "completion": "SELECT \"District\" FROM \"Table\" WHERE \"Total amount of trees\" < 150817.6878461314 AND \"Amount of old trees\" = \"1,928 (1.89%)\";"}
+{"question_id": 15860, "completion": "SELECT \"Amount of trees, that require replacement\" FROM \"Table\" WHERE \"District\" = \"Motovilikhinsky\";"}
+{"question_id": 15861, "completion": "SELECT \"Total amount of trees\" FROM \"Table\" WHERE \"District\" = \"Leninsky\";"}
+{"question_id": 15862, "completion": "SELECT \"District\" FROM \"Table\" WHERE \"Prevailing types, %\" = \"Acer negundo — 30.22 Tilia — 18.6 Poplar — 15.23\";"}
+{"question_id": 15863, "completion": "SELECT \"in Ames\" FROM \"Table\" WHERE \"Since Beginning of Big 12\" = \"Iowa State vs.\";"}
+{"question_id": 15864, "completion": "SELECT \"U.S. Open Cup\" FROM \"Table\" WHERE \"Regular Season\" = \"4th, Atlantic Division\" AND \"Division\" = \"Atlantic Division\";"}
+{"question_id": 15865, "completion": "SELECT COUNT(*) FROM \"Table\" WHERE \"Year\" = 2003 AND \"U.S. Open Cup\" = \"Did Not Qualify\";"}
+{"question_id": 15866, "completion": "SELECT \"U.S. Open Cup\" FROM \"Table\" WHERE \"Division\" = \"Semifinals\";"}
+{"question_id": 15867, "completion": "SELECT \"Playoffs\" FROM \"Table\" WHERE \"Regular Season\" = \"1st, Atlantic Division\";"}
+{"question_id": 15868, "completion": "SELECT \"Playoffs\" FROM \"Table\" WHERE \"U.S. Open Cup\" = \"1st Round\";"}
+{"question_id": 15869, "completion": "SELECT COUNT(\"2nd leg\") FROM \"Table\" WHERE \"Aggregate\" = \"7-2\";"}
+{"question_id": 15870, "completion": "SELECT \"Aggregate\" FROM \"Table\" WHERE \"1st leg\" = \"3–2\";"}
+{"question_id": 15871, "completion": "SELECT \"Competition\" FROM \"Table\" WHERE \"Aggregate\" = \"4–7\";"}
+{"question_id": 15872, "completion": "SELECT \"Competition\" FROM \"Table\" WHERE \"1st leg\" = \"4-1 (h)\";"}
+{"question_id": 15873, "completion": "SELECT COUNT(*) FROM \"Table\" WHERE \"Opponents\" = \"Haugar\";"}
+{"question_id": 15874, "completion": "SELECT \"1st leg\" FROM \"Table\" WHERE \"Opponents\" = \"Galatasaray\";"}
+{"question_id": 15875, "completion": "SELECT MAX(\"Rd\") FROM \"Table\" WHERE \"Name\" = \"Tom Sneva\" AND \"Pole Position\" = \"Tom Sneva\";"}
+{"question_id": 15876, "completion": "SELECT COUNT(\"Winning driver\") FROM \"Table\" WHERE \"Fastest Lap\" = \"56.920\";"}
+{"question_id": 15877, "completion": "SELECT COUNT(\"Report\") FROM \"Table\" WHERE \"Winning team\" = \"Forsythe Racing\" AND \"Pole Position\" = \"Teo Fabi\";"}
+{"question_id": 15878, "completion": "SELECT \"Rd\" FROM \"Table\" WHERE \"Name\" = \"Indianapolis 500\";"}
+{"question_id": 15879, "completion": "SELECT \"Winning team\" FROM \"Table\" WHERE \"Winning driver\" = \"Bobby Rahal\";"}
+{"question_id": 15880, "completion": "SELECT MIN(\"Fastest Lap\") FROM \"Table\" WHERE \"Name\" = \"Escort Radar Warning 200\";"}
+{"question_id": 15881, "completion": "SELECT \"Report\" FROM \"Table\" WHERE \"Winning team\" = \"Porsche North America\";"}
+{"question_id": 15882, "completion": "SELECT \"Rnd\" FROM \"Table\" WHERE \"Circuit\" = \"Phoenix International Raceway\";"}
+{"question_id": 15883, "completion": "SELECT \"Pole position\" FROM \"Table\" WHERE \"Rnd\" = \"12\";"}
+{"question_id": 15884, "completion": "SELECT COUNT(*) FROM \"Table\" WHERE \"Circuit\" = \"Cleveland Burke Lakefront Airport\";"}
+{"question_id": 15885, "completion": "SELECT COUNT(\"Winning driver\") FROM \"Table\" WHERE \"Rnd\" = \"5\";"}
+{"question_id": 15886, "completion": "SELECT MIN(\"Rd\") FROM \"Table\" WHERE \"Name\" = \"Tony Bettenhausen 200\";"}
+{"question_id": 15887, "completion": "SELECT \"Winning team\" FROM \"Table\" WHERE \"Name\" = \"Los Angeles Times 500\";"}
+{"question_id": 15888, "completion": "SELECT COUNT(\"Winning driver\") FROM \"Table\" WHERE \"Name\" = \"Kraco Twin 125 (R2)\";"}
+{"question_id": 15889, "completion": "SELECT \"Name\" FROM \"Table\" WHERE \"Winning driver\" = \"Johnny Rutherford\";"}
+{"question_id": 15890, "completion": "SELECT COUNT(\"Fastest Lap\") FROM \"Table\" WHERE \"Rd\" = 10 AND \"Fastest Lap\" != \"Unknown\";"}
+{"question_id": 15891, "completion": "SELECT \"Licence award date\" FROM \"Table\" WHERE \"Region\" = \"North East England\";"}
+{"question_id": 15892, "completion": "SELECT \"% growth (2000–2008)\" FROM \"Table\" WHERE \"Nation\" = \"Ethiopia\";"}
+{"question_id": 15893, "completion": "SELECT \"% growth (2000–2008)\" FROM \"Table\" WHERE \"Nation\" = \"Uganda\";"}
+{"question_id": 15894, "completion": "SELECT MAX(\"% growth (2000–2008)\") FROM \"Table\" WHERE \"Nation\" = \"Burundi\";"}
+{"question_id": 15895, "completion": "SELECT \"Village (German)\" FROM \"Table\" WHERE \"Percent of Slovenes 1951\" = \"76.3%\";"}
+{"question_id": 15896, "completion": "SELECT MIN(\"Number of people 1991\") FROM \"Table\" WHERE \"Percent of Slovenes 1991\" = \"92.5%\";"}
+{"question_id": 15897, "completion": "SELECT \"Village (German)\" FROM \"Table\" WHERE \"Village (Slovenian)\" = \"Sele Srednji Kot\";"}
+{"question_id": 15898, "completion": "SELECT \"Village (German)\" FROM \"Table\" WHERE \"Village (Slovenian)\" = \"Sele Borovnica\";"}
+{"question_id": 15899, "completion": "SELECT \"Village (German)\" FROM \"Table\" WHERE \"Percent of Slovenes 1951\" = \"96.9%\";"}
+{"question_id": 15900, "completion": "SELECT \"Village (German)\" FROM \"Table\" WHERE \"Village (Slovenian)\" = \"Sele Srednji Kot\";"}
+{"question_id": 15901, "completion": "SELECT \"Score\" FROM \"Table\" WHERE \"Date\" = \"November 12\";"}
+{"question_id": 15902, "completion": "SELECT \"High assists\" FROM \"Table\" WHERE \"Team\" = \"San Antonio\";"}
+{"question_id": 15903, "completion": "SELECT \"High points\" FROM \"Table\" WHERE \"Game\" = 4;"}
+{"question_id": 15904, "completion": "SELECT \"Location Attendance\" FROM \"Table\" WHERE \"Date\" = \"November 20\";"}
+{"question_id": 15905, "completion": "SELECT \"No. in series\" FROM \"Table\" WHERE \"Canadian airdate\" = \"11 February 2008\";"}
+{"question_id": 15906, "completion": "SELECT \"Production code\" FROM \"Table\" WHERE \"US airdate\" = \"4 April 2008\";"}
+{"question_id": 15907, "completion": "SELECT \"No. in season\" FROM \"Table\" WHERE \"Title\" = \"Don't Stop Believin'\";"}
+{"question_id": 15908, "completion": "SELECT \"Canadian airdate\" FROM \"Table\" WHERE \"US airdate\" = \"8 August 2008\";"}
+{"question_id": 15909, "completion": "SELECT \"No. in season\" FROM \"Table\" WHERE \"Canadian airdate\" = \"17 March 2008\";"}
+{"question_id": 15910, "completion": "SELECT \"Title\" FROM \"Table\" WHERE \"US airdate\" = \"4 April 2008\";"}
+{"question_id": 15911, "completion": "SELECT \"Director\" FROM \"Table\" WHERE \"Title\" = \"Great Sexpectations (2)\";"}
+{"question_id": 15912, "completion": "SELECT \"Player\" FROM \"Table\" WHERE \"College\" = \"Wilfrid Laurier\" AND \"Pick #\" = 2004;"}
+{"question_id": 15913, "completion": "SELECT \"Position\" FROM \"Table\" WHERE \"Player\" = \"Christian Leibl-Cote\";"}
+{"question_id": 15914, "completion": "SELECT \"Pick #\" FROM \"Table\" WHERE \"College\" = \"Northwestern\";"}
+{"question_id": 15915, "completion": "SELECT \"Foreign nationals in %\" FROM \"Table\" WHERE \"Population\" = \"4.911\";"}
+{"question_id": 15916, "completion": "SELECT \"No\" FROM \"Table\" WHERE \"City district (Stadtteil)\" = \"stadtteil\" AND \"Foreign nationals\" = \"5.162\";"}
+{"question_id": 15917, "completion": "SELECT \"City district (Stadtteil)\" FROM \"Table\" WHERE \"No\" = \"47\";"}
+{"question_id": 15918, "completion": "SELECT \"League\" FROM \"Table\" WHERE \"Mascot\" = \"Raiders\";"}
+{"question_id": 15919, "completion": "SELECT \"League\" FROM \"Table\" WHERE \"School\" = \"Galena\";"}
+{"question_id": 15920, "completion": "SELECT \"Location\" FROM \"Table\" WHERE \"Mascot\" = \"Lancers\";"}
+{"question_id": 15921, "completion": "SELECT \"Location\" FROM \"Table\" WHERE \"Mascot\" = \"Miners\";"}
+{"question_id": 15922, "completion": "SELECT \"School\" FROM \"Table\" WHERE \"Mascot\" = \"Raiders\";"}
+{"question_id": 15923, "completion": "SELECT \"Tournament\" FROM \"Table\" WHERE \"Date\" = \"Nov 3, 2002\";"}
+{"question_id": 15924, "completion": "SELECT \"Margin of victory\" FROM \"Table\" WHERE \"Date\" = \"Mar 28, 2004\";"}
+{"question_id": 15925, "completion": "SELECT \"To par\" FROM \"Table\" WHERE \"Date\" = \"May 4, 2003\";"}
+{"question_id": 15926, "completion": "SELECT \"Date\" FROM \"Table\" WHERE \"Runner(s)-up\" = \"Pat Hurst Juli Inkster\";"}
+{"question_id": 15927, "completion": "SELECT SUM(\"Final Episode Count\") FROM \"Table\" WHERE \"Character\" = \"Rick Stetler\";"}
+{"question_id": 15928, "completion": "SELECT \"Actor\" FROM \"Table\" WHERE \"First Episode\" = \"Ambush\";"}
+{"question_id": 15929, "completion": "SELECT \"Character\" FROM \"Table\" WHERE \"Fate\" = \"Deceased: Knife Wound\";"}
+{"question_id": 15930, "completion": "SELECT SUM(\"Final Episode Count\") FROM \"Table\" WHERE \"First Episode\" = \"L.A.\";"}
+{"question_id": 15931, "completion": "SELECT \"Actor\" FROM \"Table\" WHERE \"Character\" = \"Judge Joseph Ratner\";"}
+{"question_id": 15932, "completion": "SELECT \"First Episode\" FROM \"Table\" WHERE \"Final Episode\" = \"Rio\";"}
+{"question_id": 15933, "completion": "SELECT \"Semi-Finalist #2\" FROM \"Table\" WHERE \"Year\" = 2007;"}
+{"question_id": 15934, "completion": "SELECT COUNT(*) FROM \"Table\" WHERE \"Year\" = 2005 AND \"Semi-Finalist #1\" = \"Western Carolina\";"}

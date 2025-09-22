@@ -1,0 +1,3 @@
+.venv
+dataset/sqlite_tables.db
+*__pycache__
