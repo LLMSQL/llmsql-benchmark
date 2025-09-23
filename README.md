@@ -2,6 +2,8 @@
 
 Patched and improved version of the original large crowd-sourced dataset for developing natural language interfaces for relational databases, [WikiSQL](https://github.com/salesforce/WikiSQL).
 
+
+Our datasets are also available for different scenarios on our [HuggingFace page](https://huggingface.co/llmsql-bench).
 ---
 
 ## Overview
