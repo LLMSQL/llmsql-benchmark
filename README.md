@@ -125,6 +125,16 @@ This will train a model on the train/val splits and save it under `outputs/`.
 ## License & Citation
 
 This project builds on the original [WikiSQL](https://github.com/salesforce/WikiSQL) dataset.
-Please cite LLMSQL if you use it in your work (citation info will be added in the next release).
+Please cite LLMSQL if you use it in your work:
+```
+@inproceedings{llmsql_bench,
+  title={LLMSQL: Upgrading WikiSQL for the LLM Era of Text-to-SQLels},
+  author={Pihulski, Dzmitry and  Charchut, Karol and Novogrodskaia, Viktoria and Koco{'n}, Jan},
+  booktitle={2025 IEEE International Conference on Data Mining Workshops (ICDMW)},
+  pages={...},
+  year={2025},
+  organization={IEEE}
+}
+```
 
 
