@@ -1,8 +1,8 @@
 """
-Generate SQL predictions for a dataset of questions using a Hugging Face causal LM.
+Generate SQL predictions for a dataset of questions using vLLM.
 
 Usage (example from project root):
-    python3 inference/inference.py \
+    python3 inference/inference_vllm.py \
         --questions_file dataset/questions.jsonl \
         --tables_file dataset/tables.jsonl \
         --output_file outputs/my_model_preds.jsonl \
@@ -22,10 +22,9 @@ import random
 from typing import Dict, List
 
 import numpy as np
-import torch
 from dotenv import load_dotenv
 from tqdm import tqdm
-from transformers import AutoModelForCausalLM, AutoTokenizer, set_seed
+from transformers import AutoTokenizer, set_seed
 from utils.logging_config import log
 from utils.utils import (
     choose_prompt_builder,
@@ -33,6 +32,7 @@ from utils.utils import (
     overwrite_jsonl,
     save_jsonl_lines,
 )
+from vllm import LLM, SamplingParams
 
 load_dotenv()
 
@@ -49,31 +49,34 @@ def main(
     shots: int = 5,
     batch_size: int = 8,
     max_new_tokens: int = 256,
-    temperature: float=1.0,
-    do_sample: bool=True,
+    temperature: float = 1.0,
+    do_sample: bool = True,
     seed: int = 42,
     hf_token: str | None = None,
+    tensor_parallel_size: int = 1,
+    gpu_memory_utilization: float = 0.95,
 ) -> None:
     """
-    Generate SQL queries for all questions in `questions_file` using `model_name`.
+    Generate SQL queries for all questions in `questions_file` using `model_name` with vLLM.
 
     Args:
         questions_file: path to JSONL with questions (each item contains "question", "table_id", "sql", and "question_id").
         tables_file: path to JSONL with tables metadata (with keys like id, header, types, rows).
         output_file: path to JSONL to write outputs; overwritten at start.
-        model_name: HF model name / path used for AutoTokenizer & AutoModelForCausalLM.
+        model_name: HF model name / path used for vLLM LLM.
         shots: 0, 1 or 5 — selects prompt builder (build_prompt_0/1/5shot).
-        batch_size: number of requests processed per model.generate call.
+        batch_size: number of requests processed per vLLM generate call.
         max_new_tokens: max tokens to generate per sample.
+        temperature: sampling temperature.
+        do_sample: whether to use sampling (temperature > 0) or greedy decoding.
         seed: random seed for reproducibility.
-        hf_token: optional HF token to pass to from_pretrained (defaults to env HF_TOKEN).
+        hf_token: optional HF token to pass to vLLM (defaults to env HF_TOKEN).
+        tensor_parallel_size: number of GPUs to use for tensor parallelism.
+        gpu_memory_utilization: fraction of GPU memory to use (0.0 to 1.0).
     """
     # seeds for reproducibility
     random.seed(seed)
     np.random.seed(seed)
-    torch.manual_seed(seed)
-    if torch.cuda.is_available():
-        torch.cuda.manual_seed_all(seed)
     set_seed(seed)
 
     # load data
@@ -93,74 +96,102 @@ def main(
     prompt_builder = choose_prompt_builder(shots)
     log.info(f"Using {shots}-shot prompt builder: {prompt_builder.__name__}")
 
-    # load model & tokenizer
+    # Initialize vLLM
     hf_token = hf_token or os.environ.get("HF_TOKEN")
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    log.info(f"Loading tokenizer and model on device: {device}")
+    if hf_token:
+        os.environ["HF_TOKEN"] = hf_token
+    log.info(f"Initializing vLLM with model: {model_name}")
+
+    # vLLM initialization arguments
+    vllm_kwargs = {
+        "model": model_name,
+        "tensor_parallel_size": tensor_parallel_size,
+        "gpu_memory_utilization": gpu_memory_utilization,
+        "seed": seed,
+        "trust_remote_code": True,
+    }
+
+    try:
+        llm = LLM(**vllm_kwargs)
+        log.info("vLLM model loaded successfully")
+    except Exception as e:
+        log.error(f"Failed to load model with vLLM: {e}")
+        log.info("Trying with reduced memory utilization...")
+        vllm_kwargs["gpu_memory_utilization"] = 0.8
+        llm = LLM(**vllm_kwargs)
+        log.info("vLLM model loaded successfully with reduced memory")
+
     tokenizer = AutoTokenizer.from_pretrained(
-        model_name, **({} if not hf_token else {"token": hf_token}), padding_side='left'
+        model_name, **({} if not hf_token else {"token": hf_token})
     )
-    # Ensure pad token exists for batch padding
-    if tokenizer.pad_token_id is None:
-        tokenizer.pad_token = tokenizer.eos_token
 
-    model = AutoModelForCausalLM.from_pretrained(
-        model_name,
-        device_map="auto" if device == "cuda" else None,
-        **({} if not hf_token else {"token": hf_token}),
+    # Set up sampling parameters
+    # If do_sample is False, set temperature to 0 for greedy decoding
+    actual_temperature = temperature if do_sample else 0.0
+    sampling_params = SamplingParams(
+        temperature=actual_temperature,
+        max_tokens=max_new_tokens,
+        seed=seed,
     )
-    model.eval()
 
-    # batch generation loop
+    log.info(
+        f"Sampling params: temperature={actual_temperature}, max_tokens={max_new_tokens}"
+    )
+
     total = len(questions)
     saved = 0
+
     for batch_start in tqdm(range(0, total, batch_size), desc="Generating"):
         batch = questions[batch_start : batch_start + batch_size]
 
-        # build prompts for each example in the batch
-        # The builder should accept (question, header, types, example_row) and return a string or chat-format.
         prompts = []
+        batch_questions = []
+
         for q in batch:
             tbl = tables[q["table_id"]]
-            # example_row: we reuse the first row as example context if present
             example_row = tbl["rows"][0]
-            p = prompt_builder(q["question"], tbl["header"], tbl["types"], example_row)
-            prompts.append(p)
-
-        # Tokenize
-        # Using chat template api
-        tokenized = tokenizer.apply_chat_template(
-            [[{"role": "user", "content": p}] for p in prompts],
-            add_generation_prompt=True,
-            tokenize=True,
-            return_dict=True,
-            return_tensors="pt",
-            padding=True,
-        )
-        input_ids = tokenized["input_ids"].to(model.device)
-        attention_mask = tokenized["attention_mask"].to(model.device)
-
-        # We'll compute input lengths to strip input from tokens after generation
-        input_lengths = (tokenized["attention_mask"] != 0).sum(dim=1).tolist()
-        gen_kwargs = dict(max_new_tokens=max_new_tokens, temperature=temperature, do_sample=do_sample)
-        with torch.no_grad():
-            outputs = model.generate(
-                input_ids=input_ids, attention_mask=attention_mask, **gen_kwargs
+            prompt_content = prompt_builder(
+                q["question"], tbl["header"], tbl["types"], example_row
             )
 
-        decoded = [
-            tokenizer.decode(out[input_len:], skip_special_tokens=False)
-            for out, input_len in zip(outputs, input_lengths)
-        ]
+            # Format as chat message and apply chat template
+            try:
+                # Try to use chat template if available
+                if (
+                    hasattr(tokenizer, "apply_chat_template")
+                    and tokenizer.chat_template
+                ):
+                    formatted_prompt = tokenizer.apply_chat_template(
+                        [{"role": "user", "content": prompt_content}],
+                        add_generation_prompt=True,
+                        tokenize=False,
+                    )
+                else:
+                    # Fallback to plain prompt
+                    formatted_prompt = prompt_content
+            except Exception as e:
+                log.warning(f"Failed to apply chat template: {e}, using plain prompt")
+                formatted_prompt = prompt_content
 
+            prompts.append(formatted_prompt)
+            batch_questions.append(q)
 
+        # Generate completions
+        try:
+            outputs = llm.generate(prompts, sampling_params)
+        except Exception as e:
+            log.error(
+                f"Generation failed for batch {batch_start // batch_size + 1}: {e}"
+            )
 
-        # here we keep full decoding as "completion".
+        # Process outputs
         batch_results: List[Dict[str, str]] = []
-        for q, completion in zip(batch, decoded):
+        for q, output in zip(batch_questions, outputs):
+            completion = output.outputs[0].text
+
             batch_results.append(
                 {
-                    "question_id": q.get("question_id", q.get("id", "")),
+                    "question_id": q["question_id"],
                     "completion": completion,
                 }
             )
@@ -176,9 +207,7 @@ def main(
 
 
 if __name__ == "__main__":
-    p = argparse.ArgumentParser(
-        description="Generate SQL predictions using a HF causal LM."
-    )
+    p = argparse.ArgumentParser(description="Generate SQL predictions using vLLM.")
     p.add_argument(
         "--questions_file",
         type=str,
@@ -215,10 +244,16 @@ if __name__ == "__main__":
         "--max_new_tokens", type=int, default=256, help="Maximum tokens to generate."
     )
     p.add_argument(
-        "--temperature", type=float, default=1.0, help="Temperature to use for generation."
+        "--temperature",
+        type=float,
+        default=1.0,
+        help="Temperature to use for generation.",
     )
     p.add_argument(
-        "--do_sample", type=bool, default=True, help="Whether to sample or use greedy decoding."
+        "--do_sample",
+        type=bool,
+        default=True,
+        help="Whether to sample or use greedy decoding.",
     )
     p.add_argument("--seed", type=int, default=42, help="Random seed.")
     p.add_argument(
@@ -226,6 +261,18 @@ if __name__ == "__main__":
         type=str,
         default=os.environ.get("HF_TOKEN"),
         help="HuggingFace token (optional).",
+    )
+    p.add_argument(
+        "--tensor_parallel_size",
+        type=int,
+        default=1,
+        help="Number of GPUs to use for tensor parallelism.",
+    )
+    p.add_argument(
+        "--gpu_memory_utilization",
+        type=float,
+        default=0.9,
+        help="Fraction of GPU memory to use (0.0 to 1.0).",
     )
     args = p.parse_args()
 
@@ -241,4 +288,6 @@ if __name__ == "__main__":
         do_sample=args.do_sample,
         seed=args.seed,
         hf_token=args.hf_token,
+        tensor_parallel_size=args.tensor_parallel_size,
+        gpu_memory_utilization=args.gpu_memory_utilization,
     )
