@@ -1,0 +1,17 @@
+cff-version: 1.2.0
+message: "If you use this work, please cite it as below."
+type: conference-paper
+title: "LLMSQL: Upgrading WikiSQL for the LLM Era of Text-to-SQL"
+authors:
+  - family-names: Pihulski
+    given-names: Dzmitry
+  - family-names: Charchut
+    given-names: Karol
+  - family-names: Novogrodskaia
+    given-names: Viktoria
+  - family-names: Kocoń
+    given-names: Jan
+conference:
+  name: "2025 IEEE International Conference on Data Mining Workshops (ICDMW)"
+publisher: IEEE
+year: 2025

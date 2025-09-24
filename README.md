@@ -126,7 +126,7 @@ This will train a model on the train/val splits with the parameters provided in 
 Please cite LLMSQL if you use it in your work:
 ```text
 @inproceedings{llmsql_bench,
-  title={LLMSQL: Upgrading WikiSQL for the LLM Era of Text-to-SQLels},
+  title={LLMSQL: Upgrading WikiSQL for the LLM Era of Text-to-SQL},
   author={Pihulski, Dzmitry and  Charchut, Karol and Novogrodskaia, Viktoria and Koco{'n}, Jan},
   booktitle={2025 IEEE International Conference on Data Mining Workshops (ICDMW)},
   year={2025},
