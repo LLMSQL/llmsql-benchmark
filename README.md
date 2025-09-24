@@ -47,7 +47,7 @@ We therefore recommend that most users:
 
 ```
 
-WikiSQLv2/
+llmsql/
 ├── evaluation/          # Scripts for downloading DB + evaluating predictions
 ├── inference/           # Generate SQL queries with your LLM
 └── finetune/            # Fine-tuning with TRL's SFTTrainer
