@@ -28,7 +28,7 @@ LLMSQL is a Python package for SQL reasoning with LLMs and vLLM inference.
 - `Source code on GitHub <https://github.com/LLMSQL/llmsql-benchmark>`_
 - `PyPI project <https://pypi.org/project/llmsql/>`_
 - `Dataset on Hugging Face <https://huggingface.co/llmsql-bench>`_
-- `Example Usages <https://github.com/LLMSQL/llmsql-benchmark/examples>`_
+- `Example Usages <https://github.com/LLMSQL/llmsql-benchmark/tree/main/examples>`_
 
 
 .. toctree::
