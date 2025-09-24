@@ -2,7 +2,7 @@ name: Deploy Sphinx docs to GitHub Pages
 
 on:
   push:
-    branches: [ main ]
+    branches: [ 2-create-package-for-pypi ]
 
 permissions:
   contents: read
