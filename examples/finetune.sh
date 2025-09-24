@@ -1,0 +1,1 @@
+python3 -m llmsql finetune --config-file example_finetune_args.yaml

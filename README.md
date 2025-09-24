@@ -3,26 +3,27 @@
 Patched and improved version of the original large crowd-sourced dataset for developing natural language interfaces for relational databases, [WikiSQL](https://github.com/salesforce/WikiSQL).
 
 
-Our datasets are also available for different scenarios on our [HuggingFace page](https://huggingface.co/llmsql-bench).
+Our datasets are available for different scenarios on our [HuggingFace page](https://huggingface.co/llmsql-bench).
 ---
 
 ## Overview
 
-This repository provides the **LLMSQL Benchmark** — a modernized, cleaned, and extended version of WikiSQL, designed for evaluating and fine-tuning large language models (LLMs) on **Text-to-SQL** tasks.
+### Install
 
-### ✨ Highlights
-- Updated schema and improved SQL annotations.
+```bash
+pip3 install llmsql
+```
+
+This repository provides the **LLMSQL Benchmark** — a modernized, cleaned, and extended version of WikiSQL, designed for evaluating and fine-tuning large language models (LLMs) on **Text-to-SQL** tasks. 
+
+### Note
+The package doesn't have the dataset, it is stored on our [HuggingFace page](https://huggingface.co/llmsql-bench).
+
+### This package contains
 - Support for modern LLMs.
 - Tools for **evaluation**, **inference**, and **finetuning**.
 - Support for Hugging Face models out-of-the-box.
 - Structured for reproducibility and benchmarking.
-
----
-
-## 🚨 Version Notice
-
-This is the **first release** of the LLMSQL Benchmark.  
-Expect refinements, new features, and additional tools in future updates.
 
 ---
 
@@ -32,14 +33,14 @@ Modern LLMs are already strong at **producing SQL queries without finetuning**.
 We therefore recommend that most users:
 
 1. **Run inference** directly on the full benchmark:
-   - Use `dataset/questions.jsonl` (the main evaluation set).
-   - Generate SQL predictions with your LLM.
-   - Evaluate results against the benchmark.
+   - Use [`llmsql.LLMSQLVLLMInference`](./llmsql/inference/inference.py) (the main inference class) for generation of SQL predictions with your LLM from HF.
+   - Evaluate results against the benchmark with the [`llmsql.LLMSQLEvaluator`](./llmsql/evaluation/evaluator.py) evaluator class.
 
 2. **Optional finetuning**:
-   - For research or domain adaptation, we provide `train_questions.jsonl`, `val_questions.jsonl`, and `test_questions.jsonl`.
-   - Use the `finetune/` scripts if you want to adapt a base model.
+   - For research or domain adaptation, we provide finetuning script for HF models. Use `llmsql finetune --help` or read [Finetune Readme](./llmsql/finetune/README.md) to find more about finetuning.
 
+> [!Tip]
+> You can find additional manuals in the README files of each folder([Inferece Readme](./llmsql/inference/README.md), [Evaluation Readme](./llmsql/evaluation/README.md), [Finetune Readme](./llmsql/finetune/README.md))
 ---
 
 ## Repository Structure
@@ -47,93 +48,87 @@ We therefore recommend that most users:
 ```
 
 WikiSQLv2/
-├── dataset/             # JSONL files (questions, tables, splits)
 ├── evaluation/          # Scripts for downloading DB + evaluating predictions
 ├── inference/           # Generate SQL queries with your LLM
-├── finetune/            # Fine-tuning with TRL's SFTTrainer
-├── outputs/             # Example location for your model outputs
-└── utils/               # Shared helpers (prompt builders, logging, etc.)
+└── finetune/            # Fine-tuning with TRL's SFTTrainer
 
-````
+```
 
----
+
 
 ## Quickstart
 
-## Install
 
-Make sure you have the repo cloned (we used python3.11):
+### Install
+
+Make sure you have the package installed (we used python3.11):
 
 ```bash
-git clone https://github.com/LLMSQL/llmsql-benchmark.git
-cd LLMSQL
-pip3 install -r requirements.txt
+pip3 install llmsql
 ```
 
-### 1. Download the Benchmark Database
-```bash
-python3 evaluation/download_db.py
-````
+### 1. Run Inference
 
-This will fetch `sqlite_tables.db` into `dataset/`.
+```python
+from llmsql import LLMSQLVLLMInference
 
-### 2. Run Inference
+# Initialize inference engine
+inference = LLMSQLVLLMInference(
+    model_name="Qwen/Qwen2.5-1.5B-Instruct",  # or any Hugging Face causal LM
+    tensor_parallel_size=1,
+)
 
-```bash
-python3 inference/inference.py \
-    --questions_file dataset/questions.jsonl \
-    --tables_file dataset/tables.jsonl \
-    --output_file outputs/my_model_preds.jsonl \
-    --model_name meta-llama/Llama-3.2-1B-Instruct \
-    --shots 5 \
-    --batch_size 16
+# Run generation
+results = inference.generate(
+    output_file="path_to_your_outputs.jsonl",
+    questions_path="data/questions.jsonl",
+    tables_path="data/tables.jsonl",
+    shots=5,
+    batch_size=8,
+    max_new_tokens=256,
+    temperature=0.7,
+)
 ```
 
-### 3. Evaluate Results
+### 2. Evaluate Results
 
-```bash
-python3 evaluation/evaluate_answers.py \
-    --pred_file outputs/my_model_preds.jsonl
+```python
+from llmsql import LLMSQLEvaluator
+
+evaluator = LLMSQLEvaluator(workdir_path="llmsql_workdir")
+report = evaluator.evaluate(outputs_path="path_to_your_outputs.jsonl")
+print(report)
 ```
 
----
+
 
 ## Finetuning (Optional)
 
 If you want to adapt a base model on LLMSQL:
 
 ```bash
-python3 finetune/finetune.py \
-    --model_name_or_path meta-llama/Llama-3.2-1B-Instruct \
-    --output_dir outputs/finetuned-llama \
-    --train_file dataset/train_questions.jsonl \
-    --val_file dataset/val_questions.jsonl \
-    --tables_file dataset/tables.jsonl \
-    --num_train_epochs 2 \
-    --per_device_train_batch_size 1
+llmsql finetune --config_file examples/example_finetune_args.yaml
 ```
 
-This will train a model on the train/val splits and save it under `outputs/`.
+This will train a model on the train/val splits with the parameters provided in the config file. You can find example config file [here](./examples/example_finetune_args.yaml).
 
----
+
 
 ## Suggested Workflow
 
 * **Primary**: Run inference on `dataset/questions.jsonl` → Evaluate with `evaluation/`.
 * **Secondary (optional)**: Fine-tune on `train/val` → Test on `test_questions.jsonl`.
 
----
+
 
 ## License & Citation
 
-This project builds on the original [WikiSQL](https://github.com/salesforce/WikiSQL) dataset.
 Please cite LLMSQL if you use it in your work:
-```
+```text
 @inproceedings{llmsql_bench,
   title={LLMSQL: Upgrading WikiSQL for the LLM Era of Text-to-SQLels},
   author={Pihulski, Dzmitry and  Charchut, Karol and Novogrodskaia, Viktoria and Koco{'n}, Jan},
   booktitle={2025 IEEE International Conference on Data Mining Workshops (ICDMW)},
-  pages={...},
   year={2025},
   organization={IEEE}
 }
