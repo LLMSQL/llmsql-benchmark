@@ -1,6 +1,6 @@
 [project]
 name = "llmsql"
-version = "0.1.1"
+version = "0.1.2"
 description = "LLMSQL: Benchmark for Text-to-SQL"
 authors = [{ name = "Dzmitry Pihulski", email = "dim.pigulsky@gmail.com" }]
 readme = "README.md"
