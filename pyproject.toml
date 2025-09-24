@@ -1,0 +1,30 @@
+[project]
+name = "llmsql"
+version = "0.1.1"
+description = "LLMSQL: Benchmark for Text-to-SQL"
+authors = [{ name = "Dzmitry Pihulski", email = "dim.pigulsky@gmail.com" }]
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "torch",
+    "transformers",
+    "datasets",
+    "trl",
+    "huggingface_hub",
+    "vllm",
+    "tqdm",
+    "numpy",
+    "python-dotenv",
+    "pyyaml"
+]
+scripts = { llmsql = "llmsql.__main__:main" }
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+license-files = ["LICENSE"]
+
+[tool.setuptools.packages.find]
+include = ["llmsql*"]
