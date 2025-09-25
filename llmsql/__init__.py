@@ -1,10 +1,7 @@
-import logging
-import os
-
 __version__ = "0.1.2"
 
 
-def __getattr__(name: str):
+def __getattr__(name: str):  # type: ignore
     if name == "LLMSQLVLLMInference":
         from .inference.inference import LLMSQLVLLMInference
 

@@ -1,11 +1,11 @@
 import sqlite3
-from typing import List, Optional, Tuple
+from typing import Any
 
 from llmsql.loggers.logging_config import log
 from llmsql.utils.regex_extractor import find_sql
 
 
-def execute_sql(conn: sqlite3.Connection, sql: str) -> Optional[List[Tuple]]:
+def execute_sql(conn: sqlite3.Connection, sql: str) -> list[tuple] | None:
     """
     Execute a SQL query on the given SQLite connection and return its results.
 
@@ -59,7 +59,11 @@ def fix_table_name(sql: str, table_id: str) -> str:
     )
 
 
-def evaluate_sample(item, questions, conn):
+def evaluate_sample(
+    item: dict[str, int | str],
+    questions: dict[int, dict[str, str]],
+    conn: sqlite3.Connection,
+) -> tuple[int, dict[str, Any] | None, dict[Any, Any]]:
     """
     Evaluate a single model prediction against the gold (ground-truth) SQL query.
 
@@ -93,6 +97,9 @@ def evaluate_sample(item, questions, conn):
     """
     # Extract question metadata
     qid = item["question_id"]
+    assert isinstance(qid, int), (
+        "question_id in the outputs file needs to be of type int."
+    )
     q_info = questions[qid]
     table_id, gold_sql, question_text = (
         q_info["table_id"],
@@ -115,6 +122,9 @@ def evaluate_sample(item, questions, conn):
     last_pred_res = None  # store last prediction results for mismatch logging
 
     # Loop over all SQL queries extracted from the model output
+    assert isinstance(item["completion"], str), (
+        f"Completion filed in outputs file must be of type string: {item['completion']}. Type: {type(item['completion'])}"
+    )
     for pred_sql in find_sql(item["completion"]):
         # Replace placeholder table names with the actual one
         pred_sql_fixed = fix_table_name(pred_sql, table_id)

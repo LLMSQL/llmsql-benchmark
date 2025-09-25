@@ -5,3 +5,4 @@ dataset/sqlite_tables.db
 dist/
 
 *.egg-info/
+.pdm-python

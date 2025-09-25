@@ -1,6 +1,6 @@
+from collections.abc import Callable, Iterable
 import json
 from pathlib import Path
-from typing import Callable, Dict, Iterable, List
 
 from llmsql.prompts.prompts import (
     build_prompt_0shot,
@@ -10,13 +10,13 @@ from llmsql.prompts.prompts import (
 
 
 # ---------- Utility functions ----------
-def load_jsonl(path: str) -> List[Dict]:
+def load_jsonl(path: str) -> list[dict]:
     """Load a JSONL file into a list of dicts."""
-    with open(path, "r", encoding="utf-8") as f:
+    with open(path, encoding="utf-8") as f:
         return [json.loads(line) for line in f if line.strip()]
 
 
-def save_jsonl_lines(path: str, items: Iterable[Dict]) -> None:
+def save_jsonl_lines(path: str, items: Iterable[dict]) -> None:
     """Append lines (dicts) to a JSONL file."""
     with open(path, "a", encoding="utf-8") as f:
         for item in items:
@@ -26,13 +26,13 @@ def save_jsonl_lines(path: str, items: Iterable[Dict]) -> None:
 def overwrite_jsonl(path: str) -> None:
     """Ensure output file is empty (start fresh)."""
     Path(path).parent.mkdir(parents=True, exist_ok=True)
-    with open(path, "w", encoding="utf-8") as f:
+    with open(path, "w", encoding="utf-8"):
         pass
 
 
 def choose_prompt_builder(
     shots: int,
-) -> Callable[[str, List[str], List[str], List[str]], str]:
+) -> Callable[[str, list[str], list[str], list[str | float | int]], str]:
     """
     Return a prompt-building function according to shots.
     The returned callable signature matches how prompts are used below:

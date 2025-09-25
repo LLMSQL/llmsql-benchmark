@@ -33,14 +33,14 @@ Notes:
 """
 
 import os
-import random
 from pathlib import Path
-from typing import Dict, List, Optional
+import random
+from typing import Any
 
-import numpy as np
-import torch
 from dotenv import load_dotenv
 from huggingface_hub import hf_hub_download
+import numpy as np
+import torch
 from tqdm import tqdm
 from vllm import LLM, SamplingParams
 
@@ -54,8 +54,8 @@ from llmsql.utils.utils import (
 
 load_dotenv()
 
-Question = Dict[str, object]
-Table = Dict[str, object]
+Question = dict[str, object]
+Table = dict[str, object]
 
 
 class LLMSQLVLLMInference:
@@ -70,7 +70,7 @@ class LLMSQLVLLMInference:
         tensor_parallel_size: int = 1,
         seed: int = 42,
         workdir_path: str = "llmsql_workdir",
-        **llm_kwargs,
+        **llm_kwargs: Any,
     ):
         """
         Initialize vLLM model for SQL inference.
@@ -127,15 +127,15 @@ class LLMSQLVLLMInference:
     def generate(
         self,
         output_file: str,
-        questions_path: Optional[str] = None,
-        tables_path: Optional[str] = None,
+        questions_path: str | None = None,
+        tables_path: str | None = None,
         shots: int = 5,
         batch_size: int = 8,
         max_new_tokens: int = 256,
         temperature: float = 1.0,
         do_sample: bool = True,
-        **sampling_kwargs,
-    ) -> List[Dict[str, str]]:
+        **sampling_kwargs: Any,
+    ) -> list[dict[str, str]]:
         """
         Generate SQL queries for all benchmark questions.
 
@@ -199,7 +199,7 @@ class LLMSQLVLLMInference:
         prompt_builder = choose_prompt_builder(shots)
         log.info(f"Using {shots}-shot prompt builder: {prompt_builder.__name__}")
 
-        all_results: List[Dict[str, str]] = []
+        all_results: list[dict[str, str]] = []
         total = len(questions)
 
         temperature = 0.0 if not do_sample else temperature
@@ -225,8 +225,8 @@ class LLMSQLVLLMInference:
             # Generate with vLLM
             outputs = self.llm.generate(prompts, sampling_params)
 
-            batch_results: List[Dict[str, str]] = []
-            for q, out in zip(batch, outputs):
+            batch_results: list[dict[str, str]] = []
+            for q, out in zip(batch, outputs, strict=False):
                 text = out.outputs[0].text
                 batch_results.append(
                     {

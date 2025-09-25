@@ -1,4 +1,9 @@
-def build_prompt_5shot(question, headers, types, sample_row) -> str:
+def build_prompt_5shot(
+    question: str,
+    headers: list[str],
+    types: list[str],
+    sample_row: list[str | float | int],
+) -> str:
     return f"""You are an expert SQLite SQL query generator.
 Your task: Given a question and a table schema, output ONLY a valid SQL SELECT query.
 ⚠️ STRICT RULES:
@@ -52,7 +57,12 @@ Sample row: {sample_row}
 SQL:"""
 
 
-def build_prompt_1shot(question, headers, types, sample_row) -> str:
+def build_prompt_1shot(
+    question: str,
+    headers: list[str],
+    types: list[str],
+    sample_row: list[str | float | int],
+) -> str:
     return f"""You are an expert SQLite SQL query generator.
 Your task: Given a question and a table schema, output ONLY a valid SQL SELECT query.
 ⚠️ STRICT RULES:
@@ -78,7 +88,12 @@ Sample row: {sample_row}
 SQL:"""
 
 
-def build_prompt_0shot(question, headers, types, sample_row) -> str:
+def build_prompt_0shot(
+    question: str,
+    headers: list[str],
+    types: list[str],
+    sample_row: list[str | float | int],
+) -> str:
     return f"""You are an expert SQLite SQL query generator.
 Your task: Given a question and a table schema, output ONLY a valid SQL SELECT query.
 ⚠️ STRICT RULES:

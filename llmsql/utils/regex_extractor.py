@@ -1,8 +1,7 @@
 import re
-from typing import List
 
 
-def find_sql(model_output: str, limit: int = 10) -> List[str]:
+def find_sql(model_output: str, limit: int = 10) -> list[str]:
     """Function to extract SQL queries from the model's response
 
     Args:

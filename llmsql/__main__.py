@@ -2,7 +2,7 @@ import argparse
 import sys
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser(prog="llmsql", description="LLMSQL CLI")
     subparsers = parser.add_subparsers(dest="command")
 
