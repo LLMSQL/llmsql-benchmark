@@ -22,9 +22,8 @@ Notes:
 
 import json
 import os
-import sqlite3
 from pathlib import Path
-from typing import Dict, List, Optional
+import sqlite3
 
 from huggingface_hub import hf_hub_download
 from rich.progress import track
@@ -45,7 +44,7 @@ class LLMSQLEvaluator:
         """
         Initialize evaluator.
         """
-        self.conn = None
+        self.conn: sqlite3.Connection | None = None
         self.workdir_path = Path(workdir_path)
         self.workdir_path.mkdir(parents=True, exist_ok=True)
         self.repo_id = "llmsql-bench/llmsql-benchmark"
@@ -67,30 +66,27 @@ class LLMSQLEvaluator:
         log.info(f"File saved at: {file_path}")
         return file_path
 
-    def connect(self, db_path: str):
+    def connect(self, db_path: str) -> None:
         """Establish SQLite connection."""
         if not os.path.exists(db_path):
             raise FileNotFoundError(f"Database not found at {db_path}")
         self.conn = sqlite3.connect(db_path)
 
-    def close(self):
+    def close(self) -> None:
         """Close SQLite connection if open."""
         if self.conn:
             self.conn.close()
             self.conn = None
 
-    # ------------------------------------------------------------------
-    # Evaluation
-    # ------------------------------------------------------------------
     def evaluate(
         self,
         outputs_path: str,
-        questions_path: Optional[str] = None,
-        db_path: Optional[str] = None,
-        save_report: Optional[str] = None,
+        questions_path: str | None = None,
+        db_path: str | None = None,
+        save_report: str | None = None,
         show_mismatches: bool = True,
         max_mismatches: int = 5,
-    ) -> Dict:
+    ) -> dict:
         """
         Evaluate predicted SQL queries against benchmark ground truth.
 
@@ -145,12 +141,14 @@ class LLMSQLEvaluator:
             "gold_none": 0,
             "sql_errors": 0,
         }
-        mismatches: List[Dict] = []
+        mismatches: list[dict] = []
 
         for item in track(outputs, description="Evaluating"):
             metrics["total"] += 1
             is_match, mismatch_info, m_update = evaluate_sample(
-                item, questions, self.conn
+                item,
+                questions,
+                self.conn,  # type: ignore
             )
 
             metrics["matches"] += is_match

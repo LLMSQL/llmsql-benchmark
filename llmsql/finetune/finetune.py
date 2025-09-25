@@ -20,23 +20,24 @@ Notes:
 """
 
 import argparse
+from collections.abc import Callable
 import os
-import shutil
 from pathlib import Path
-from typing import Dict, Optional
+import shutil
+from typing import Any
 
-import torch
-import yaml
-from datasets import Dataset
+from datasets import Dataset  # type: ignore
 from huggingface_hub import hf_hub_download
+import torch
 from transformers import AutoModelForCausalLM
 from trl import SFTConfig, SFTTrainer
+import yaml
 
 from llmsql.loggers.logging_config import log
 from llmsql.utils.utils import choose_prompt_builder, load_jsonl
 
 
-def parse_args_and_config():
+def parse_args_and_config() -> argparse.Namespace:
     """Parse CLI args and optionally merge with YAML config."""
     p = argparse.ArgumentParser(
         description="Fine-tune a causal LM on Text-to-SQL benchmark."
@@ -66,10 +67,10 @@ def parse_args_and_config():
     # Load YAML config
     config = {}
     if args.get("config_file"):
-        with open(args["config_file"], "r") as f:
+        with open(args["config_file"]) as f:
             config = yaml.safe_load(f)
 
-    def flatten(d, parent_key="", sep="_"):
+    def flatten(d: Any, parent_key: str = "", sep: str = "_") -> dict[str, Any]:
         items = {}
         for k, v in d.items():
             new_key = f"{parent_key}{sep}{k}" if parent_key else k
@@ -88,7 +89,7 @@ def parse_args_and_config():
     return argparse.Namespace(**args)
 
 
-def build_dataset(file_path: str, tables: Dict, prompt_builder) -> Dataset:
+def build_dataset(file_path: str, tables: dict, prompt_builder: Callable) -> Dataset:
     """Convert JSONL file to HF dataset samples."""
     questions = load_jsonl(file_path)
     samples = []
@@ -115,15 +116,13 @@ def _download_file(filename: str, repo_id: str, workdir_path: str) -> str:
     shutil.copy(cached_path, local_path)
     return local_path
 
-    return cached_path
-
 
 def main(
     model_name_or_path: str,
     output_dir: str,
-    train_file: Optional[str] = None,
-    val_file: Optional[str] = None,
-    tables_file: Optional[str] = None,
+    train_file: str | None = None,
+    val_file: str | None = None,
+    tables_file: str | None = None,
     shots: int = 5,
     num_train_epochs: int = 3,
     per_device_train_batch_size: int = 4,
@@ -136,11 +135,11 @@ def main(
     max_length: int = 32768,
     no_eval: bool = False,
     eval_steps: int = 100,
-    wandb_project: Optional[str] = None,
-    wandb_run_name: Optional[str] = None,
-    wandb_key: Optional[str] = None,
+    wandb_project: str | None = None,
+    wandb_run_name: str | None = None,
+    wandb_key: str | None = None,
     wandb_offline: bool = False,
-):
+) -> None:
     os.makedirs(output_dir, exist_ok=True)
 
     # Seed
@@ -268,7 +267,7 @@ def main(
     log.info(f"Model saved at {output_dir}/final_model")
 
 
-def run_cli():
+def run_cli() -> None:
     args = parse_args_and_config()
     main(
         train_file=args.train_file,
