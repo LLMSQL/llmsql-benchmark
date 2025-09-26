@@ -1,5 +1,9 @@
+![Downloads](https://img.shields.io/pypi/dm/llmsql)
 [![codecov](https://codecov.io/gh/LLMSQL/llmsql-benchmark/branch/main/graph/badge.svg)](https://codecov.io/gh/LLMSQL/llmsql-benchmark)
-
+![PyPI Version](https://img.shields.io/pypi/v/llmsql)
+![CI](https://github.com/LLMSQL/llmsql-benchmark/actions/workflows/tests.yml/badge.svg)
+![Python Versions](https://img.shields.io/pypi/pyversions/llmsql)
+![License](https://img.shields.io/pypi/l/llmsql)
 
 # LLMSQL
 
