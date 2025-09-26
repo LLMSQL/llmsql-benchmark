@@ -96,6 +96,10 @@ class LLMSQLVLLMInference:
         self.workdir_path.mkdir(parents=True, exist_ok=True)
         self.repo_id = "llmsql-bench/llmsql-benchmark"
 
+        if "device" not in llm_kwargs:
+            llm_kwargs["device"] = "cuda" if torch.cuda.is_available() else "cpu"
+        self.device = llm_kwargs["device"]
+
         log.info(
             f"Loading vLLM model {model_name} with tensor_parallel_size={tensor_parallel_size}..."
         )
