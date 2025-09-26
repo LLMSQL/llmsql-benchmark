@@ -16,7 +16,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.11"   # adjust if you need a different version
+          python-version: "3.11"
 
       - name: Install PDM
         run: pip install pdm
@@ -32,5 +32,13 @@ jobs:
       - name: Install dependencies (with dev)
         run: pdm install --with dev
 
-      - name: Run tests
-        run: PYTHONPATH=. pdm run pytest -v --maxfail=1 --disable-warnings
+      - name: Run tests with coverage
+        run: PYTHONPATH=. pdm run pytest --cov=llmsql --cov-report=xml --maxfail=1 --disable-warnings -v
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./coverage.xml
+          flags: unittests
+          fail_ci_if_error: true
