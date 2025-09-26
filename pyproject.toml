@@ -57,6 +57,7 @@ dev = [
     "pre-commit>=4.3.0",
     "types-tqdm>=4.67.0.20250809",
     "types-PyYAML>=6.0.12.20250915",
+    "pytest-asyncio>=1.2.0",
 ]
 
 [tool.pdm]
