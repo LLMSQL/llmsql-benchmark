@@ -127,6 +127,17 @@ This will train a model on the train/val splits with the parameters provided in 
 * **Secondary (optional)**: Fine-tune on `train/val` → Test on `test_questions.jsonl`.
 
 
+## Contributing
+
+Check out our [open issues](https://github.com/LLMSQL/llmsql-benchmark/issues) and feel free to submit pull requests!
+
+We also encourage you to submit new issues!
+
+To get started with development, first fork the repository and install the dev dependencies.
+
+For more information on the contributing: check [CONTRIBUTING.md](./CONTRIBUTING.md) and our [documentation page](https://llmsql.github.io/llmsql-benchmark/).
+
+
 
 ## License & Citation
 
