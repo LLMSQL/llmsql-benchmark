@@ -58,6 +58,10 @@ dev = [
     "types-tqdm>=4.67.0.20250809",
     "types-PyYAML>=6.0.12.20250915",
     "pytest-asyncio>=1.2.0",
+    "sphinx>=8.1.3",
+    "sphinx-autodoc-typehints>=3.0.1",
+    "furo>=2025.9.25",
+    "sphinx-autoapi>=3.6.0",
 ]
 
 [tool.pdm]
