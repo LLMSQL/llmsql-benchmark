@@ -97,9 +97,9 @@ def evaluate_sample(
     """
     # Extract question metadata
     qid = item["question_id"]
-    assert isinstance(qid, int), (
-        "question_id in the outputs file needs to be of type int."
-    )
+    assert isinstance(
+        qid, int
+    ), "question_id in the outputs file needs to be of type int."
     q_info = questions[qid]
     table_id, gold_sql, question_text = (
         q_info["table_id"],
@@ -122,9 +122,9 @@ def evaluate_sample(
     last_pred_res = None  # store last prediction results for mismatch logging
 
     # Loop over all SQL queries extracted from the model output
-    assert isinstance(item["completion"], str), (
-        f"Completion filed in outputs file must be of type string: {item['completion']}. Type: {type(item['completion'])}"
-    )
+    assert isinstance(
+        item["completion"], str
+    ), f"Completion filed in outputs file must be of type string: {item['completion']}. Type: {type(item['completion'])}"
     for pred_sql in find_sql(item["completion"]):
         # Replace placeholder table names with the actual one
         pred_sql_fixed = fix_table_name(pred_sql, table_id)

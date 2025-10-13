@@ -1,6 +1,6 @@
 # LLMSQL vLLM Inference
 
-This module provides the `LLMSQLVLLMInference` class for running **Text-to-SQL generation** using large language models with the [vLLM](https://github.com/vllm-project/vllm) backend.  
+This module provides the `LLMSQLVLLMInference` class for running **Text-to-SQL generation** using large language models with the [vLLM](https://github.com/vllm-project/vllm) backend.
 It loads benchmark questions and table schemas, builds prompts with configurable few-shot settings, and generates SQL queries efficiently in batches.
 
 ---
@@ -75,4 +75,3 @@ The `generate` method returns a list of dictionaries and also writes them increm
 {"question_id": "2", "completion": "SELECT COUNT(*) FROM courses;"}
 {"question_id": "3", "completion": "or any unstructured output from the model: SELECT COUNT(*) FROM courses; even with special tokens <eos>"}
 ```
-

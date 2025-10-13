@@ -126,6 +126,9 @@ class LLMSQLVLLMInference:
             local_dir=self.workdir_path,
         )
         log.info(f"File saved at: {file_path}")
+        assert isinstance(
+            file_path, str
+        ), f"file path to the {filename} is not string. File path: {file_path}, type: {type(file_path)}"
         return file_path
 
     def generate(

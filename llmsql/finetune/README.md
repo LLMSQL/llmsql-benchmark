@@ -1,6 +1,6 @@
 # Fine-Tuning: Training Text-to-SQL Models on LLMSQL
 
-This module provides the fine-tuning pipeline for **LLMSQL**, allowing you to adapt a causal language model to the Text-to-SQL benchmark.  
+This module provides the fine-tuning pipeline for **LLMSQL**, allowing you to adapt a causal language model to the Text-to-SQL benchmark.
 It supports dataset preparation, prompt construction, and training with Hugging Face [TRL](https://github.com/huggingface/trl)’s `SFTTrainer`.
 
 ---

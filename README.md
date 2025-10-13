@@ -21,7 +21,7 @@ Our datasets are available for different scenarios on our [HuggingFace page](htt
 pip3 install llmsql
 ```
 
-This repository provides the **LLMSQL Benchmark** — a modernized, cleaned, and extended version of WikiSQL, designed for evaluating and fine-tuning large language models (LLMs) on **Text-to-SQL** tasks. 
+This repository provides the **LLMSQL Benchmark** — a modernized, cleaned, and extended version of WikiSQL, designed for evaluating and fine-tuning large language models (LLMs) on **Text-to-SQL** tasks.
 
 ### Note
 The package doesn't have the dataset, it is stored on our [HuggingFace page](https://huggingface.co/llmsql-bench).
@@ -36,7 +36,7 @@ The package doesn't have the dataset, it is stored on our [HuggingFace page](htt
 
 ## Usage Recommendations
 
-Modern LLMs are already strong at **producing SQL queries without finetuning**.  
+Modern LLMs are already strong at **producing SQL queries without finetuning**.
 We therefore recommend that most users:
 
 1. **Run inference** directly on the full benchmark:
@@ -151,5 +151,3 @@ Please cite LLMSQL if you use it in your work:
   organization={IEEE}
 }
 ```
-
-
