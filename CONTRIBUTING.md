@@ -28,6 +28,7 @@ pip3 install --user pdm
 git clone https://github.com/<YOUR_USERNAME>/llmsql-benchmark.git
 cd llmsql-benchmark
 pdm install --without default --with dev
+pre-commit install
 ```
 
 > **Note**: If you see `Command 'pdm' not found`, it usually means `~/.local/bin` is not on your `PATH`.
@@ -55,6 +56,7 @@ PYTHONPATH=. pdm run pytest --cov=llmsql --cov-report=xml --maxfail=1 --disable-
 
 Please run this command before any changes, just to make sure all code you forked works well by the time the development starts.
 
+Also to enable `pre-commit hooks` with `pre-commit install` command. Pre commit hooks contain pytest and will be run before each commit.
 
 ## Contribution Best Practices
 

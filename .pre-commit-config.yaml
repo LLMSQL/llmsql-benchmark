@@ -1,0 +1,74 @@
+# Pre-commit hooks configuration
+# Setup: pre-commit install
+# Run manually: pre-commit run --all-files
+
+repos:
+  # Ruff
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.8.4
+    hooks:
+      # Run the linter
+      - id: ruff
+        args: [--fix]
+        types_or: [python, pyi]
+      # Run the formatter
+      - id: ruff-format
+        types_or: [python, pyi]
+
+  # Mypy
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.13.0
+    hooks:
+      - id: mypy
+        args: [--ignore-missing-imports, --check-untyped-defs]
+        files: ^llmsql/
+        additional_dependencies:
+          - types-PyYAML
+          - types-tqdm
+          - types-requests
+
+  # Run tests with pytest
+  - repo: local
+    hooks:
+      - id: pytest
+        name: pytest
+        entry: pytest
+        language: system
+        pass_filenames: false
+        always_run: true
+        args:
+          - tests/
+          - -v
+          - --tb=short
+        stages: [pre-commit]
+
+  # Standard pre-commit hooks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      # Check for files that would conflict in case-insensitive filesystems
+      - id: check-case-conflict
+      # Check for merge conflicts
+      - id: check-merge-conflict
+      # Check YAML syntax
+      - id: check-yaml
+      # Check TOML syntax
+      - id: check-toml
+      # Check for added large files
+      - id: check-added-large-files
+        args: [--maxkb=1000]
+      # Trim trailing whitespace
+      - id: trailing-whitespace
+      # Ensure files end with newline
+      - id: end-of-file-fixer
+      # Check JSON syntax
+      - id: check-json
+      # Check for debugger imports
+      - id: debug-statements
+
+# Configuration for specific hooks
+default_language_version:
+  python: python3.11
+
+# Run these hooks on every commit
+default_stages: [pre-commit]

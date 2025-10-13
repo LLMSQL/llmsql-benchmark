@@ -34,4 +34,3 @@ LLMSQL is a Python package for SQL reasoning with LLMs and vLLM inference.
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
-
