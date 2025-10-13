@@ -1,7 +1,5 @@
 """Tests for llmsql.utils.regex_extractor module."""
 
-import pytest
-
 from llmsql.utils.regex_extractor import find_sql
 
 
@@ -112,7 +110,7 @@ class TestFindSQL:
 
     def test_query_with_quotes(self) -> None:
         """Test query with quoted identifiers and strings."""
-        output = '''SELECT "Competition or tour" FROM "2-17637370-13" WHERE "Opponent" = 'Nordsjælland\''''
+        output = """SELECT "Competition or tour" FROM "2-17637370-13" WHERE "Opponent" = 'Nordsjælland\'"""
         result = find_sql(output)
         assert len(result) == 1
         assert "Competition or tour" in result[0]
