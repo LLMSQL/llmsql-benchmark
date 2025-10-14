@@ -4,7 +4,7 @@ import sqlite3
 
 import pytest
 
-import llmsql.inference.inference as inference
+import llmsql.inference.inference_vllm as inference_vllm
 
 
 @pytest.fixture
@@ -41,7 +41,7 @@ def mock_llm(monkeypatch):
         def generate(self, prompts, sampling_params):
             return [DummyOutput(f"-- SQL for: {p}") for p in prompts]
 
-    monkeypatch.setattr(inference, "LLM", lambda **_: DummyLLM())
+    monkeypatch.setattr(inference_vllm, "LLM", lambda **_: DummyLLM())
     return DummyLLM()
 
 
