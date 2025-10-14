@@ -88,7 +88,7 @@ from llmsql import inference_transformers
 results = inference_transformers(
     model_or_model_name_or_path="Qwen/Qwen2.5-1.5B-Instruct",
     output_file="path_to_your_outputs.jsonl",
-    shots=5,
+    num_fewshots=5,
     batch_size=8,
     max_new_tokens=256,
     do_sample=False,

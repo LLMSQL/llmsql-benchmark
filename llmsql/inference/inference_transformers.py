@@ -34,7 +34,8 @@ def inference_transformers(
     questions_path: str | None = None,
     tables_path: str | None = None,
     workdir_path: str = DEFAULT_WORKDIR_PATH,
-    num_fewshot: int = 5,
+    num_fewshots: int = 5,
+    trust_remote_code: bool = True,
     batch_size: int = 8,
     max_new_tokens: int = 256,
     temperature: float = 0.0,
@@ -44,7 +45,7 @@ def inference_transformers(
     seed: int = 42,
     dtype: torch.dtype = torch.float16,
     device_map: str | dict[str, int] | None = "auto",
-    **generate_kwargs: Any,
+    generate_kwargs: dict[str, Any] | None = None,
 ) -> list[dict[str, str]]:
     """
     Inference a causal model (Transformers) on the LLMSQL benchmark.
@@ -59,7 +60,7 @@ def inference_transformers(
         questions_path: Path to benchmark questions JSONL.
         tables_path: Path to benchmark tables JSONL.
         workdir_path: Work directory (default: "llmsql_workdir").
-        num_fewshot: 0, 1, or 5 — prompt builder choice.
+        num_fewshots: 0, 1, or 5 — prompt builder choice.
         batch_size: Batch size for inference.
         max_new_tokens: Max tokens to generate.
         temperature: Sampling temperature.
@@ -80,6 +81,15 @@ def inference_transformers(
     workdir = Path(workdir_path)
     workdir.mkdir(parents=True, exist_ok=True)
 
+    if generate_kwargs is None:
+        generate_kwargs = {}
+
+    model_args = model_args or {}
+    if "torch_dtype" in model_args:
+        dtype = model_args.pop("torch_dtype")
+    if "trust_remote_code" in model_args:
+        trust_remote_code = model_args.pop("trust_remote_code")
+
     # --- Load model ---
     if isinstance(model_or_model_name_or_path, str):
         model_args = model_args or {}
@@ -89,7 +99,7 @@ def inference_transformers(
             torch_dtype=dtype,
             device_map=device_map,
             token=hf_token,
-            trust_remote_code=True,
+            trust_remote_code=trust_remote_code,
             **model_args,
         )
     else:
@@ -138,8 +148,8 @@ def inference_transformers(
     overwrite_jsonl(output_file)
     log.info(f"Writing results to {output_file}")
 
-    prompt_builder = choose_prompt_builder(num_fewshot)
-    log.info(f"Using {num_fewshot}-shot prompt builder: {prompt_builder.__name__}")
+    prompt_builder = choose_prompt_builder(num_fewshots)
+    log.info(f"Using {num_fewshots}-shot prompt builder: {prompt_builder.__name__}")
 
     results: list[dict[str, str]] = []
     total = len(questions)

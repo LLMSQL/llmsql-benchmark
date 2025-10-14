@@ -13,7 +13,7 @@ Example:
         output_file="outputs/predictions.jsonl",
         questions_path="data/questions.jsonl",
         tables_path="data/tables.jsonl",
-        shots=5,
+        num_fewshots=5,
         batch_size=8,
         max_new_tokens=256,
         temperature=0.7,
@@ -52,12 +52,12 @@ def inference_vllm(
     tensor_parallel_size: int = 1,
     seed: int = 42,
     workdir_path: str = DEFAULT_WORKDIR_PATH,
-    shots: int = 5,
+    num_fewshots: int = 5,
     batch_size: int = 8,
     max_new_tokens: int = 256,
     temperature: float = 1.0,
     do_sample: bool = True,
-    **llm_kwargs: Any,
+    llm_kwargs: dict[str, Any] | None = None,
 ) -> list[dict[str, str]]:
     """
     Run SQL generation using vLLM.
@@ -71,7 +71,7 @@ def inference_vllm(
         tensor_parallel_size: Degree of tensor parallelism (for multi-GPU).
         seed: Random seed.
         workdir_path: Directory to store any downloaded data.
-        shots: Number of examples per prompt (0, 1, or 5).
+        num_fewshots: Number of examples per prompt (0, 1, or 5).
         batch_size: Number of questions per generation batch.
         max_new_tokens: Max tokens to generate.
         temperature: Sampling temperature.
@@ -88,10 +88,6 @@ def inference_vllm(
     workdir = Path(workdir_path)
     workdir.mkdir(parents=True, exist_ok=True)
 
-    if "device" not in llm_kwargs:
-        llm_kwargs["device"] = "cuda" if torch.cuda.is_available() else "cpu"
-    device = llm_kwargs["device"]
-
     # --- load input data ---
     log.info("Preparing questions and tables...")
     questions_path = _maybe_download("questions.jsonl", questions_path)
@@ -101,9 +97,17 @@ def inference_vllm(
     tables = {t["table_id"]: t for t in tables_list}
 
     # --- init model ---
+    llm_kwargs = llm_kwargs or {}
+    if "tensor_parallel_size" in llm_kwargs:
+        tensor_parallel_size = llm_kwargs.pop("tensor_parallel_size")
+    if "device" not in llm_kwargs:
+        llm_kwargs["device"] = "cuda" if torch.cuda.is_available() else "cpu"
+    device = llm_kwargs["device"]
+
     log.info(
         f"Loading vLLM model '{model_name}' (tp={tensor_parallel_size}) on {device}..."
     )
+
     llm = LLM(
         model=model_name,
         tokenizer=model_name,
@@ -117,7 +121,7 @@ def inference_vllm(
     log.info(f"Output will be written to {output_file}")
 
     # --- prompt builder and sampling params ---
-    prompt_builder = choose_prompt_builder(shots)
+    prompt_builder = choose_prompt_builder(num_fewshots)
     temperature = 0.0 if not do_sample else temperature
     sampling_params = SamplingParams(
         temperature=temperature,

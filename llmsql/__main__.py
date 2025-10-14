@@ -1,5 +1,6 @@
 import argparse
 import inspect
+import json
 import sys
 
 
@@ -36,14 +37,14 @@ Examples:
       --model-or-model-name-or-path Qwen/Qwen2.5-1.5B-Instruct \
       --output-file outputs/preds_transformers.jsonl \
       --batch-size 8 \
-      --shots 5
+      --num-fewshots 5
 
   # 2️⃣ Run inference with vLLM backend
   llmsql inference --method vllm \
       --model-name Qwen/Qwen2.5-1.5B-Instruct \
       --output-file outputs/preds_vllm.jsonl \
       --batch-size 8 \
-      --shots 5
+      --num-fewshots 5
 
   # 3️⃣ Pass model-specific kwargs (for Transformers)
   llmsql inference --method transformers \
@@ -82,14 +83,6 @@ Examples:
         help="Inference backend to use ('transformers' or 'vllm').",
     )
 
-    # Catch-all for remaining inference-specific args
-    inf_parser.add_argument(
-        "--args",
-        nargs=argparse.REMAINDER,
-        help="Additional arguments passed to the chosen inference function "
-        "(e.g., --model-name MODEL --output-file FILE --batch-size 8 ...).",
-    )
-
     # ================================================================
     # Parse CLI
     # ================================================================
@@ -123,8 +116,18 @@ Examples:
 
         sig = inspect.signature(inference_fn)
         for name, param in sig.parameters.items():
-            if name.startswith("**"):
-                continue  # skip **kwargs
+            if param.kind == inspect.Parameter.VAR_KEYWORD:
+                fn_parser.add_argument(
+                    "--llm-kwargs",
+                    default="{}",
+                    help="Additional LLM kwargs as a JSON string, e.g. '{\"top_p\": 0.9}'",
+                )
+                fn_parser.add_argument(
+                    "--generate-kwargs",
+                    default="{}",
+                    help="",
+                )
+                continue
             arg_name = f"--{name.replace('_', '-')}"
             default = param.default
             if default is inspect.Parameter.empty:
@@ -136,13 +139,33 @@ Examples:
                         action="store_true" if not default else "store_false",
                         help=f"(default: {default})",
                     )
+                elif default is None:
+                    fn_parser.add_argument(arg_name, type=str, default=None)
                 else:
                     fn_parser.add_argument(
                         arg_name, type=type(default), default=default
                     )
 
-        fn_args = fn_parser.parse_args(args.args or [])
+        fn_args = fn_parser.parse_args(extra)
         fn_kwargs = vars(fn_args)
+
+        if "llm_kwargs" in fn_kwargs and isinstance(fn_kwargs["llm_kwargs"], str):
+            try:
+                fn_kwargs["llm_kwargs"] = json.loads(fn_kwargs["llm_kwargs"])
+            except json.JSONDecodeError:
+                print("⚠️  Could not parse --llm-kwargs JSON, passing as string.")
+
+        if fn_kwargs.get("model_args") is not None:
+            try:
+                fn_kwargs["model_args"] = json.loads(fn_kwargs["model_args"])
+            except json.JSONDecodeError:
+                raise
+
+        if fn_kwargs.get("generate_kwargs") is not None:
+            try:
+                fn_kwargs["generate_kwargs"] = json.loads(fn_kwargs["generate_kwargs"])
+            except json.JSONDecodeError:
+                raise
 
         print(f"🔹 Running {args.method} inference with arguments:")
         for k, v in fn_kwargs.items():

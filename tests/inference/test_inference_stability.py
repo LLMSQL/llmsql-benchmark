@@ -60,7 +60,7 @@ async def test_inference_vllm_with_local_files(monkeypatch, tmp_path):
         output_file=str(out_file),
         questions_path=str(qpath),
         tables_path=str(tpath),
-        shots=1,
+        num_fewshots=1,
         batch_size=1,
         max_new_tokens=5,
         temperature=0.7,

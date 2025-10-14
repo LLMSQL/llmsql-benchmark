@@ -37,7 +37,7 @@ results = inference_transformers(
     output_file="outputs/preds_transformers.jsonl",
     questions_path="data/questions.jsonl",
     tables_path="data/tables.jsonl",
-    shots=5,
+    num_fewshots=5,
     batch_size=8,
     max_new_tokens=256,
     temperature=0.7,
@@ -63,7 +63,7 @@ results = inference_vllm(
     output_file="outputs/preds_vllm.jsonl",
     questions_path="data/questions.jsonl",
     tables_path="data/tables.jsonl",
-    shots=5,
+    num_fewshots=5,
     batch_size=8,
     max_new_tokens=256,
     do_sample=False,
@@ -86,7 +86,7 @@ llmsql inference --method vllm \
     --model-name Qwen/Qwen2.5-1.5B-Instruct \
     --output-file outputs/preds.jsonl \
     --batch-size 8 \
-    --shots 5 \
+    --num_fewshots 5 \
     --temperature 0.0
 ```
 
@@ -118,7 +118,7 @@ Runs inference using the Hugging Face `transformers` backend.
 | `model_or_model_name_or_path`   | `str`   | Model name or local path (any causal LM).                      |
 | `output_file`                   | `str`   | Path to write predictions as JSONL.                            |
 | `questions_path`, `tables_path` | `str`   | Benchmark files (auto-downloaded if missing).                  |
-| `shots`                         | `int`   | Number of few-shot examples (0, 1, 5).                         |
+| `num_fewshots`                         | `int`   | Number of few-shot examples (0, 1, 5).                         |
 | `batch_size`                    | `int`   | Batch size for inference.                                      |
 | `max_new_tokens`                | `int`   | Maximum length of generated SQL queries.                       |
 | `temperature`                   | `float` | Sampling temperature.                                          |
@@ -139,7 +139,7 @@ Runs inference using the [vLLM](https://github.com/vllm-project/vllm) backend fo
 | `model_name`                    | `str`   | Hugging Face model name or path.                 |
 | `output_file`                   | `str`   | Path to write predictions as JSONL.              |
 | `questions_path`, `tables_path` | `str`   | Benchmark files (auto-downloaded if missing).    |
-| `shots`                         | `int`   | Number of few-shot examples (0, 1, 5).           |
+| `num_fewshots`                         | `int`   | Number of few-shot examples (0, 1, 5).           |
 | `batch_size`                    | `int`   | Number of prompts per batch.                     |
 | `max_new_tokens`                | `int`   | Maximum tokens per generation.                   |
 | `temperature`                   | `float` | Sampling temperature.                            |
