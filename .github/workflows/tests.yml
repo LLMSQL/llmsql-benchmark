@@ -30,7 +30,7 @@ jobs:
             ${{ runner.os }}-pdm-
 
       - name: Install dependencies (with dev)
-        run: pdm install --with dev
+        run: pdm install --with dev vllm
 
       - name: Run tests with coverage
         run: PYTHONPATH=. pdm run pytest --cov=llmsql --cov-report=xml --maxfail=1 --disable-warnings -v
