@@ -19,7 +19,6 @@ dependencies = [
     "datasets>=2.16.0",
     "trl>=0.4.0",
     "huggingface-hub>=0.20.0",
-    "vllm>=0.6.0",
     "tqdm>=4.65.0",
     "numpy>=1.24.0",
     "python-dotenv>=1.0.0",
@@ -62,6 +61,9 @@ dev = [
     "sphinx-autodoc-typehints>=3.0.1",
     "furo>=2025.9.25",
     "sphinx-autoapi>=3.6.0",
+]
+vllm = [
+    "vllm>=0.8.3",
 ]
 
 [tool.pdm]

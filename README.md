@@ -40,7 +40,9 @@ Modern LLMs are already strong at **producing SQL queries without finetuning**.
 We therefore recommend that most users:
 
 1. **Run inference** directly on the full benchmark:
-   - Use [`llmsql.LLMSQLVLLMInference`](./llmsql/inference/inference.py) (the main inference class) for generation of SQL predictions with your LLM from HF.
+    model_or_model_name_or_path="Qwen/Qwen2.5-1.5B-Instruct",
+    output_file="path_to_your_outputs.jsonl",
+   - Use [`llmsql.inference_transformers`](./llmsql/inference/inference_transformers.py) (the function for transformers inference) for generation of SQL predictions with your model. If you want to do vllm based inference, use [`llmsql.inference_vllm`](./llmsql/inference/inference_vllm.py). Works both with HF model id, e.g. `Qwen/Qwen2.5-1.5B-Instruct` and model instance passed directly, e.g. `inference_transformers(model_or_model_name_or_path=model, ...)`
    - Evaluate results against the benchmark with the [`llmsql.LLMSQLEvaluator`](./llmsql/evaluation/evaluator.py) evaluator class.
 
 2. **Optional finetuning**:
@@ -48,6 +50,9 @@ We therefore recommend that most users:
 
 > [!Tip]
 > You can find additional manuals in the README files of each folder([Inferece Readme](./llmsql/inference/README.md), [Evaluation Readme](./llmsql/evaluation/README.md), [Finetune Readme](./llmsql/finetune/README.md))
+
+> [!Tip]
+> vllm based inference require vllm optional dependency group installed: `pip install llmsql[vllm]`
 ---
 
 ## Repository Structure
@@ -77,24 +82,21 @@ pip3 install llmsql
 ### 1. Run Inference
 
 ```python
-from llmsql import LLMSQLVLLMInference
+from llmsql import inference_transformers
 
-# Initialize inference engine
-inference = LLMSQLVLLMInference(
-    model_name="Qwen/Qwen2.5-1.5B-Instruct",  # or any Hugging Face causal LM
-    tensor_parallel_size=1,
-)
-
-# Run generation
-results = inference.generate(
+# Run generation directly with transformers
+results = inference_transformers(
+    model_or_model_name_or_path="Qwen/Qwen2.5-1.5B-Instruct",
     output_file="path_to_your_outputs.jsonl",
-    questions_path="data/questions.jsonl",
-    tables_path="data/tables.jsonl",
-    shots=5,
+    num_fewshots=5,
     batch_size=8,
     max_new_tokens=256,
-    temperature=0.7,
+    do_sample=False,
+    model_args={
+        "torch_dtype": "bfloat16",
+    }
 )
+
 ```
 
 ### 2. Evaluate Results

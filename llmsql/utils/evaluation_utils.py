@@ -1,7 +1,6 @@
 import sqlite3
 from typing import Any
 
-from llmsql.loggers.logging_config import log
 from llmsql.utils.regex_extractor import find_sql
 
 
@@ -27,8 +26,7 @@ def execute_sql(conn: sqlite3.Connection, sql: str) -> list[tuple] | None:
         cur.execute(sql)
         results = cur.fetchall()
         return sorted(results)
-    except Exception as e:
-        log.error(f"SQL Execution Error: {e} | Query: {sql}")
+    except Exception:
         return None
 
 
