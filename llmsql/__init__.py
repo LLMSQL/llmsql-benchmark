@@ -2,7 +2,7 @@
 LLMSQL — A Text2SQL benchmark for evaluation of Large Language Models
 """
 
-__version__ = "0.1.4"
+__version__ = "0.1.5"
 
 
 def __getattr__(name: str):  # type: ignore
