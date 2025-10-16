@@ -16,14 +16,12 @@ dependencies = [
     "accelerate>=0.26.0",
     "torch>=1.8",
     "transformers>=4.1",
-    "datasets>=2.16.0",
-    "trl>=0.4.0",
-    "huggingface-hub>=0.20.0",
-    "tqdm>=4.65.0",
-    "numpy>=1.24.0",
-    "python-dotenv>=1.0.0",
-    "pyyaml>=6.0",
-    "rich>=13.0.0",
+    "datasets",
+    "tqdm",
+    "numpy",
+    "python-dotenv",
+    "pyyaml",
+    "rich",
 ]
 scripts = { llmsql = "llmsql.__main__:main" }
 classifiers = [
