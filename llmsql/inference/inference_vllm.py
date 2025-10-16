@@ -26,7 +26,6 @@ from pathlib import Path
 from typing import Any
 
 from dotenv import load_dotenv
-import torch
 from tqdm import tqdm
 from vllm import LLM, SamplingParams
 
@@ -100,13 +99,8 @@ def inference_vllm(
     llm_kwargs = llm_kwargs or {}
     if "tensor_parallel_size" in llm_kwargs:
         tensor_parallel_size = llm_kwargs.pop("tensor_parallel_size")
-    if "device" not in llm_kwargs:
-        llm_kwargs["device"] = "cuda" if torch.cuda.is_available() else "cpu"
-    device = llm_kwargs["device"]
 
-    log.info(
-        f"Loading vLLM model '{model_name}' (tp={tensor_parallel_size}) on {device}..."
-    )
+    log.info(f"Loading vLLM model '{model_name}' (tp={tensor_parallel_size})...")
 
     llm = LLM(
         model=model_name,
