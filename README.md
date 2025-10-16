@@ -28,7 +28,7 @@ The package doesn't have the dataset, it is stored on our [HuggingFace page](htt
 
 ### This package contains
 - Support for modern LLMs.
-- Tools for **evaluation**, **inference**, and **finetuning**.
+- Tools for **inference** and **evaluation**.
 - Support for Hugging Face models out-of-the-box.
 - Structured for reproducibility and benchmarking.
 
@@ -46,10 +46,10 @@ We therefore recommend that most users:
    - Evaluate results against the benchmark with the [`llmsql.LLMSQLEvaluator`](./llmsql/evaluation/evaluator.py) evaluator class.
 
 2. **Optional finetuning**:
-   - For research or domain adaptation, we provide finetuning script for HF models. Use `llmsql finetune --help` or read [Finetune Readme](./llmsql/finetune/README.md) to find more about finetuning.
+   - For research or domain adaptation, we provide finetuning version for HF models. Use [Finetune Ready](https://huggingface.co/datasets/llmsql-bench/llmsql-benchmark-finetune-ready) dataset from HuggingFace.
 
 > [!Tip]
-> You can find additional manuals in the README files of each folder([Inferece Readme](./llmsql/inference/README.md), [Evaluation Readme](./llmsql/evaluation/README.md), [Finetune Readme](./llmsql/finetune/README.md))
+> You can find additional manuals in the README files of each folder([Inferece Readme](./llmsql/inference/README.md), [Evaluation Readme](./llmsql/evaluation/README.md))
 
 > [!Tip]
 > vllm based inference require vllm optional dependency group installed: `pip install llmsql[vllm]`
@@ -61,9 +61,7 @@ We therefore recommend that most users:
 
 llmsql/
 ├── evaluation/          # Scripts for downloading DB + evaluating predictions
-├── inference/           # Generate SQL queries with your LLM
-└── finetune/            # Fine-tuning with TRL's SFTTrainer
-
+└── inference/           # Generate SQL queries with your LLM
 ```
 
 
@@ -111,21 +109,30 @@ print(report)
 
 
 
-## Finetuning (Optional)
+## Vllm inference (Recommended)
 
-If you want to adapt a base model on LLMSQL:
-
+To speed up your inference we recommend using vllm inference. You can do it with optional llmsql[vllm] dependency group
 ```bash
-llmsql finetune --config_file examples/example_finetune_args.yaml
+pip install llmsql[vllm]
 ```
 
-This will train a model on the train/val splits with the parameters provided in the config file. You can find example config file [here](./examples/example_finetune_args.yaml).
+After that run
+```python
+from llmsql import inference_vllm
+results = inference_vllm(
+    "Qwen/Qwen2.5-1.5B-Instruct",
+    "test_results.jsonl",
+    do_sample=False,
+    batch_size=20000
+)
+```
+for fast inference.
 
 
 
 ## Suggested Workflow
 
-* **Primary**: Run inference on `dataset/questions.jsonl` → Evaluate with `evaluation/`.
+* **Primary**: Run inference on `dataset/questions.jsonl` with vllm → Evaluate with `evaluation/`.
 * **Secondary (optional)**: Fine-tune on `train/val` → Test on `test_questions.jsonl`.
 
 
