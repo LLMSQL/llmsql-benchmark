@@ -1,2 +1,1 @@
-.. raw:: html
-   :file: front_page.html
+.. This file exists only because Sphinx requires index.rst

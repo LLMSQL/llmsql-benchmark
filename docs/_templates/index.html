@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>LLMSQL Project — Text-to-SQL Benchmark</title>
 
-  <!-- подключаем css из _static -->
-  <link rel="stylesheet" href="_static/styles/front_page.css">
+  <link rel="stylesheet" href="{{ pathto('_static/styles/front_page.css', 1) }}">
+
 
 </head>
 <body>
@@ -64,6 +64,26 @@
     </div>
 
     <h2 id="quick-start">⚡ Quick Start</h2>
+    <div class="custom-highlight-box">
+  <p><strong>⚠️ WARNING — Reproducibility</strong></p>
+
+  <p>
+    vLLM i HuggingFace Transformers mogą dawać <strong>różne wyniki</strong> nawet przy tych samych
+    ustawieniach (np. temperature=0). Wynika to z różnic w implementacji, precyzji obliczeń i sposobie batchowania.
+  </p>
+
+  <p><strong>Zalecenie:</strong> do porównywania jakości modeli używaj <strong>tego samego backendu</strong>
+  (albo tylko vLLM, albo tylko Transformers).</p>
+
+  <p><strong>Źródła:</strong><br/>
+    • vLLM FAQ:
+    <a href="https://docs.vllm.ai/en/latest/usage/faq/" target="_blank">FAQ</a><br/>
+    • Model Support Policy:
+    <a href="https://docs.vllm.ai/en/latest/models/supported_models/#embedding" target="_blank">
+      Supported Models
+    </a>
+  </p>
+</div>
     <h3>Installation</h3>
     <pre><code>pip3 install llmsql</code></pre>
 
@@ -109,7 +129,7 @@ print(report)
     </div>
   </main>
 
-  <script src="_static/scripts/front_page.js"></script>
+  <script src="{{ pathto('_static/scripts/front_page.js', 1) }}"></script>
 
 </body>
 </html>
