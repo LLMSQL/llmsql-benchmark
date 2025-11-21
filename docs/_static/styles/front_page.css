@@ -197,3 +197,19 @@ code {
   h1 { font-size: 1.5rem; }
   .badges img { height: 18px; }
 }
+
+pre, code {
+    background: #2d2d2d !important;
+    color: #eee !important;
+    border-radius: 6px;
+}
+
+pre {
+    padding: 12px !important;
+    overflow-x: auto;
+}
+
+pre span {
+    background: none !important;
+    color: inherit !important;
+}

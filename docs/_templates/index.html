@@ -68,14 +68,15 @@
   <p><strong>⚠️ WARNING — Reproducibility</strong></p>
 
   <p>
-    vLLM i HuggingFace Transformers mogą dawać <strong>różne wyniki</strong> nawet przy tych samych
-    ustawieniach (np. temperature=0). Wynika to z różnic w implementacji, precyzji obliczeń i sposobie batchowania.
+    vLLM and HuggingFace Transformers may produce <strong>different results</strong> even with the same
+    settings (e.g., temperature=0). This is due to differences in implementation, computation precision,
+    and batching mechanisms.
   </p>
 
-  <p><strong>Zalecenie:</strong> do porównywania jakości modeli używaj <strong>tego samego backendu</strong>
-  (albo tylko vLLM, albo tylko Transformers).</p>
+  <p><strong>Recommendation:</strong> when comparing model quality, use the <strong>same backend</strong>
+  (either only vLLM or only Transformers).</p>
 
-  <p><strong>Źródła:</strong><br/>
+  <p><strong>Sources:</strong><br/>
     • vLLM FAQ:
     <a href="https://docs.vllm.ai/en/latest/usage/faq/" target="_blank">FAQ</a><br/>
     • Model Support Policy:
@@ -84,6 +85,7 @@
     </a>
   </p>
 </div>
+
     <h3>Installation</h3>
     <pre><code>pip3 install llmsql</code></pre>
 

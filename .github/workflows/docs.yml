@@ -3,11 +3,11 @@ name: Build & Deploy Sphinx Docs
 on:
   push:
     branches:
-      - page        # тестовая ветка для preview
-      - main        # production deploy
+      - page
+      - main
   pull_request:
     branches:
-      - main        # проверка перед merge
+      - main
 
 permissions:
   contents: read
