@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>LLMSQL Project — Text-to-SQL Benchmark</title>
+
+  <link rel="stylesheet" href="_static/styles/front_page.css">
+
+
+</head>
+<body>
+
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-content">
+      <a class="sidebar-button" href="https://llmsql.github.io/llmsql-benchmark/docs" target="_blank" rel="noopener">📚 Documentation</a>
+      <input type="text" placeholder="Search..." class="sidebar-search"/>
+    </div>
+  </div>
+
+  <!-- Right panel -->
+  <aside class="on-this-page" aria-label="On this page">
+    <h4>ON THIS PAGE</h4>
+    <ul>
+      <li><a href="#description">Description</a></li>
+      <li><a href="#improvements">Key improvements</a></li>
+      <li><a href="#documentation">Documentation</a></li>
+      <li><a href="#quick-start">Quick Start</a></li>
+      <li><a href="#links">Links</a></li>
+      <li><a href="#contributing">Contributing</a></li>
+      <li><a href="#leaderboard">Leaderboard</a></li>
+      <li><a href="#citation">Citation</a></li>
+    </ul>
+  </aside>
+
+  <!-- Main content -->
+  <main>
+    <div class="center-content">
+      <h1>Welcome to LLMSQL Project</h1>
+
+      <div class="badges" aria-hidden="true">
+        <img src="https://img.shields.io/badge/pypi-v0.1.11-555" alt="pypi v0.1.11">
+        <img src="https://img.shields.io/github/stars/LLMSQL/llmsql-benchmark?style=social" alt="GitHub stars">
+        <img src="https://img.shields.io/badge/docs-online-blue" alt="docs online">
+        <img src="https://img.shields.io/badge/dataset-HuggingFace-orange" alt="dataset HuggingFace">
+      </div>
+
+      <p style="margin-top:10px;">LLMSQL is a Python package for SQL reasoning with LLMs and vLLM inference.</p>
+    </div>
+
+    <h2 id="description">💡 Description</h2>
+    <p><strong>LLMSQL Benchmark</strong> is an <strong>open-source framework</strong> providing a <strong>modernized, cleaned, and extended version of the original WikiSQL dataset</strong>, specifically designed for evaluating and fine-tuning <strong>Large Language Models (LLMs)</strong> on <strong>Text-to-SQL</strong> tasks.</p>
+
+    <h2 id="improvements">Key improvements</h2>
+    <ul>
+      <li><strong>Data Cleaning:</strong> Fixed errors (type mismatches, case sensitivity) causing 41% empty results.</li>
+      <li><strong>LLM-Ready Format:</strong> Replaced numeric placeholders with standard SQL, improving training consistency.</li>
+    </ul>
+
+    <h2 id="documentation">📚 Documentation</h2>
+    <div class="note-box">
+      <p><strong>Note:</strong> Documentation pages (installation guide, API reference) are <strong>under construction</strong>. See <strong>Quick Start</strong> below.</p>
+    </div>
+
+    <h2 id="quick-start">⚡ Quick Start</h2>
+    <div class="custom-highlight-box">
+  <p><strong>⚠️ WARNING — Reproducibility</strong></p>
+
+  <p>
+    vLLM and HuggingFace Transformers may produce <strong>different results</strong> even with the same
+    settings (e.g., temperature=0). This is due to differences in implementation, computation precision,
+    and batching mechanisms.
+  </p>
+
+  <p><strong>Recommendation:</strong> when comparing model quality, use the <strong>same backend</strong>
+  (either only vLLM or only Transformers).</p>
+
+  <p><strong>Sources:</strong><br/>
+    • vLLM FAQ:
+    <a href="https://docs.vllm.ai/en/latest/usage/faq/" target="_blank">FAQ</a><br/>
+    • Model Support Policy:
+    <a href="https://docs.vllm.ai/en/latest/models/supported_models/#embedding" target="_blank">
+      Supported Models
+    </a>
+  </p>
+</div>
+
+    <h3>Installation</h3>
+    <pre><code>pip3 install llmsql</code></pre>
+
+    <h3>Recommended Workflow (vLLM)</h3>
+    <pre><code>pip install llmsql[vllm]
+llmsql evaluate --model gpt-4 --dataset llmsql_dev</code></pre>
+
+    <h3>Evaluation API (Python)</h3>
+    <pre><code>from llmsql import LLMSQLEvaluator
+
+evaluator = LLMSQLEvaluator(workdir_path="llmsql_workdir")
+report = evaluator.evaluate(outputs_path="path_to_your_outputs.jsonl")
+print(report)
+</code></pre>
+
+    <h2 id="links">🔗 Resources</h2>
+    <table>
+      <thead><tr><th>Resource</th><th>Details</th></tr></thead>
+      <tbody>
+        <tr><td>📦 <strong>PyPI Project</strong></td><td><a href="https://pypi.org/project/llmsql/">llmsql on PyPI</a></td></tr>
+        <tr><td>💾 <strong>Dataset on Hugging Face</strong></td><td><a href="https://huggingface.co/datasets/llmsql-bench/llmsql-benchmark">llmsql-bench dataset</a></td></tr>
+        <tr><td>💻 <strong>Source Code</strong></td><td><a href="https://github.com/LLMSQL/llmsql-benchmark">GitHub repo</a></td></tr>
+      </tbody>
+    </table>
+
+    <h2 id="leaderboard">📊 Leaderboard [in progress]</h2>
+    <div class="custom-highlight-box">
+      <p>The official Leaderboard is currently empty and <strong>in progress</strong>. Submit your model results to be the first on the ranking!</p>
+    </div>
+
+    <h2 id="citation">📄 Citation</h2>
+    <pre><code>@inproceedings{llmsql_bench,
+  title={LLMSQL: Upgrading WikiSQL for the LLM Era of Text-to-SQL},
+  author={Pihulski, Dzmitry and Charchut, Karol and Novogrodskaia, Viktoria and Koco{'n}, Jan},
+  booktitle={2025 IEEE ICDMW},
+  year={2025},
+  organization={IEEE}
+}
+</code></pre>
+
+    <div class="center-content small">
+      💬 Made with ❤️ by the LLMSQL Team<br>
+    </div>
+  </main>
+
+  <script src="_static/scripts/front_page.js"></script>
+
+</body>
+</html>
