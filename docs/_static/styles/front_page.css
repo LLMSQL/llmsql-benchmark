@@ -1,0 +1,215 @@
+/* === LLMSQL Front Page CSS === */
+
+.sidebar {
+  position: fixed;
+  top: 16px;
+  left: 16px;
+  height: auto;
+  width: 160px;
+  background-color: #f4f4f4;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 110;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+}
+
+.sidebar-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+
+.sidebar-button {
+  display: block;
+  text-align: center;
+  background-color: #eef6ff;
+  color: #0056b3;
+  padding: 10px;
+  border-radius: 6px;
+  text-decoration: none;
+  font-weight: 600;
+  transition: background-color 0.2s, color 0.2s;
+}
+.sidebar-button:hover {
+  background-color: #007bff;
+  color: white;
+}
+
+.sidebar-search {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 0.9rem;
+  box-sizing: border-box;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.search-highlight {
+  background-color: #fff89a;
+  border-radius: 3px;
+  padding: 0 2px;
+}
+
+.sidebar-search:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 6px rgba(0, 123, 255, 0.3);
+}
+
+.on-this-page {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  width: 220px;
+  background: #fafafa;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 0.95rem;
+  z-index: 105;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+}
+.on-this-page h4 {
+  margin: 0 0 8px 0;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #e9e9e9;
+  font-size: 0.95rem;
+}
+.on-this-page ul {
+  list-style: none;
+  padding: 0;
+  margin: 8px 0 0 0;
+}
+.on-this-page ul li {
+  margin-bottom: 6px;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  line-height: 1.6;
+  margin: 0 auto;
+  padding: 28px 36px;
+  color: #333;
+  background-color: #fff;
+  max-width: 1100px;
+}
+
+.center-content {
+  text-align: center;
+  margin-bottom: 18px;
+}
+h1 {
+  margin: 0 0 10px 0;
+  font-size: 1.9rem;
+  color: #0056b3;
+  border-bottom: 3px solid #e9f1ff;
+  padding-bottom: 8px;
+}
+
+.badges {
+  margin-top: 10px;
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.badges img {
+  height: 20px;
+  display: inline-block;
+}
+
+h2 {
+  color: #007bff;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 6px;
+  margin-top: 28px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 18px;
+}
+th, td {
+  border: 1px solid #ddd;
+  padding: 10px;
+  text-align: left;
+}
+th {
+  background: #f6f6f6;
+}
+
+pre {
+  background-color: #2d2d2d;
+  color: #ccc;
+  padding: 12px;
+  border-radius: 6px;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  margin: 10px 0;
+}
+
+code {
+  background-color: #f4f4f4;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.95em;
+  color: #c94a4a;
+}
+
+.note-box {
+  background-color: #eef5ff;
+  padding: 12px;
+  border-left: 4px solid #007bff;
+  margin: 12px 0;
+  border-radius: 6px;
+}
+
+.custom-highlight-box {
+  border-left: 5px solid #ffc107;
+  background-color: #fff8e1;
+  padding: 12px;
+  border-radius: 6px;
+  margin-bottom: 14px;
+}
+
+.center-content.small {
+  font-size: 0.92rem;
+  color: #666;
+  margin-top: 26px;
+}
+
+/* Responsive */
+@media (max-width: 1000px) {
+  .on-this-page { position: static; width: auto; margin: 12px 0 18px; }
+}
+
+@media (max-width: 720px) {
+  .sidebar, .on-this-page { display: none; }
+  h1 { font-size: 1.5rem; }
+  .badges img { height: 18px; }
+}
+
+pre, code {
+    background: #2d2d2d !important;
+    color: #eee !important;
+    border-radius: 6px;
+}
+
+pre {
+    padding: 12px !important;
+    overflow-x: auto;
+}
+
+pre span {
+    background: none !important;
+    color: inherit !important;
+}

@@ -1,33 +1,27 @@
 # Configuration file for the Sphinx documentation builder.
-#
-# For the full list of built-in configuration values, see the documentation:
-# https://www.sphinx-doc.org/en/master/usage/configuration.html
 
 # -- Project information -----------------------------------------------------
-# https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
 project = "LLMSQL"
 copyright = "2025, Dzmitry Pihulski"
-author = "Dzmitry Pihulski"
-release = "0.1.1"
+author = "Viktoria Novogrodskaia"
+release = "0.2.0"
 
 # -- General configuration ---------------------------------------------------
-# https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
 extensions = []
 
 templates_path = ["_templates"]
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
-
-# -- Options for HTML output -------------------------------------------------
-# https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
-
 html_static_path = ["_static"]
 
-extensions = [
-    "sphinx.ext.autodoc",
-    "sphinx.ext.napoleon",
-    "sphinx_autodoc_typehints",
-]
-html_theme = "furo"
+html_theme = "basic"
+
+html_additional_pages = {
+    "index": "index.html",
+}
+
+def setup(app):
+    app.add_css_file("styles/front_page.css")
+    app.add_js_file("scripts/front_page.js")
