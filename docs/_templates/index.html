@@ -86,15 +86,33 @@
   </p>
 </div>
 
-    <h3>Installation</h3>
-    <pre><code>pip3 install llmsql</code></pre>
+    <h3>1️⃣ Installation</h3>
+  <p>Install the base package:</p>
+  <pre><code>pip install llmsql</code></pre>
 
-    <h3>Recommended Workflow (vLLM)</h3>
-    <pre><code>pip install llmsql[vllm]
-llmsql evaluate --model gpt-4 --dataset llmsql_dev</code></pre>
+  <p>To enable the vLLM backend:</p>
+  <pre><code>pip install llmsql[vllm]</code></pre>
 
-    <h3>Evaluation API (Python)</h3>
-    <pre><code>from llmsql import LLMSQLEvaluator
+  <h3>2️⃣ Inference from CLI</h3>
+
+<p><strong>vLLM Backend (Recommended)</strong></p>
+<pre><code>llmsql inference --method vllm \
+--model-name Qwen/Qwen2.5-1.5B-Instruct \
+--output-file outputs/preds.jsonl \
+--batch-size 8 \
+--num_fewshots 5 \
+--temperature 0.0</code></pre>
+
+<p><strong>Transformers Backend</strong></p>
+<pre><code>llmsql inference --method transformers \
+--model-or-model-name-or-path Qwen/Qwen2.5-1.5B-Instruct \
+--output-file outputs/preds.jsonl \
+--batch-size 8 \
+--temperature 0.9 \
+--generate-kwargs '{"do_sample": false, "top_p": 0.95}'</code></pre>
+
+  <h3>3️⃣ Evaluation API (Python)</h3>
+<pre><code>from llmsql import LLMSQLEvaluator
 
 evaluator = LLMSQLEvaluator(workdir_path="llmsql_workdir")
 report = evaluator.evaluate(outputs_path="path_to_your_outputs.jsonl")
