@@ -185,6 +185,4 @@ class LLMSQLEvaluator:
                 json.dump(report, f, indent=2, ensure_ascii=False)
             log.info(f"Saved report to {save_report}")
 
-        self.close()
-
         return report
