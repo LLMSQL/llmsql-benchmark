@@ -113,6 +113,7 @@ def inference_transformers(
                 model_or_model_name_or_path,
                 token=hf_token,
                 trust_remote_code=True,
+                padding_side="left"
             )
         else:
             raise ValueError("Tokenizer must be provided if model is passed directly.")
@@ -121,6 +122,7 @@ def inference_transformers(
             tokenizer_or_name,
             token=hf_token,
             trust_remote_code=True,
+            padding_side="left"
         )
     else:
         tokenizer = tokenizer_or_name
