@@ -63,16 +63,16 @@
 
 
 
-      <p style="margin-top:10px;">LLMSQL is a Python package for evaluation HF models on LLMSQL benchmark with transformers and vLLM.</p>
+      <p style="margin-top:10px;">LLMSQL is a Python package for evaluation Hugging Face models on LLMSQL benchmark with transformers and vLLM.</p>
     </div>
 
     <h2 id="description">💡 Description</h2>
-    <p><strong>LLMSQL Benchmark</strong> is an <strong>open-source framework</strong> providing a <strong>modernized, cleaned, and extended version of the original WikiSQL dataset</strong>, specifically designed for evaluating HF style <strong>Large Language Models (LLMs)</strong> on <strong>Text-to-SQL</strong> tasks.</p>
+    <p><strong>LLMSQL Benchmark</strong> is an <strong>open-source framework</strong> providing a <strong>modernized, cleaned, and extended version of the original WikiSQL dataset</strong>, specifically designed for evaluating Hugging Face style <strong>Large Language Models (LLMs)</strong> on <strong>Text-to-SQL</strong> tasks.</p>
 
     <h2 id="improvements">Key improvements</h2>
     <ul>
-      <li><strong>Data Cleaning:</strong> Fixed errors (type mismatches, case sensitivity) causing 41% empty results.</li>
-      <li><strong>LLM-Ready Format:</strong> Replaced numeric placeholders with standard SQL, improving training consistency.</li>
+      <li><strong>Data Cleaning:</strong> Resolved duplicates, datatype mismatches, and inconsistent casing, reducing the widespread occurrence of empty query results.</li>
+      <li><strong>LLM-Ready Format:</strong> Reformatted SQL queries stored in WikiSQL’s custom encoding into standard SQL syntax.</li>
     </ul>
 
     <h2 id="documentation">📚 Documentation</h2>
@@ -85,9 +85,7 @@
   <p><strong>⚠️ WARNING — Reproducibility</strong></p>
 
   <p>
-    vLLM and HuggingFace Transformers may produce <strong>different results</strong> even with the same
-    settings (e.g., temperature=0). This is due to differences in implementation, computation precision,
-    and batching mechanisms.
+    vLLM and HuggingFace Transformers may generate <strong> different text </strong> outputs even when configured with the same model generation parameters (e.g., temperature=0), because of differences in implementation, floating-point computation, and how batches are processed.
   </p>
 
   <p><strong>Recommendation:</strong> when comparing model quality, use the <strong>same backend</strong>
