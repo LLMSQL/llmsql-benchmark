@@ -33,21 +33,10 @@ pip install llmsql[vllm]
 from llmsql import inference_transformers
 
 results = inference_transformers(
-    model_or_model_name_or_path="Qwen/Qwen2.5-1.5B-Instruct",
-    output_file="outputs/preds_transformers.jsonl",
-    questions_path="data/questions.jsonl",
-    tables_path="data/tables.jsonl",
-    num_fewshots=5,
-    batch_size=8,
-    max_new_tokens=256,
-    temperature=0.7,
-    model_args={
-        "attn_implementation": "flash_attention_2",
-        "torch_dtype": "bfloat16",
-    },
-    generate_kwargs={
-        "do_sample": False,
-    },
+    model_or_model_name_or_path="EleutherAI/pythia-14m",
+    output_file="test_output.jsonl",
+    batch_size=5000,
+    do_sample=False,
 )
 ```
 
@@ -59,19 +48,10 @@ results = inference_transformers(
 from llmsql import inference_vllm
 
 results = inference_vllm(
-    model_name="Qwen/Qwen2.5-1.5B-Instruct",
-    output_file="outputs/preds_vllm.jsonl",
-    questions_path="data/questions.jsonl",
-    tables_path="data/tables.jsonl",
-    num_fewshots=5,
-    batch_size=8,
-    max_new_tokens=256,
+    model_name="EleutherAI/pythia-14m",
+    output_file="test_output.jsonl",
+    batch_size=5000,
     do_sample=False,
-    llm_kwargs={
-        "tensor_parallel_size": 1,
-        "gpu_memory_utilization": 0.9,
-        "max_model_len": 4096,
-    },
 )
 ```
 
@@ -97,8 +77,7 @@ llmsql inference --method transformers \
     --model-or-model-name-or-path Qwen/Qwen2.5-1.5B-Instruct \
     --output-file outputs/preds.jsonl \
     --batch-size 8 \
-    --temperature 0.9 \
-    --generate-kwargs '{"do_sample": false, "top_p": 0.95}'
+    --temperature 0.0 \
 ```
 
 👉 Run `llmsql inference --help` for more detailed examples and parameter options.
@@ -113,18 +92,49 @@ Runs inference using the Hugging Face `transformers` backend.
 
 **Parameters:**
 
-| Argument                        | Type    | Description                                                    |
-| ------------------------------- | ------- | -------------------------------------------------------------- |
-| `model_or_model_name_or_path`   | `str`   | Model name or local path (any causal LM).                      |
-| `output_file`                   | `str`   | Path to write predictions as JSONL.                            |
-| `questions_path`, `tables_path` | `str`   | Benchmark files (auto-downloaded if missing).                  |
-| `num_fewshots`                         | `int`   | Number of few-shot examples (0, 1, 5).                         |
-| `batch_size`                    | `int`   | Batch size for inference.                                      |
-| `max_new_tokens`                | `int`   | Maximum length of generated SQL queries.                       |
-| `temperature`                   | `float` | Sampling temperature.                                          |
-| `do_sample`                     | `bool`  | Whether to use sampling.                                       |
-| `model_args`                    | `dict`  | Extra kwargs passed to `AutoModelForCausalLM.from_pretrained`. |
-| `generate_kwargs`               | `dict`  | Extra kwargs passed to `model.generate()`.                     |
+#### Model Loading
+
+| Argument                        | Type                  | Default       | Description                                                    |
+| ------------------------------- | --------------------- | ------------- | -------------------------------------------------------------- |
+| `model_or_model_name_or_path`   | `str \| AutoModelForCausalLM` | *required* | Model object, HuggingFace model name, or local path. |
+| `tokenizer_or_name`             | `str \| Any \| None`  | `None`        | Tokenizer object, name, or None (infers from model).           |
+| `trust_remote_code`             | `bool`                | `True`        | Whether to trust remote code when loading models.              |
+| `dtype`                         | `torch.dtype`         | `torch.float16` | Model precision (e.g., `torch.float16`, `torch.bfloat16`).   |
+| `device_map`                    | `str \| dict \| None` | `"auto"`      | Device placement strategy for multi-GPU.                       |
+| `hf_token`                      | `str \| None`         | `None`        | Hugging Face authentication token.                             |
+| `model_kwargs`                  | `dict \| None`        | `None`        | Additional kwargs for `AutoModelForCausalLM.from_pretrained()`. |
+| `tokenizer_kwargs`              | `dict \| None`        | `None`        | Additional kwargs for `AutoTokenizer.from_pretrained()`.       |
+
+#### Prompt & Chat
+
+| Argument                        | Type           | Default | Description                                      |
+| ------------------------------- | -------------- | ------- | ------------------------------------------------ |
+| `chat_template`                 | `str \| None`  | `None`  | Optional chat template string to apply.          |
+
+#### Generation
+
+| Argument                        | Type           | Default | Description                                      |
+| ------------------------------- | -------------- | ------- | ------------------------------------------------ |
+| `max_new_tokens`                | `int`          | `256`   | Maximum tokens to generate per sequence.         |
+| `temperature`                   | `float`        | `0.0`   | Sampling temperature (0.0 = greedy).             |
+| `do_sample`                     | `bool`         | `False` | Whether to use sampling vs greedy decoding.      |
+| `top_p`                         | `float`        | `1.0`   | Nucleus sampling parameter.                      |
+| `top_k`                         | `int`          | `50`    | Top-k sampling parameter.                        |
+| `generation_kwargs`             | `dict \| None` | `None`  | Additional kwargs for `model.generate()`.        |
+
+#### Benchmark
+
+| Argument                        | Type    | Default                   | Description                                      |
+| ------------------------------- | ------- | ------------------------- | ------------------------------------------------ |
+| `output_file`                   | `str`   | `"outputs/predictions.jsonl"` | Path to write predictions as JSONL.          |
+| `questions_path`                | `str \| None` | `None`          | Path to questions.jsonl (auto-downloads if missing). |
+| `tables_path`                   | `str \| None` | `None`          | Path to tables.jsonl (auto-downloads if missing).    |
+| `workdir_path`                  | `str`   | `"llmsql_workdir"`        | Working directory for downloaded files.          |
+| `num_fewshots`                  | `int`   | `5`                       | Number of few-shot examples (0, 1, or 5).        |
+| `batch_size`                    | `int`   | `8`                       | Batch size for inference.                        |
+| `seed`                          | `int`   | `42`                      | Random seed for reproducibility.                 |
+
+**Note:** Explicit parameters (e.g., `dtype`, `trust_remote_code`) override any values specified in `model_kwargs` or `tokenizer_kwargs`.
 
 ---
 
@@ -134,18 +144,39 @@ Runs inference using the [vLLM](https://github.com/vllm-project/vllm) backend fo
 
 **Parameters:**
 
-| Argument                        | Type    | Description                                      |
-| ------------------------------- | ------- | ------------------------------------------------ |
-| `model_name`                    | `str`   | Hugging Face model name or path.                 |
-| `output_file`                   | `str`   | Path to write predictions as JSONL.              |
-| `questions_path`, `tables_path` | `str`   | Benchmark files (auto-downloaded if missing).    |
-| `num_fewshots`                         | `int`   | Number of few-shot examples (0, 1, 5).           |
-| `batch_size`                    | `int`   | Number of prompts per batch.                     |
-| `max_new_tokens`                | `int`   | Maximum tokens per generation.                   |
-| `temperature`                   | `float` | Sampling temperature.                            |
-| `do_sample`                     | `bool`  | Whether to sample or use greedy decoding.        |
-| `llm_kwargs`                    | `dict`  | Extra kwargs forwarded to `vllm.LLM`.            |
-| `sampling_kwargs`               | `dict`  | Extra kwargs forwarded to `vllm.SamplingParams`. |
+#### Model Loading
+
+| Argument                        | Type           | Default | Description                                      |
+| ------------------------------- | -------------- | ------- | ------------------------------------------------ |
+| `model_name`                    | `str`          | *required* | Hugging Face model name or local path.        |
+| `trust_remote_code`             | `bool`         | `True`  | Whether to trust remote code when loading.       |
+| `tensor_parallel_size`          | `int`          | `1`     | Number of GPUs for tensor parallelism.           |
+| `hf_token`                      | `str \| None`  | `None`  | Hugging Face authentication token.               |
+| `llm_kwargs`                    | `dict \| None` | `None`  | Additional kwargs for `vllm.LLM()`.              |
+| `llm_kwargs`                    | `bool` | `True`  | Whether to use chat template of the tokenizer              |
+
+#### Generation
+
+| Argument                        | Type           | Default | Description                                      |
+| ------------------------------- | -------------- | ------- | ------------------------------------------------ |
+| `max_new_tokens`                | `int`          | `256`   | Maximum tokens to generate per sequence.         |
+| `temperature`                   | `float`        | `1.0`   | Sampling temperature (0.0 = greedy).             |
+| `do_sample`                     | `bool`         | `True`  | Whether to use sampling vs greedy decoding.      |
+| `sampling_kwargs`               | `dict \| None` | `None`  | Additional kwargs for `vllm.SamplingParams()`.   |
+
+#### Benchmark
+
+| Argument                        | Type           | Default                       | Description                                      |
+| ------------------------------- | -------------- | ----------------------------- | ------------------------------------------------ |
+| `output_file`                   | `str`          | `"outputs/predictions.jsonl"` | Path to write predictions as JSONL.              |
+| `questions_path`                | `str \| None`  | `None`                        | Path to questions.jsonl (auto-downloads if missing). |
+| `tables_path`                   | `str \| None`  | `None`                        | Path to tables.jsonl (auto-downloads if missing).    |
+| `workdir_path`                  | `str`          | `"llmsql_workdir"`            | Working directory for downloaded files.          |
+| `num_fewshots`                  | `int`          | `5`                           | Number of few-shot examples (0, 1, or 5).        |
+| `batch_size`                    | `int`          | `8`                           | Number of prompts per batch.                     |
+| `seed`                          | `int`          | `42`                          | Random seed for reproducibility.                 |
+
+**Note:** Explicit parameters (e.g., `tensor_parallel_size`, `trust_remote_code`) override any values specified in `llm_kwargs` or `sampling_kwargs`.
 
 ---
 

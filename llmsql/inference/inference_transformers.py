@@ -1,3 +1,25 @@
+"""
+LLMSQL Transformers Inference Function
+
+This module provides a single function `inference_transformers()` that performs
+text-to-SQL generation using large language models via the transformers backend.
+
+Example:
+
+    from llmsql import inference_transformers
+
+    results = inference_transformers(
+        model_or_model_name_or_path="EleutherAI/pythia-14m",
+        output_file="test_output.jsonl",
+        batch_size=5000,
+        do_sample=False,
+        # Advanced model loading options
+        model_kwargs={"low_cpu_mem_usage": True, "attn_implementation": "flash_attention_2"},
+        # Advanced generation options
+        generation_kwargs={"repetition_penalty": 1.1, "length_penalty": 1.0},
+    )
+"""
+
 from pathlib import Path
 from typing import Any
 
@@ -6,6 +28,7 @@ import torch
 from tqdm import tqdm
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
+from llmsql.config.config import DEFAULT_WORKDIR_PATH
 from llmsql.loggers.logging_config import log
 from llmsql.utils.inference_utils import _maybe_download, _setup_seed
 from llmsql.utils.utils import (
@@ -44,10 +67,10 @@ def inference_transformers(
     top_k: int = 50,
     generation_kwargs: dict[str, Any] | None = None,
     # --- Benchmark Parameters ---
-    output_file: str = "outputs/predictions.jsonl",
+    output_file: str = "llm_sql_predictions.jsonl",
     questions_path: str | None = None,
     tables_path: str | None = None,
-    workdir_path: str = "llmsql_workdir",
+    workdir_path: str = DEFAULT_WORKDIR_PATH,
     num_fewshots: int = 5,
     batch_size: int = 8,
     seed: int = 42,
