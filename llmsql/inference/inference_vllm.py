@@ -22,6 +22,11 @@ Example:
 """
 
 import os
+
+os.environ["VLLM_USE_V1"] = "0"
+os.environ["CUBLAS_WORKSPACE_CONFIG"] = ":4096:8"
+os.environ["VLLM_ENABLE_V1_MULTIPROCESSING"] = "0"
+
 from pathlib import Path
 from typing import Any
 
