@@ -21,6 +21,8 @@ Example:
     )
 """
 
+from __future__ import annotations
+
 import os
 
 os.environ["VLLM_USE_V1"] = "0"
@@ -49,43 +51,65 @@ load_dotenv()
 
 def inference_vllm(
     model_name: str,
-    output_file: str,
-    questions_path: str | None = None,
-    tables_path: str | None = None,
-    hf_token: str | None = None,
+    *,
+    # === Model Loading Parameters ===
+    trust_remote_code: bool = True,
     tensor_parallel_size: int = 1,
-    seed: int = 42,
-    workdir_path: str = DEFAULT_WORKDIR_PATH,
-    num_fewshots: int = 5,
-    batch_size: int = 8,
+    hf_token: str | None = None,
+    llm_kwargs: dict[str, Any] | None = None,
+    use_chat_template: bool = True,
+    # === Generation Parameters ===
     max_new_tokens: int = 256,
     temperature: float = 1.0,
     do_sample: bool = True,
-    llm_kwargs: dict[str, Any] | None = None,
+    sampling_kwargs: dict[str, Any] | None = None,
+    # === Benchmark Parameters ===
+    output_file: str = "llm_sql_predictions.jsonl",
+    questions_path: str | None = None,
+    tables_path: str | None = None,
+    workdir_path: str = DEFAULT_WORKDIR_PATH,
+    num_fewshots: int = 5,
+    batch_size: int = 8,
+    seed: int = 42,
 ) -> list[dict[str, str]]:
     """
     Run SQL generation using vLLM.
 
     Args:
         model_name: Hugging Face model name or path.
+
+        # Model Loading:
+        trust_remote_code: Whether to trust remote code (default: True).
+        tensor_parallel_size: Number of GPUs for tensor parallelism (default: 1).
+        hf_token: Hugging Face authentication token.
+        llm_kwargs: Additional arguments for vllm.LLM().
+                   Note: 'model', 'tokenizer', 'tensor_parallel_size',
+                   'trust_remote_code' are handled separately and will
+                   override values here.
+
+        # Generation:
+        max_new_tokens: Maximum tokens to generate per sequence.
+        temperature: Sampling temperature (0.0 = greedy).
+        do_sample: Whether to use sampling vs greedy decoding.
+        sampling_kwargs: Additional arguments for vllm.SamplingParams().
+                        Note: 'temperature', 'max_tokens' are handled
+                        separately and will override values here.
+
+        # Benchmark:
         output_file: Path to write outputs (will be overwritten).
-        questions_path: Path to questions.jsonl (optional, auto-download if missing).
-        tables_path: Path to tables.jsonl (optional, auto-download if missing).
-        hf_token: Hugging Face auth token.
-        tensor_parallel_size: Degree of tensor parallelism (for multi-GPU).
-        seed: Random seed.
-        workdir_path: Directory to store any downloaded data.
-        num_fewshots: Number of examples per prompt (0, 1, or 5).
+        questions_path: Path to questions.jsonl (auto-downloads if missing).
+        tables_path: Path to tables.jsonl (auto-downloads if missing).
+        workdir_path: Directory to store downloaded data.
+        num_fewshots: Number of few-shot examples (0, 1, or 5).
         batch_size: Number of questions per generation batch.
-        max_new_tokens: Max tokens to generate.
-        temperature: Sampling temperature.
-        do_sample: Whether to sample or use greedy decoding.
-        **llm_kwargs: Extra kwargs forwarded to vllm.LLM().
+        seed: Random seed for reproducibility.
 
     Returns:
         List of dicts containing `question_id` and generated `completion`.
     """
     # --- setup ---
+    llm_kwargs = llm_kwargs or {}
+    sampling_kwargs = sampling_kwargs or {}
     _setup_seed(seed=seed)
 
     hf_token = hf_token or os.environ.get("HF_TOKEN")
@@ -101,19 +125,21 @@ def inference_vllm(
     tables = {t["table_id"]: t for t in tables_list}
 
     # --- init model ---
-    llm_kwargs = llm_kwargs or {}
-    if "tensor_parallel_size" in llm_kwargs:
-        tensor_parallel_size = llm_kwargs.pop("tensor_parallel_size")
+    llm_init_args = {
+        "model": model_name,
+        "tokenizer": model_name,
+        "tensor_parallel_size": tensor_parallel_size,
+        "trust_remote_code": trust_remote_code,
+        **llm_kwargs,  # User kwargs come first, but explicit params above will override
+    }
 
     log.info(f"Loading vLLM model '{model_name}' (tp={tensor_parallel_size})...")
 
-    llm = LLM(
-        model=model_name,
-        tokenizer=model_name,
-        tensor_parallel_size=tensor_parallel_size,
-        trust_remote_code=True,
-        **llm_kwargs,
-    )
+    llm = LLM(**llm_init_args)
+
+    tokenizer = llm.get_tokenizer()
+    if use_chat_template:
+        use_chat_template = getattr(tokenizer, "chat_template", None)  # type: ignore
 
     # --- prepare output file ---
     overwrite_jsonl(output_file)
@@ -121,11 +147,16 @@ def inference_vllm(
 
     # --- prompt builder and sampling params ---
     prompt_builder = choose_prompt_builder(num_fewshots)
-    temperature = 0.0 if not do_sample else temperature
-    sampling_params = SamplingParams(
-        temperature=temperature,
-        max_tokens=max_new_tokens,
-    )
+
+    effective_temperature = 0.0 if not do_sample else temperature
+
+    sampling_params_args = {
+        "temperature": effective_temperature,
+        "max_tokens": max_new_tokens,
+        **sampling_kwargs,
+    }
+
+    sampling_params = SamplingParams(**sampling_params_args)
 
     # --- main inference loop ---
     all_results: list[dict[str, str]] = []
@@ -138,9 +169,21 @@ def inference_vllm(
         for q in batch:
             tbl = tables[q["table_id"]]
             example_row = tbl["rows"][0] if tbl["rows"] else []
-            prompts.append(
-                prompt_builder(q["question"], tbl["header"], tbl["types"], example_row)
+
+            raw_text = prompt_builder(
+                q["question"], tbl["header"], tbl["types"], example_row
             )
+
+            if use_chat_template:
+                messages = [{"role": "user", "content": raw_text}]
+
+                final_prompt = tokenizer.apply_chat_template(
+                    messages, tokenize=False, add_generation_prompt=True
+                )
+            else:
+                final_prompt = raw_text
+
+            prompts.append(final_prompt)
 
         outputs = llm.generate(prompts, sampling_params)
 
