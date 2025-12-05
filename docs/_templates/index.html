@@ -1,11 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+
+
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>LLMSQL Project — Text-to-SQL Benchmark</title>
 
   <link rel="stylesheet" href="{{ pathto('_static/styles/front_page.css', 1) }}">
+  {{ pygments_css }}
+
 
 
 </head>
@@ -14,7 +18,7 @@
   <!-- Sidebar -->
   <div class="sidebar">
     <div class="sidebar-content">
-      <a class="sidebar-button" href="https://llmsql.github.io/llmsql-benchmark/docs" target="_blank" rel="noopener">📚 Documentation</a>
+      <a class="sidebar-button" href="./docs" rel="noopener">📚 Documentation</a>
       <input type="text" placeholder="Search..." class="sidebar-search"/>
     </div>
   </div>
@@ -40,22 +44,35 @@
       <h1>Welcome to LLMSQL Project</h1>
 
       <div class="badges" aria-hidden="true">
-        <img src="https://img.shields.io/badge/pypi-v0.1.11-555" alt="pypi v0.1.11">
-        <img src="https://img.shields.io/github/stars/LLMSQL/llmsql-benchmark?style=social" alt="GitHub stars">
-        <img src="https://img.shields.io/badge/docs-online-blue" alt="docs online">
-        <img src="https://img.shields.io/badge/dataset-HuggingFace-orange" alt="dataset HuggingFace">
+          <a href="https://pypi.org/project/llmsql/" target="_blank" rel="noopener noreferrer">
+              <img src="https://img.shields.io/pypi/v/llmsql" alt="PyPI Version">
+          </a>
+
+          <a href="https://github.com/LLMSQL/llmsql-benchmark" target="_blank" rel="noopener noreferrer">
+              <img src="https://img.shields.io/github/stars/LLMSQL/llmsql-benchmark?style=social" alt="GitHub stars">
+          </a>
+
+          <a href="/docs">
+              <img src="https://img.shields.io/badge/docs-online-blue" alt="Documentation">
+          </a>
+
+          <a href="https://huggingface.co/datasets/llmsql-bench/llmsql-benchmark" target="_blank" rel="noopener noreferrer">
+              <img src="https://img.shields.io/badge/dataset-HuggingFace-orange" alt="HuggingFace Dataset">
+          </a>
       </div>
 
-      <p style="margin-top:10px;">LLMSQL is a Python package for SQL reasoning with LLMs and vLLM inference.</p>
+
+
+      <p style="margin-top:10px;">LLMSQL is a Python package for evaluation Hugging Face models on LLMSQL benchmark with transformers and vLLM.</p>
     </div>
 
     <h2 id="description">💡 Description</h2>
-    <p><strong>LLMSQL Benchmark</strong> is an <strong>open-source framework</strong> providing a <strong>modernized, cleaned, and extended version of the original WikiSQL dataset</strong>, specifically designed for evaluating and fine-tuning <strong>Large Language Models (LLMs)</strong> on <strong>Text-to-SQL</strong> tasks.</p>
+    <p><strong>LLMSQL Benchmark</strong> is an <strong>open-source framework</strong> providing a <strong>modernized, cleaned, and extended version of the original WikiSQL dataset</strong>, specifically designed for evaluating Hugging Face style <strong>Large Language Models (LLMs)</strong> on <strong>Text-to-SQL</strong> tasks.</p>
 
     <h2 id="improvements">Key improvements</h2>
     <ul>
-      <li><strong>Data Cleaning:</strong> Fixed errors (type mismatches, case sensitivity) causing 41% empty results.</li>
-      <li><strong>LLM-Ready Format:</strong> Replaced numeric placeholders with standard SQL, improving training consistency.</li>
+      <li><strong>Data Cleaning:</strong> Resolved duplicates, datatype mismatches, and inconsistent casing, reducing the widespread occurrence of empty query results.</li>
+      <li><strong>LLM-Ready Format:</strong> Reformatted SQL queries stored in WikiSQL’s custom encoding into standard SQL syntax.</li>
     </ul>
 
     <h2 id="documentation">📚 Documentation</h2>
@@ -68,9 +85,7 @@
   <p><strong>⚠️ WARNING — Reproducibility</strong></p>
 
   <p>
-    vLLM and HuggingFace Transformers may produce <strong>different results</strong> even with the same
-    settings (e.g., temperature=0). This is due to differences in implementation, computation precision,
-    and batching mechanisms.
+    vLLM and HuggingFace Transformers may generate <strong> different text </strong> outputs even when configured with the same model generation parameters (e.g., temperature=0), because of differences in implementation, floating-point computation, and how batches are processed.
   </p>
 
   <p><strong>Recommendation:</strong> when comparing model quality, use the <strong>same backend</strong>
@@ -114,7 +129,7 @@
   <h3>3️⃣ Evaluation API (Python)</h3>
 <pre><code>from llmsql import LLMSQLEvaluator
 
-evaluator = LLMSQLEvaluator(workdir_path="llmsql_workdir")
+evaluator = LLMSQLEvaluator()
 report = evaluator.evaluate(outputs_path="path_to_your_outputs.jsonl")
 print(report)
 </code></pre>
@@ -157,6 +172,32 @@ print(report)
   </main>
 
   <script src="{{ pathto('_static/scripts/front_page.js', 1) }}"></script>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  document.querySelectorAll("pre > code").forEach(block => {
+    block.classList.add("highlight", "language-python");
+  });
+});
+</script>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  document.querySelectorAll("pre").forEach(pre => {
+    const btn = document.createElement("button");
+    btn.className = "copy-btn";
+    btn.textContent = "Copy";
+    btn.onclick = () => {
+      const code = pre.querySelector("code");
+      navigator.clipboard.writeText(code.innerText);
+      btn.textContent = "Copied!";
+      setTimeout(() => btn.textContent = "Copy", 1200);
+    };
+    pre.style.position = "relative";
+    pre.appendChild(btn);
+  });
+});
+</script>
+
 
 </body>
 </html>

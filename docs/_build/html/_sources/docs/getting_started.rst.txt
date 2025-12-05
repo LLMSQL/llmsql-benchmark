@@ -1,0 +1,47 @@
+Getting Started
+===============
+
+Installation
+------------
+
+Install LLMSQL from source:
+
+.. code-block:: bash
+
+    git clone https://github.com/<your repo>/llmsql.git
+    cd llmsql
+    pip install -e .
+
+Requirements:
+
+* Python 3.10+
+* PyTorch or CUDA environment (for inference)
+* vLLM (optional)
+* transformers
+
+Quick Example
+-------------
+
+Run inference directly:
+
+.. code-block:: python
+
+    from llmsql.inference.inference_transformers import TransformersInference
+
+    model = TransformersInference(
+        model_name="Qwen2.5-7B-Instruct",
+        device="cuda"
+    )
+
+    query = "How many orders were placed in 2023?"
+    print(model.predict(query))
+
+Evaluate a model end-to-end:
+
+.. code-block:: python
+
+    from llmsql.evaluation.evaluator import Evaluator
+
+    evaluator = Evaluator(dataset="spider")
+    results = evaluator.evaluate(model)
+    print(results)

@@ -1,10 +1,14 @@
 """
 LLMSQL vLLM Inference Function
+==============================
 
 This module provides a single function `inference_vllm()` that performs
 text-to-SQL generation using large language models via the vLLM backend.
 
-Example:
+Example
+-------
+
+.. code-block:: python
 
     from llmsql.inference import inference_vllm
 
@@ -19,6 +23,13 @@ Example:
         temperature=0.7,
         tensor_parallel_size=1,
     )
+
+Notes
+~~~~~
+
+This function uses the vLLM backend. Outputs may differ from the Transformers
+backend due to differences in implementation, batching, and numerical precision.
+
 """
 
 from __future__ import annotations

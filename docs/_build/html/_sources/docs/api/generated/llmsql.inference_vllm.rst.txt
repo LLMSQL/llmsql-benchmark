@@ -1,0 +1,6 @@
+﻿llmsql.inference\_vllm
+======================
+
+.. currentmodule:: llmsql
+
+.. autofunction:: inference_vllm

@@ -10,9 +10,9 @@ from llmsql import LLMSQLEvaluator
 @pytest.mark.asyncio
 async def test_connect_and_close(dummy_db_file):
     evaluator = LLMSQLEvaluator()
-    evaluator.connect(dummy_db_file)
+    evaluator._connect(dummy_db_file)
     assert isinstance(evaluator.conn, sqlite3.Connection)
-    evaluator.close()
+    evaluator._close()
     assert evaluator.conn is None
 
 
@@ -72,7 +72,7 @@ async def test_connect_with_nonexistent_db():
     """Test that connecting to non-existent database raises FileNotFoundError."""
     evaluator = LLMSQLEvaluator()
     with pytest.raises(FileNotFoundError, match="Database not found"):
-        evaluator.connect("/nonexistent/path/to/database.db")
+        evaluator._connect("/nonexistent/path/to/database.db")
 
 
 @pytest.mark.asyncio

@@ -1,2 +1,4 @@
 sphinx>=7.0
 sphinx-rtd-theme
+sphinx-autobuild
+sphinx-copybutton

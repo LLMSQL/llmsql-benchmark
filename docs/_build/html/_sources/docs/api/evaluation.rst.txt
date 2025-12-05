@@ -1,0 +1,10 @@
+Evaluation Module
+=================
+
+.. automodule:: llmsql.evaluation.evaluator
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. toctree::
+   :maxdepth: 1

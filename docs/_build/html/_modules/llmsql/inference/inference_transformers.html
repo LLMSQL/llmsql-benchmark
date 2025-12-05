@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>llmsql.inference.inference_transformers &#8212; LLMSQL 0.1.13 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=5349f25f" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/basic.css?v=5c69cfe2" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/styles/front_page.css?v=9e26f69c" />
+    <script src="../../../_static/documentation_options.js?v=8d02545a"></script>
+    <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../../../_static/copybutton.js?v=ccdb6887"></script>
+    <script src="../../../_static/scripts/front_page.js?v=a59558f4"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+  </head><body>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">LLMSQL 0.1.13 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">llmsql.inference.inference_transformers</a></li>
+      </ul>
+    </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+
+  <h1>Source code for llmsql.inference.inference_transformers</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">LLMSQL Transformers Inference Function</span>
+<span class="sd">======================================</span>
+
+<span class="sd">This module provides a single function `inference_transformers()` that performs</span>
+<span class="sd">text-to-SQL generation using large language models via the Transformers backend.</span>
+
+<span class="sd">Example</span>
+<span class="sd">-------</span>
+
+<span class="sd">.. code-block:: python</span>
+
+<span class="sd">    from llmsql.inference import inference_transformers</span>
+
+<span class="sd">    results = inference_transformers(</span>
+<span class="sd">        model_or_model_name_or_path=&quot;Qwen/Qwen2.5-1.5B-Instruct&quot;,</span>
+<span class="sd">        output_file=&quot;outputs/preds_transformers.jsonl&quot;,</span>
+<span class="sd">        questions_path=&quot;data/questions.jsonl&quot;,</span>
+<span class="sd">        tables_path=&quot;data/tables.jsonl&quot;,</span>
+<span class="sd">        num_fewshots=5,</span>
+<span class="sd">        batch_size=8,</span>
+<span class="sd">        max_new_tokens=256,</span>
+<span class="sd">        temperature=0.7,</span>
+<span class="sd">        model_args={</span>
+<span class="sd">            &quot;torch_dtype&quot;: &quot;bfloat16&quot;,</span>
+<span class="sd">        },</span>
+<span class="sd">        generate_kwargs={</span>
+<span class="sd">            &quot;do_sample&quot;: False,</span>
+<span class="sd">        },</span>
+<span class="sd">    )</span>
+
+<span class="sd">Notes</span>
+<span class="sd">~~~~~</span>
+
+<span class="sd">This function uses the HuggingFace Transformers backend and may produce</span>
+<span class="sd">slightly different outputs than the vLLM backend even with the same inputs</span>
+<span class="sd">due to differences in implementation and numerical precision.</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">dotenv</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_dotenv</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">tqdm</span><span class="w"> </span><span class="kn">import</span> <span class="n">tqdm</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">transformers</span><span class="w"> </span><span class="kn">import</span> <span class="n">AutoModelForCausalLM</span><span class="p">,</span> <span class="n">AutoTokenizer</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">llmsql.config.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">DEFAULT_WORKDIR_PATH</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">llmsql.loggers.logging_config</span><span class="w"> </span><span class="kn">import</span> <span class="n">log</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">llmsql.utils.inference_utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">_maybe_download</span><span class="p">,</span> <span class="n">_setup_seed</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">llmsql.utils.utils</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">choose_prompt_builder</span><span class="p">,</span>
+    <span class="n">load_jsonl</span><span class="p">,</span>
+    <span class="n">overwrite_jsonl</span><span class="p">,</span>
+    <span class="n">save_jsonl_lines</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">load_dotenv</span><span class="p">()</span>
+
+<span class="n">Question</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
+<span class="n">Table</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
+
+
+<div class="viewcode-block" id="inference_transformers">
+<a class="viewcode-back" href="../../../docs/inference.html#llmsql.inference.inference_transformers.inference_transformers">[docs]</a>
+<span class="nd">@torch</span><span class="o">.</span><span class="n">inference_mode</span><span class="p">()</span>  <span class="c1"># type: ignore</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">inference_transformers</span><span class="p">(</span>
+    <span class="n">model_or_model_name_or_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">AutoModelForCausalLM</span><span class="p">,</span>
+    <span class="n">tokenizer_or_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Any</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="c1"># --- Model Loading Parameters ---</span>
+    <span class="n">trust_remote_code</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">dtype</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">dtype</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">float16</span><span class="p">,</span>
+    <span class="n">device_map</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="s2">&quot;auto&quot;</span><span class="p">,</span>
+    <span class="n">hf_token</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">model_kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="c1"># --- Tokenizer Loading Parameters ---</span>
+    <span class="n">tokenizer_kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="c1"># --- Prompt &amp; Chat Parameters ---</span>
+    <span class="n">chat_template</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="c1"># --- Generation Parameters ---</span>
+    <span class="n">max_new_tokens</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">256</span><span class="p">,</span>
+    <span class="n">temperature</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
+    <span class="n">do_sample</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">top_p</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
+    <span class="n">top_k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">50</span><span class="p">,</span>
+    <span class="n">generation_kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="c1"># --- Benchmark Parameters ---</span>
+    <span class="n">output_file</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;llm_sql_predictions.jsonl&quot;</span><span class="p">,</span>
+    <span class="n">questions_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">tables_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">workdir_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">DEFAULT_WORKDIR_PATH</span><span class="p">,</span>
+    <span class="n">num_fewshots</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span><span class="p">,</span>
+    <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">8</span><span class="p">,</span>
+    <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">42</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Inference a causal model (Transformers) on the LLMSQL benchmark.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        model_or_model_name_or_path: Model object or HF model name/path.</span>
+<span class="sd">        tokenizer_or_name: Tokenizer object or HF tokenizer name/path.</span>
+
+<span class="sd">        # Model Loading:</span>
+<span class="sd">        trust_remote_code: Whether to trust remote code (default: True).</span>
+<span class="sd">        dtype: Torch dtype for model (default: float16).</span>
+<span class="sd">        device_map: Device placement strategy (default: &quot;auto&quot;).</span>
+<span class="sd">        hf_token: Hugging Face authentication token.</span>
+<span class="sd">        model_kwargs: Additional arguments for AutoModelForCausalLM.from_pretrained().</span>
+<span class="sd">                     Note: &#39;dtype&#39;, &#39;device_map&#39;, &#39;trust_remote_code&#39;, &#39;token&#39;</span>
+<span class="sd">                     are handled separately and will override values here.</span>
+
+<span class="sd">        # Tokenizer Loading:</span>
+<span class="sd">        tokenizer_kwargs: Additional arguments for AutoTokenizer.from_pretrained(). &#39;padding_side&#39; defaults to &quot;left&quot;.</span>
+<span class="sd">                    Note: &#39;trust_remote_code&#39;, &#39;token&#39; are handled separately and will override values here.</span>
+
+
+<span class="sd">        # Prompt &amp; Chat:</span>
+<span class="sd">        chat_template: Optional chat template to apply before tokenization.</span>
+
+<span class="sd">        # Generation:</span>
+<span class="sd">        max_new_tokens: Maximum tokens to generate per sequence.</span>
+<span class="sd">        temperature: Sampling temperature (0.0 = greedy).</span>
+<span class="sd">        do_sample: Whether to use sampling vs greedy decoding.</span>
+<span class="sd">        top_p: Nucleus sampling parameter.</span>
+<span class="sd">        top_k: Top-k sampling parameter.</span>
+<span class="sd">        generation_kwargs: Additional arguments for model.generate().</span>
+<span class="sd">                          Note: &#39;max_new_tokens&#39;, &#39;temperature&#39;, &#39;do_sample&#39;,</span>
+<span class="sd">                          &#39;top_p&#39;, &#39;top_k&#39; are handled separately.</span>
+
+<span class="sd">        # Benchmark:</span>
+<span class="sd">        output_file: Output JSONL file path for completions.</span>
+<span class="sd">        questions_path: Path to benchmark questions JSONL.</span>
+<span class="sd">        tables_path: Path to benchmark tables JSONL.</span>
+<span class="sd">        workdir_path: Working directory path.</span>
+<span class="sd">        num_fewshots: Number of few-shot examples (0, 1, or 5).</span>
+<span class="sd">        batch_size: Batch size for inference.</span>
+<span class="sd">        seed: Random seed for reproducibility.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        List of generated SQL results with metadata.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># --- Setup ---</span>
+    <span class="n">_setup_seed</span><span class="p">(</span><span class="n">seed</span><span class="o">=</span><span class="n">seed</span><span class="p">)</span>
+
+    <span class="n">workdir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">workdir_path</span><span class="p">)</span>
+    <span class="n">workdir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="n">model_kwargs</span> <span class="o">=</span> <span class="n">model_kwargs</span> <span class="ow">or</span> <span class="p">{}</span>
+    <span class="n">tokenizer_kwargs</span> <span class="o">=</span> <span class="n">tokenizer_kwargs</span> <span class="ow">or</span> <span class="p">{}</span>
+    <span class="n">generation_kwargs</span> <span class="o">=</span> <span class="n">generation_kwargs</span> <span class="ow">or</span> <span class="p">{}</span>
+
+    <span class="c1"># --- Load Model ---</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">model_or_model_name_or_path</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="n">load_args</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;torch_dtype&quot;</span><span class="p">:</span> <span class="n">dtype</span><span class="p">,</span>
+            <span class="s2">&quot;device_map&quot;</span><span class="p">:</span> <span class="n">device_map</span><span class="p">,</span>
+            <span class="s2">&quot;trust_remote_code&quot;</span><span class="p">:</span> <span class="n">trust_remote_code</span><span class="p">,</span>
+            <span class="s2">&quot;token&quot;</span><span class="p">:</span> <span class="n">hf_token</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">model_kwargs</span><span class="p">,</span>
+        <span class="p">}</span>
+
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Loading model from: </span><span class="si">{</span><span class="n">model_or_model_name_or_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">AutoModelForCausalLM</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span>
+            <span class="n">model_or_model_name_or_path</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">load_args</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">model_or_model_name_or_path</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Using provided model object: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">model</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="c1"># --- Load Tokenizer ---</span>
+    <span class="k">if</span> <span class="n">tokenizer_or_name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">model_or_model_name_or_path</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="n">tok_name</span> <span class="o">=</span> <span class="n">model_or_model_name_or_path</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;tokenizer_or_name must be provided when passing a model object directly.&quot;</span>
+            <span class="p">)</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">tokenizer_or_name</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="n">tok_name</span> <span class="o">=</span> <span class="n">tokenizer_or_name</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># Already a tokenizer object</span>
+        <span class="n">tokenizer</span> <span class="o">=</span> <span class="n">tokenizer_or_name</span>
+        <span class="n">tok_name</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">if</span> <span class="n">tok_name</span><span class="p">:</span>
+        <span class="n">load_tok_args</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;trust_remote_code&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+            <span class="s2">&quot;token&quot;</span><span class="p">:</span> <span class="n">hf_token</span><span class="p">,</span>
+            <span class="s2">&quot;padding_side&quot;</span><span class="p">:</span> <span class="n">tokenizer_kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;padding_side&quot;</span><span class="p">,</span> <span class="s2">&quot;left&quot;</span><span class="p">),</span>
+            <span class="o">**</span><span class="n">tokenizer_kwargs</span><span class="p">,</span>
+        <span class="p">}</span>
+        <span class="n">tokenizer</span> <span class="o">=</span> <span class="n">AutoTokenizer</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="n">tok_name</span><span class="p">,</span> <span class="o">**</span><span class="n">load_tok_args</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">tokenizer</span><span class="o">.</span><span class="n">pad_token</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">tokenizer</span><span class="o">.</span><span class="n">pad_token</span> <span class="o">=</span> <span class="n">tokenizer</span><span class="o">.</span><span class="n">eos_token</span>
+
+    <span class="n">gen_params</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;max_new_tokens&quot;</span><span class="p">:</span> <span class="n">max_new_tokens</span><span class="p">,</span>
+        <span class="s2">&quot;temperature&quot;</span><span class="p">:</span> <span class="n">temperature</span><span class="p">,</span>
+        <span class="s2">&quot;do_sample&quot;</span><span class="p">:</span> <span class="n">do_sample</span><span class="p">,</span>
+        <span class="s2">&quot;top_p&quot;</span><span class="p">:</span> <span class="n">top_p</span><span class="p">,</span>
+        <span class="s2">&quot;top_k&quot;</span><span class="p">:</span> <span class="n">top_k</span><span class="p">,</span>
+        <span class="s2">&quot;pad_token_id&quot;</span><span class="p">:</span> <span class="n">tokenizer</span><span class="o">.</span><span class="n">pad_token_id</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">generation_kwargs</span><span class="p">,</span>
+    <span class="p">}</span>
+
+    <span class="n">model</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
+
+    <span class="c1"># --- Load necessary files ---</span>
+    <span class="n">questions_path</span> <span class="o">=</span> <span class="n">_maybe_download</span><span class="p">(</span><span class="s2">&quot;questions.jsonl&quot;</span><span class="p">,</span> <span class="n">questions_path</span><span class="p">)</span>
+    <span class="n">tables_path</span> <span class="o">=</span> <span class="n">_maybe_download</span><span class="p">(</span><span class="s2">&quot;tables.jsonl&quot;</span><span class="p">,</span> <span class="n">tables_path</span><span class="p">)</span>
+
+    <span class="n">questions</span> <span class="o">=</span> <span class="n">load_jsonl</span><span class="p">(</span><span class="n">questions_path</span><span class="p">)</span>
+    <span class="n">tables_list</span> <span class="o">=</span> <span class="n">load_jsonl</span><span class="p">(</span><span class="n">tables_path</span><span class="p">)</span>
+    <span class="n">tables</span> <span class="o">=</span> <span class="p">{</span><span class="n">t</span><span class="p">[</span><span class="s2">&quot;table_id&quot;</span><span class="p">]:</span> <span class="n">t</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">tables_list</span><span class="p">}</span>
+
+    <span class="c1"># --- Chat template setup ---</span>
+    <span class="n">use_chat_template</span> <span class="o">=</span> <span class="n">chat_template</span> <span class="ow">or</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">tokenizer</span><span class="p">,</span> <span class="s2">&quot;chat_template&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">use_chat_template</span><span class="p">:</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Using chat template for prompt formatting.&quot;</span><span class="p">)</span>
+
+    <span class="c1"># --- Output setup ---</span>
+    <span class="n">overwrite_jsonl</span><span class="p">(</span><span class="n">output_file</span><span class="p">)</span>
+    <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Writing results to </span><span class="si">{</span><span class="n">output_file</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="n">prompt_builder</span> <span class="o">=</span> <span class="n">choose_prompt_builder</span><span class="p">(</span><span class="n">num_fewshots</span><span class="p">)</span>
+    <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Using </span><span class="si">{</span><span class="n">num_fewshots</span><span class="si">}</span><span class="s2">-shot prompt builder: </span><span class="si">{</span><span class="n">prompt_builder</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="n">results</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">total</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">questions</span><span class="p">)</span>
+
+    <span class="c1"># --- Inference loop ---</span>
+    <span class="k">for</span> <span class="n">start</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">total</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">),</span> <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;Generating&quot;</span><span class="p">):</span>
+        <span class="n">batch</span> <span class="o">=</span> <span class="n">questions</span><span class="p">[</span><span class="n">start</span> <span class="p">:</span> <span class="n">start</span> <span class="o">+</span> <span class="n">batch_size</span><span class="p">]</span>
+        <span class="n">prompts</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">for</span> <span class="n">q</span> <span class="ow">in</span> <span class="n">batch</span><span class="p">:</span>
+            <span class="n">tbl</span> <span class="o">=</span> <span class="n">tables</span><span class="p">[</span><span class="n">q</span><span class="p">[</span><span class="s2">&quot;table_id&quot;</span><span class="p">]]</span>
+            <span class="n">example_row</span> <span class="o">=</span> <span class="n">tbl</span><span class="p">[</span><span class="s2">&quot;rows&quot;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">tbl</span><span class="p">[</span><span class="s2">&quot;rows&quot;</span><span class="p">]</span> <span class="k">else</span> <span class="p">[]</span>
+            <span class="n">text</span> <span class="o">=</span> <span class="n">prompt_builder</span><span class="p">(</span>
+                <span class="n">q</span><span class="p">[</span><span class="s2">&quot;question&quot;</span><span class="p">],</span> <span class="n">tbl</span><span class="p">[</span><span class="s2">&quot;header&quot;</span><span class="p">],</span> <span class="n">tbl</span><span class="p">[</span><span class="s2">&quot;types&quot;</span><span class="p">],</span> <span class="n">example_row</span>
+            <span class="p">)</span>
+
+            <span class="c1"># Apply chat template if available</span>
+            <span class="k">if</span> <span class="n">use_chat_template</span><span class="p">:</span>
+                <span class="n">messages</span> <span class="o">=</span> <span class="p">[{</span><span class="s2">&quot;role&quot;</span><span class="p">:</span> <span class="s2">&quot;user&quot;</span><span class="p">,</span> <span class="s2">&quot;content&quot;</span><span class="p">:</span> <span class="n">text</span><span class="p">}]</span>
+                <span class="n">text</span> <span class="o">=</span> <span class="n">tokenizer</span><span class="o">.</span><span class="n">apply_chat_template</span><span class="p">(</span>
+                    <span class="n">messages</span><span class="p">,</span>
+                    <span class="n">tokenize</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                    <span class="n">add_generation_prompt</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                    <span class="n">chat_template</span><span class="o">=</span><span class="n">use_chat_template</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="n">prompts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+
+        <span class="n">inputs</span> <span class="o">=</span> <span class="n">tokenizer</span><span class="p">(</span>
+            <span class="n">prompts</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">truncation</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">return_tensors</span><span class="o">=</span><span class="s2">&quot;pt&quot;</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+
+        <span class="n">outputs</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span>
+            <span class="o">**</span><span class="n">inputs</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">gen_params</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">input_lengths</span> <span class="o">=</span> <span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">ids</span><span class="p">)</span> <span class="k">for</span> <span class="n">ids</span> <span class="ow">in</span> <span class="n">inputs</span><span class="p">[</span><span class="s2">&quot;input_ids&quot;</span><span class="p">]]</span>
+
+        <span class="c1"># Slice off the prompt part</span>
+        <span class="n">generated_texts</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">output</span><span class="p">,</span> <span class="n">input_len</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">outputs</span><span class="p">,</span> <span class="n">input_lengths</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+            <span class="n">generated_part</span> <span class="o">=</span> <span class="n">output</span><span class="p">[</span><span class="n">input_len</span><span class="p">:]</span>  <span class="c1"># tokens generated after the prompt</span>
+            <span class="n">text</span> <span class="o">=</span> <span class="n">tokenizer</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">generated_part</span><span class="p">,</span> <span class="n">skip_special_tokens</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+            <span class="n">generated_texts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+
+        <span class="n">batch_results</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">q</span><span class="p">,</span> <span class="n">text</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">batch</span><span class="p">,</span> <span class="n">generated_texts</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+            <span class="n">batch_results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="p">{</span>
+                    <span class="s2">&quot;question_id&quot;</span><span class="p">:</span> <span class="n">q</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;question_id&quot;</span><span class="p">,</span> <span class="n">q</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;id&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)),</span>
+                    <span class="s2">&quot;completion&quot;</span><span class="p">:</span> <span class="n">text</span><span class="o">.</span><span class="n">strip</span><span class="p">(),</span>
+                <span class="p">}</span>
+            <span class="p">)</span>
+
+        <span class="n">save_jsonl_lines</span><span class="p">(</span><span class="n">output_file</span><span class="p">,</span> <span class="n">batch_results</span><span class="p">)</span>
+        <span class="n">results</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">batch_results</span><span class="p">)</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Saved batch </span><span class="si">{</span><span class="n">start</span><span class="w"> </span><span class="o">//</span><span class="w"> </span><span class="n">batch_size</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">results</span><span class="p">)</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">total</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Generation complete — total: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">results</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">results</span></div>
+
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">LLMSQL 0.1.13 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">llmsql.inference.inference_transformers</a></li>
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+    </div>
+  </body>
+</html>

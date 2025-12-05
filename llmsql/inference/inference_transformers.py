@@ -1,23 +1,41 @@
 """
 LLMSQL Transformers Inference Function
+======================================
 
 This module provides a single function `inference_transformers()` that performs
-text-to-SQL generation using large language models via the transformers backend.
+text-to-SQL generation using large language models via the Transformers backend.
 
-Example:
+Example
+-------
 
-    from llmsql import inference_transformers
+.. code-block:: python
+
+    from llmsql.inference import inference_transformers
 
     results = inference_transformers(
-        model_or_model_name_or_path="EleutherAI/pythia-14m",
-        output_file="test_output.jsonl",
-        batch_size=5000,
-        do_sample=False,
-        # Advanced model loading options
-        model_kwargs={"low_cpu_mem_usage": True, "attn_implementation": "flash_attention_2"},
-        # Advanced generation options
-        generation_kwargs={"repetition_penalty": 1.1, "length_penalty": 1.0},
+        model_or_model_name_or_path="Qwen/Qwen2.5-1.5B-Instruct",
+        output_file="outputs/preds_transformers.jsonl",
+        questions_path="data/questions.jsonl",
+        tables_path="data/tables.jsonl",
+        num_fewshots=5,
+        batch_size=8,
+        max_new_tokens=256,
+        temperature=0.7,
+        model_args={
+            "torch_dtype": "bfloat16",
+        },
+        generate_kwargs={
+            "do_sample": False,
+        },
     )
+
+Notes
+~~~~~
+
+This function uses the HuggingFace Transformers backend and may produce
+slightly different outputs than the vLLM backend even with the same inputs
+due to differences in implementation and numerical precision.
+
 """
 
 from pathlib import Path

@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Usage Overview &#8212; LLMSQL 0.1.13 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=5349f25f" />
+    <link rel="stylesheet" type="text/css" href="../_static/basic.css?v=5c69cfe2" />
+    <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/front_page.css?v=9e26f69c" />
+    <script src="../_static/documentation_options.js?v=8d02545a"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../_static/copybutton.js?v=ccdb6887"></script>
+    <script src="../_static/scripts/front_page.js?v=a59558f4"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Inference API Reference" href="inference.html" />
+    <link rel="prev" title="LLMSQL package Documentation" href="index.html" />
+  </head><body>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="inference.html" title="Inference API Reference"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="LLMSQL package Documentation"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">LLMSQL 0.1.13 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">LLMSQL package Documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Usage Overview</a></li>
+      </ul>
+    </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+
+  <section id="usage-overview">
+<h1>Usage Overview<a class="headerlink" href="#usage-overview" title="Link to this heading">¶</a></h1>
+<p>LLMSQL package provides two primary components:</p>
+<ol class="arabic simple">
+<li><p><strong>Inference</strong> – running LLM models to generate SQL queries.</p></li>
+<li><p><strong>Evaluation</strong> – computing accuracy and task-level performance.</p></li>
+</ol>
+<section id="typical-workflow">
+<h2>Typical workflow<a class="headerlink" href="#typical-workflow" title="Link to this heading">¶</a></h2>
+<ol class="arabic simple">
+<li><p>Run inference on dataset examples (Transformers or vLLM)</p></li>
+<li><p>Pass predictions to <cite>Evaluator</cite></p></li>
+<li><p>Inspect evaluation metrics</p></li>
+</ol>
+</section>
+<section id="basic-example">
+<h2>Basic Example<a class="headerlink" href="#basic-example" title="Link to this heading">¶</a></h2>
+<p>Using transformers backend.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">llmsql</span><span class="w"> </span><span class="kn">import</span> <span class="n">inference_transformers</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">llmsql</span><span class="w"> </span><span class="kn">import</span> <span class="n">LLMSQLEvaluator</span>
+
+<span class="c1"># Run inference (will take some time)</span>
+<span class="n">results</span> <span class="o">=</span> <span class="n">inference_transformers</span><span class="p">(</span>
+    <span class="n">model_or_model_name_or_path</span><span class="o">=</span><span class="s2">&quot;Qwen/Qwen2.5-1.5B-Instruct&quot;</span><span class="p">,</span>
+    <span class="n">output_file</span><span class="o">=</span><span class="s2">&quot;outputs/preds_transformers.jsonl&quot;</span><span class="p">,</span>
+    <span class="n">questions_path</span><span class="o">=</span><span class="s2">&quot;data/questions.jsonl&quot;</span><span class="p">,</span>
+    <span class="n">tables_path</span><span class="o">=</span><span class="s2">&quot;data/tables.jsonl&quot;</span><span class="p">,</span>
+    <span class="n">num_fewshots</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
+    <span class="n">batch_size</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
+    <span class="n">max_new_tokens</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span>
+    <span class="n">temperature</span><span class="o">=</span><span class="mf">0.7</span><span class="p">,</span>
+    <span class="n">model_args</span><span class="o">=</span><span class="p">{</span>
+        <span class="s2">&quot;attn_implementation&quot;</span><span class="p">:</span> <span class="s2">&quot;flash_attention_2&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;torch_dtype&quot;</span><span class="p">:</span> <span class="s2">&quot;bfloat16&quot;</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="n">generate_kwargs</span><span class="o">=</span><span class="p">{</span>
+        <span class="s2">&quot;do_sample&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">},</span>
+<span class="p">)</span>
+
+<span class="c1"># Evaluate the results</span>
+<span class="n">evaluator</span> <span class="o">=</span> <span class="n">LLMSQLEvaluator</span><span class="p">()</span>
+<span class="n">report</span> <span class="o">=</span> <span class="n">evaluator</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">outputs_path</span><span class="o">=</span><span class="s2">&quot;outputs/preds_transformers.jsonl&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">report</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Using vllm backend.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">llmsql</span><span class="w"> </span><span class="kn">import</span> <span class="n">inference_vllm</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">llmsql</span><span class="w"> </span><span class="kn">import</span> <span class="n">LLMSQLEvaluator</span>
+
+<span class="c1"># Run inference (will take some time)</span>
+<span class="n">results</span> <span class="o">=</span> <span class="n">inference_vllm</span><span class="p">(</span>
+    <span class="n">model_name</span><span class="o">=</span><span class="s2">&quot;Qwen/Qwen2.5-1.5B-Instruct&quot;</span><span class="p">,</span>
+    <span class="n">output_file</span><span class="o">=</span><span class="s2">&quot;outputs/preds_vllm.jsonl&quot;</span><span class="p">,</span>
+    <span class="n">questions_path</span><span class="o">=</span><span class="s2">&quot;data/questions.jsonl&quot;</span><span class="p">,</span>
+    <span class="n">tables_path</span><span class="o">=</span><span class="s2">&quot;data/tables.jsonl&quot;</span><span class="p">,</span>
+    <span class="n">num_fewshots</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
+    <span class="n">batch_size</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
+    <span class="n">max_new_tokens</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span>
+    <span class="n">do_sample</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">llm_kwargs</span><span class="o">=</span><span class="p">{</span>
+        <span class="s2">&quot;tensor_parallel_size&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="s2">&quot;gpu_memory_utilization&quot;</span><span class="p">:</span> <span class="mf">0.9</span><span class="p">,</span>
+        <span class="s2">&quot;max_model_len&quot;</span><span class="p">:</span> <span class="mi">4096</span><span class="p">,</span>
+    <span class="p">},</span>
+<span class="p">)</span>
+
+<span class="c1"># Evaluate the results</span>
+<span class="n">evaluator</span> <span class="o">=</span> <span class="n">LLMSQLEvaluator</span><span class="p">()</span>
+<span class="n">report</span> <span class="o">=</span> <span class="n">evaluator</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">outputs_path</span><span class="o">=</span><span class="s2">&quot;outputs/preds_transformers.jsonl&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">report</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>—</p>
+<div style="text-align:center; margin-top:2rem; color:#666;">
+  💬 Made with ❤️ by the LLMSQL Team
+</div></section>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+  <div>
+    <h3><a href="../index.html">Table of Contents</a></h3>
+    <ul>
+<li><a class="reference internal" href="#">Usage Overview</a><ul>
+<li><a class="reference internal" href="#typical-workflow">Typical workflow</a></li>
+<li><a class="reference internal" href="#basic-example">Basic Example</a></li>
+</ul>
+</li>
+</ul>
+
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="index.html"
+                          title="previous chapter">LLMSQL package Documentation</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="inference.html"
+                          title="next chapter">Inference API Reference</a></p>
+  </div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/docs/usage.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="inference.html" title="Inference API Reference"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="LLMSQL package Documentation"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">LLMSQL 0.1.13 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >LLMSQL package Documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Usage Overview</a></li>
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+    </div>
+  </body>
+</html>
