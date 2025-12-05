@@ -59,6 +59,8 @@ dev = [
     "sphinx-autodoc-typehints>=3.0.1",
     "furo>=2025.9.25",
     "sphinx-autoapi>=3.6.0",
+    "sphinx-autobuild>=2024.10.3",
+    "sphinx-copybutton>=0.5.2",
 ]
 vllm = [
     "vllm>=0.4.2",

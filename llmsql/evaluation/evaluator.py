@@ -69,13 +69,13 @@ class LLMSQLEvaluator:
         log.info(f"File saved at: {file_path}")
         return file_path
 
-    def connect(self, db_path: str) -> None:
+    def _connect(self, db_path: str) -> None:
         """Establish SQLite connection."""
         if not os.path.exists(db_path):
             raise FileNotFoundError(f"Database not found at {db_path}")
         self.conn = sqlite3.connect(db_path)
 
-    def close(self) -> None:
+    def _close(self) -> None:
         """Close SQLite connection if open."""
         if self.conn:
             self.conn.close()
@@ -104,13 +104,11 @@ class LLMSQLEvaluator:
             Dict: Metrics summary.
 
         Example:
-            ```
             from llmsql import LLMSQLEvaluator
 
             evaluator = LLMSQLEvaluator(workdir_path="llmsql_workdir")
             report = evaluator.evaluate("examples/test_output.jsonl")
             print(report)
-            ```
         """
         if (
             questions_path is None
@@ -129,7 +127,7 @@ class LLMSQLEvaluator:
             db_path = f"{self.workdir_path}/sqlite_tables.db"
 
         if self.conn is None:
-            self.connect(db_path=db_path)
+            self._connect(db_path=db_path)
 
         with open(questions_path, encoding="utf-8") as f:
             questions = {q["question_id"]: q for q in map(json.loads, f)}
@@ -184,5 +182,8 @@ class LLMSQLEvaluator:
             with open(save_report, "w", encoding="utf-8") as f:
                 json.dump(report, f, indent=2, ensure_ascii=False)
             log.info(f"Saved report to {save_report}")
+
+        if self.conn is not None:
+            self._close()
 
         return report

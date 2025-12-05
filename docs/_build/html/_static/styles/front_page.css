@@ -158,11 +158,11 @@ pre {
 }
 
 code {
-  background-color: #f4f4f4;
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-size: 0.95em;
-  color: #c94a4a;
+    background-color: #f4f4f4 !important;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.95em;
+    color: #c94a4a !important;
 }
 
 .note-box {
@@ -173,12 +173,51 @@ code {
   border-radius: 6px;
 }
 
+.copy-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+  background: #444;
+  color: #fff;
+  font-size: 12px;
+}
+.copy-btn:hover {
+  background: #666;
+}
+
+
+/* Inline code */
+code:not(pre > code) {
+  background: #f4f4f4 !important;
+  color: #c94a4a !important;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+
 .custom-highlight-box {
   border-left: 5px solid #ffc107;
   background-color: #fff8e1;
   padding: 12px;
   border-radius: 6px;
   margin-bottom: 14px;
+}
+
+div.highlight pre {
+    background: #2d2d2d !important;
+    color: #eee !important;
+    border-radius: 6px;
+    padding: 12px;
+    overflow-x: auto;
+}
+
+/* Ensure syntax colors from Pygments show correctly */
+div.highlight span {
+    color: unset !important;
 }
 
 .center-content.small {
@@ -204,10 +243,6 @@ pre, code {
     border-radius: 6px;
 }
 
-pre {
-    padding: 12px !important;
-    overflow-x: auto;
-}
 
 pre span {
     background: none !important;

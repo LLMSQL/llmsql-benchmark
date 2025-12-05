@@ -42,7 +42,6 @@ results = inference_transformers(
     max_new_tokens=256,
     temperature=0.7,
     model_args={
-        "attn_implementation": "flash_attention_2",
         "torch_dtype": "bfloat16",
     },
     generate_kwargs={
