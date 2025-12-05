@@ -25,14 +25,24 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Install dependencies
-        run: |
-          pip install -r docs/requirements.txt
+      - name: Install PDM
+        run: pip install pdm
+
+      - name: Cache PDM packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pdm
+          key: ${{ runner.os }}-pdm-${{ hashFiles('pdm.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-pdm-
+
+      - name: Install dependencies (with dev)
+        run: pdm install --with dev,vllm
 
       - name: Build Sphinx docs
         run: |
           cd docs
-          python -m sphinx -b html . _build/html
+          PYTHONPATH=.. pdm run python -m sphinx -b html . _build/html
 
       - name: Upload artifact (HTML for preview)
         uses: actions/upload-artifact@v4

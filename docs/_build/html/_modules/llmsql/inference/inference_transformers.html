@@ -4,12 +4,12 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>llmsql.inference.inference_transformers &#8212; LLMSQL 0.1.11 documentation</title>
+    <title>llmsql.inference.inference_transformers &#8212; LLMSQL 0.1.13 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=5349f25f" />
     <link rel="stylesheet" type="text/css" href="../../../_static/basic.css?v=5c69cfe2" />
     <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/front_page.css?v=9e26f69c" />
-    <script src="../../../_static/documentation_options.js?v=1e825a29"></script>
+    <script src="../../../_static/documentation_options.js?v=8d02545a"></script>
     <script src="../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -27,7 +27,7 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">LLMSQL 0.1.11 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">LLMSQL 0.1.13 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">llmsql.inference.inference_transformers</a></li>
       </ul>
@@ -104,31 +104,37 @@
 
 
 <div class="viewcode-block" id="inference_transformers">
-<a class="viewcode-back" href="../../../docs/api/inference.html#llmsql.inference.inference_transformers.inference_transformers">[docs]</a>
+<a class="viewcode-back" href="../../../docs/inference.html#llmsql.inference.inference_transformers.inference_transformers">[docs]</a>
 <span class="nd">@torch</span><span class="o">.</span><span class="n">inference_mode</span><span class="p">()</span>  <span class="c1"># type: ignore</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">inference_transformers</span><span class="p">(</span>
     <span class="n">model_or_model_name_or_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">AutoModelForCausalLM</span><span class="p">,</span>
     <span class="n">tokenizer_or_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Any</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="o">*</span><span class="p">,</span>
-    <span class="n">chat_template</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">model_args</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">hf_token</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">output_file</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;outputs/predictions.jsonl&quot;</span><span class="p">,</span>
-    <span class="n">questions_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">tables_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">workdir_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">DEFAULT_WORKDIR_PATH</span><span class="p">,</span>
-    <span class="n">num_fewshots</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span><span class="p">,</span>
+    <span class="c1"># --- Model Loading Parameters ---</span>
     <span class="n">trust_remote_code</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
-    <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">8</span><span class="p">,</span>
+    <span class="n">dtype</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">dtype</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">float16</span><span class="p">,</span>
+    <span class="n">device_map</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="s2">&quot;auto&quot;</span><span class="p">,</span>
+    <span class="n">hf_token</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">model_kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="c1"># --- Tokenizer Loading Parameters ---</span>
+    <span class="n">tokenizer_kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="c1"># --- Prompt &amp; Chat Parameters ---</span>
+    <span class="n">chat_template</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="c1"># --- Generation Parameters ---</span>
     <span class="n">max_new_tokens</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">256</span><span class="p">,</span>
     <span class="n">temperature</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
     <span class="n">do_sample</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="n">top_p</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
     <span class="n">top_k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">50</span><span class="p">,</span>
+    <span class="n">generation_kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="c1"># --- Benchmark Parameters ---</span>
+    <span class="n">output_file</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;llm_sql_predictions.jsonl&quot;</span><span class="p">,</span>
+    <span class="n">questions_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">tables_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">workdir_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">DEFAULT_WORKDIR_PATH</span><span class="p">,</span>
+    <span class="n">num_fewshots</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span><span class="p">,</span>
+    <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">8</span><span class="p">,</span>
     <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">42</span><span class="p">,</span>
-    <span class="n">dtype</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">dtype</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">float16</span><span class="p">,</span>
-    <span class="n">device_map</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="s2">&quot;auto&quot;</span><span class="p">,</span>
-    <span class="n">generate_kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Inference a causal model (Transformers) on the LLMSQL benchmark.</span>
@@ -136,27 +142,45 @@
 <span class="sd">    Args:</span>
 <span class="sd">        model_or_model_name_or_path: Model object or HF model name/path.</span>
 <span class="sd">        tokenizer_or_name: Tokenizer object or HF tokenizer name/path.</span>
+
+<span class="sd">        # Model Loading:</span>
+<span class="sd">        trust_remote_code: Whether to trust remote code (default: True).</span>
+<span class="sd">        dtype: Torch dtype for model (default: float16).</span>
+<span class="sd">        device_map: Device placement strategy (default: &quot;auto&quot;).</span>
+<span class="sd">        hf_token: Hugging Face authentication token.</span>
+<span class="sd">        model_kwargs: Additional arguments for AutoModelForCausalLM.from_pretrained().</span>
+<span class="sd">                     Note: &#39;dtype&#39;, &#39;device_map&#39;, &#39;trust_remote_code&#39;, &#39;token&#39;</span>
+<span class="sd">                     are handled separately and will override values here.</span>
+
+<span class="sd">        # Tokenizer Loading:</span>
+<span class="sd">        tokenizer_kwargs: Additional arguments for AutoTokenizer.from_pretrained(). &#39;padding_side&#39; defaults to &quot;left&quot;.</span>
+<span class="sd">                    Note: &#39;trust_remote_code&#39;, &#39;token&#39; are handled separately and will override values here.</span>
+
+
+<span class="sd">        # Prompt &amp; Chat:</span>
 <span class="sd">        chat_template: Optional chat template to apply before tokenization.</span>
-<span class="sd">        model_args: Optional kwargs passed to `from_pretrained` if needed.</span>
-<span class="sd">        hf_token: Hugging Face token (optional).</span>
-<span class="sd">        output_file: Output JSONL file for completions.</span>
-<span class="sd">        questions_path: Path to benchmark questions JSONL.</span>
-<span class="sd">        tables_path: Path to benchmark tables JSONL.</span>
-<span class="sd">        workdir_path: Work directory (default: &quot;llmsql_workdir&quot;).</span>
-<span class="sd">        num_fewshots: 0, 1, or 5 — prompt builder choice.</span>
-<span class="sd">        batch_size: Batch size for inference.</span>
-<span class="sd">        max_new_tokens: Max tokens to generate.</span>
-<span class="sd">        temperature: Sampling temperature.</span>
-<span class="sd">        do_sample: Whether to sample or use greedy decoding.</span>
+
+<span class="sd">        # Generation:</span>
+<span class="sd">        max_new_tokens: Maximum tokens to generate per sequence.</span>
+<span class="sd">        temperature: Sampling temperature (0.0 = greedy).</span>
+<span class="sd">        do_sample: Whether to use sampling vs greedy decoding.</span>
 <span class="sd">        top_p: Nucleus sampling parameter.</span>
 <span class="sd">        top_k: Top-k sampling parameter.</span>
-<span class="sd">        seed: Random seed.</span>
-<span class="sd">        dtype: Torch dtype (default: float16).</span>
-<span class="sd">        device_map: Device map (&quot;auto&quot; for multi-GPU).</span>
-<span class="sd">        **generate_kwargs: Extra arguments for `model.generate`.</span>
+<span class="sd">        generation_kwargs: Additional arguments for model.generate().</span>
+<span class="sd">                          Note: &#39;max_new_tokens&#39;, &#39;temperature&#39;, &#39;do_sample&#39;,</span>
+<span class="sd">                          &#39;top_p&#39;, &#39;top_k&#39; are handled separately.</span>
+
+<span class="sd">        # Benchmark:</span>
+<span class="sd">        output_file: Output JSONL file path for completions.</span>
+<span class="sd">        questions_path: Path to benchmark questions JSONL.</span>
+<span class="sd">        tables_path: Path to benchmark tables JSONL.</span>
+<span class="sd">        workdir_path: Working directory path.</span>
+<span class="sd">        num_fewshots: Number of few-shot examples (0, 1, or 5).</span>
+<span class="sd">        batch_size: Batch size for inference.</span>
+<span class="sd">        seed: Random seed for reproducibility.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        List[dict[str, str]]: Generated SQL results.</span>
+<span class="sd">        List of generated SQL results with metadata.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="c1"># --- Setup ---</span>
     <span class="n">_setup_seed</span><span class="p">(</span><span class="n">seed</span><span class="o">=</span><span class="n">seed</span><span class="p">)</span>
@@ -164,53 +188,65 @@
     <span class="n">workdir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">workdir_path</span><span class="p">)</span>
     <span class="n">workdir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
-    <span class="k">if</span> <span class="n">generate_kwargs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">generate_kwargs</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">model_kwargs</span> <span class="o">=</span> <span class="n">model_kwargs</span> <span class="ow">or</span> <span class="p">{}</span>
+    <span class="n">tokenizer_kwargs</span> <span class="o">=</span> <span class="n">tokenizer_kwargs</span> <span class="ow">or</span> <span class="p">{}</span>
+    <span class="n">generation_kwargs</span> <span class="o">=</span> <span class="n">generation_kwargs</span> <span class="ow">or</span> <span class="p">{}</span>
 
-    <span class="n">model_args</span> <span class="o">=</span> <span class="n">model_args</span> <span class="ow">or</span> <span class="p">{}</span>
-    <span class="k">if</span> <span class="s2">&quot;torch_dtype&quot;</span> <span class="ow">in</span> <span class="n">model_args</span><span class="p">:</span>
-        <span class="n">dtype</span> <span class="o">=</span> <span class="n">model_args</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;torch_dtype&quot;</span><span class="p">)</span>
-    <span class="k">if</span> <span class="s2">&quot;trust_remote_code&quot;</span> <span class="ow">in</span> <span class="n">model_args</span><span class="p">:</span>
-        <span class="n">trust_remote_code</span> <span class="o">=</span> <span class="n">model_args</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;trust_remote_code&quot;</span><span class="p">)</span>
-
-    <span class="c1"># --- Load model ---</span>
+    <span class="c1"># --- Load Model ---</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">model_or_model_name_or_path</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
-        <span class="n">model_args</span> <span class="o">=</span> <span class="n">model_args</span> <span class="ow">or</span> <span class="p">{}</span>
-        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Loading model from: </span><span class="si">{</span><span class="n">model_or_model_name_or_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">load_args</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;torch_dtype&quot;</span><span class="p">:</span> <span class="n">dtype</span><span class="p">,</span>
+            <span class="s2">&quot;device_map&quot;</span><span class="p">:</span> <span class="n">device_map</span><span class="p">,</span>
+            <span class="s2">&quot;trust_remote_code&quot;</span><span class="p">:</span> <span class="n">trust_remote_code</span><span class="p">,</span>
+            <span class="s2">&quot;token&quot;</span><span class="p">:</span> <span class="n">hf_token</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">model_kwargs</span><span class="p">,</span>
+        <span class="p">}</span>
+
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Loading model from: </span><span class="si">{</span><span class="n">model_or_model_name_or_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
         <span class="n">model</span> <span class="o">=</span> <span class="n">AutoModelForCausalLM</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span>
             <span class="n">model_or_model_name_or_path</span><span class="p">,</span>
-            <span class="n">torch_dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">,</span>
-            <span class="n">device_map</span><span class="o">=</span><span class="n">device_map</span><span class="p">,</span>
-            <span class="n">token</span><span class="o">=</span><span class="n">hf_token</span><span class="p">,</span>
-            <span class="n">trust_remote_code</span><span class="o">=</span><span class="n">trust_remote_code</span><span class="p">,</span>
-            <span class="o">**</span><span class="n">model_args</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">load_args</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">model</span> <span class="o">=</span> <span class="n">model_or_model_name_or_path</span>
-        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Using provided model object: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">model</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Using provided model object: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">model</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
-    <span class="c1"># --- Load tokenizer ---</span>
+    <span class="c1"># --- Load Tokenizer ---</span>
     <span class="k">if</span> <span class="n">tokenizer_or_name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">model_or_model_name_or_path</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
-            <span class="n">tokenizer</span> <span class="o">=</span> <span class="n">AutoTokenizer</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span>
-                <span class="n">model_or_model_name_or_path</span><span class="p">,</span>
-                <span class="n">token</span><span class="o">=</span><span class="n">hf_token</span><span class="p">,</span>
-                <span class="n">trust_remote_code</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-            <span class="p">)</span>
+            <span class="n">tok_name</span> <span class="o">=</span> <span class="n">model_or_model_name_or_path</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Tokenizer must be provided if model is passed directly.&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;tokenizer_or_name must be provided when passing a model object directly.&quot;</span>
+            <span class="p">)</span>
     <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">tokenizer_or_name</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
-        <span class="n">tokenizer</span> <span class="o">=</span> <span class="n">AutoTokenizer</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span>
-            <span class="n">tokenizer_or_name</span><span class="p">,</span>
-            <span class="n">token</span><span class="o">=</span><span class="n">hf_token</span><span class="p">,</span>
-            <span class="n">trust_remote_code</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-        <span class="p">)</span>
+        <span class="n">tok_name</span> <span class="o">=</span> <span class="n">tokenizer_or_name</span>
     <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># Already a tokenizer object</span>
         <span class="n">tokenizer</span> <span class="o">=</span> <span class="n">tokenizer_or_name</span>
+        <span class="n">tok_name</span> <span class="o">=</span> <span class="kc">None</span>
 
-    <span class="c1"># ensure pad token exists</span>
+    <span class="k">if</span> <span class="n">tok_name</span><span class="p">:</span>
+        <span class="n">load_tok_args</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;trust_remote_code&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+            <span class="s2">&quot;token&quot;</span><span class="p">:</span> <span class="n">hf_token</span><span class="p">,</span>
+            <span class="s2">&quot;padding_side&quot;</span><span class="p">:</span> <span class="n">tokenizer_kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;padding_side&quot;</span><span class="p">,</span> <span class="s2">&quot;left&quot;</span><span class="p">),</span>
+            <span class="o">**</span><span class="n">tokenizer_kwargs</span><span class="p">,</span>
+        <span class="p">}</span>
+        <span class="n">tokenizer</span> <span class="o">=</span> <span class="n">AutoTokenizer</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="n">tok_name</span><span class="p">,</span> <span class="o">**</span><span class="n">load_tok_args</span><span class="p">)</span>
+
     <span class="k">if</span> <span class="n">tokenizer</span><span class="o">.</span><span class="n">pad_token</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">tokenizer</span><span class="o">.</span><span class="n">pad_token</span> <span class="o">=</span> <span class="n">tokenizer</span><span class="o">.</span><span class="n">eos_token</span>
+
+    <span class="n">gen_params</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;max_new_tokens&quot;</span><span class="p">:</span> <span class="n">max_new_tokens</span><span class="p">,</span>
+        <span class="s2">&quot;temperature&quot;</span><span class="p">:</span> <span class="n">temperature</span><span class="p">,</span>
+        <span class="s2">&quot;do_sample&quot;</span><span class="p">:</span> <span class="n">do_sample</span><span class="p">,</span>
+        <span class="s2">&quot;top_p&quot;</span><span class="p">:</span> <span class="n">top_p</span><span class="p">,</span>
+        <span class="s2">&quot;top_k&quot;</span><span class="p">:</span> <span class="n">top_k</span><span class="p">,</span>
+        <span class="s2">&quot;pad_token_id&quot;</span><span class="p">:</span> <span class="n">tokenizer</span><span class="o">.</span><span class="n">pad_token_id</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">generation_kwargs</span><span class="p">,</span>
+    <span class="p">}</span>
 
     <span class="n">model</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
 
@@ -266,13 +302,7 @@
 
         <span class="n">outputs</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span>
             <span class="o">**</span><span class="n">inputs</span><span class="p">,</span>
-            <span class="n">max_new_tokens</span><span class="o">=</span><span class="n">max_new_tokens</span><span class="p">,</span>
-            <span class="n">temperature</span><span class="o">=</span><span class="n">temperature</span> <span class="k">if</span> <span class="n">do_sample</span> <span class="k">else</span> <span class="mf">0.0</span><span class="p">,</span>
-            <span class="n">do_sample</span><span class="o">=</span><span class="n">do_sample</span><span class="p">,</span>
-            <span class="n">top_p</span><span class="o">=</span><span class="n">top_p</span><span class="p">,</span>
-            <span class="n">top_k</span><span class="o">=</span><span class="n">top_k</span><span class="p">,</span>
-            <span class="n">pad_token_id</span><span class="o">=</span><span class="n">tokenizer</span><span class="o">.</span><span class="n">pad_token_id</span><span class="p">,</span>
-            <span class="o">**</span><span class="n">generate_kwargs</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">gen_params</span><span class="p">,</span>
         <span class="p">)</span>
 
         <span class="n">input_lengths</span> <span class="o">=</span> <span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">ids</span><span class="p">)</span> <span class="k">for</span> <span class="n">ids</span> <span class="ow">in</span> <span class="n">inputs</span><span class="p">[</span><span class="s2">&quot;input_ids&quot;</span><span class="p">]]</span>
@@ -331,14 +361,12 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">LLMSQL 0.1.11 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">LLMSQL 0.1.13 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">llmsql.inference.inference_transformers</a></li>
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-    &#169; Copyright .
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.1.3.
     </div>
   </body>
 </html>
