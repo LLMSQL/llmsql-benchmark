@@ -67,25 +67,31 @@ def inference_transformers(
     model_or_model_name_or_path: str | AutoModelForCausalLM,
     tokenizer_or_name: str | Any | None = None,
     *,
-    chat_template: str | None = None,
-    model_args: dict[str, Any] | None = None,
-    hf_token: str | None = None,
-    output_file: str = "outputs/predictions.jsonl",
-    questions_path: str | None = None,
-    tables_path: str | None = None,
-    workdir_path: str = DEFAULT_WORKDIR_PATH,
-    num_fewshots: int = 5,
+    # --- Model Loading Parameters ---
     trust_remote_code: bool = True,
-    batch_size: int = 8,
+    dtype: torch.dtype = torch.float16,
+    device_map: str | dict[str, int] | None = "auto",
+    hf_token: str | None = None,
+    model_kwargs: dict[str, Any] | None = None,
+    # --- Tokenizer Loading Parameters ---
+    tokenizer_kwargs: dict[str, Any] | None = None,
+    # --- Prompt & Chat Parameters ---
+    chat_template: str | None = None,
+    # --- Generation Parameters ---
     max_new_tokens: int = 256,
     temperature: float = 0.0,
     do_sample: bool = False,
     top_p: float = 1.0,
     top_k: int = 50,
+    generation_kwargs: dict[str, Any] | None = None,
+    # --- Benchmark Parameters ---
+    output_file: str = "llm_sql_predictions.jsonl",
+    questions_path: str | None = None,
+    tables_path: str | None = None,
+    workdir_path: str = DEFAULT_WORKDIR_PATH,
+    num_fewshots: int = 5,
+    batch_size: int = 8,
     seed: int = 42,
-    dtype: torch.dtype = torch.float16,
-    device_map: str | dict[str, int] | None = "auto",
-    generate_kwargs: dict[str, Any] | None = None,
 ) -> list[dict[str, str]]:
     """
     Inference a causal model (Transformers) on the LLMSQL benchmark.
@@ -93,27 +99,45 @@ def inference_transformers(
     Args:
         model_or_model_name_or_path: Model object or HF model name/path.
         tokenizer_or_name: Tokenizer object or HF tokenizer name/path.
+
+        # Model Loading:
+        trust_remote_code: Whether to trust remote code (default: True).
+        dtype: Torch dtype for model (default: float16).
+        device_map: Device placement strategy (default: "auto").
+        hf_token: Hugging Face authentication token.
+        model_kwargs: Additional arguments for AutoModelForCausalLM.from_pretrained().
+                     Note: 'dtype', 'device_map', 'trust_remote_code', 'token'
+                     are handled separately and will override values here.
+
+        # Tokenizer Loading:
+        tokenizer_kwargs: Additional arguments for AutoTokenizer.from_pretrained(). 'padding_side' defaults to "left".
+                    Note: 'trust_remote_code', 'token' are handled separately and will override values here.
+
+
+        # Prompt & Chat:
         chat_template: Optional chat template to apply before tokenization.
-        model_args: Optional kwargs passed to `from_pretrained` if needed.
-        hf_token: Hugging Face token (optional).
-        output_file: Output JSONL file for completions.
-        questions_path: Path to benchmark questions JSONL.
-        tables_path: Path to benchmark tables JSONL.
-        workdir_path: Work directory (default: "llmsql_workdir").
-        num_fewshots: 0, 1, or 5 — prompt builder choice.
-        batch_size: Batch size for inference.
-        max_new_tokens: Max tokens to generate.
-        temperature: Sampling temperature.
-        do_sample: Whether to sample or use greedy decoding.
+
+        # Generation:
+        max_new_tokens: Maximum tokens to generate per sequence.
+        temperature: Sampling temperature (0.0 = greedy).
+        do_sample: Whether to use sampling vs greedy decoding.
         top_p: Nucleus sampling parameter.
         top_k: Top-k sampling parameter.
-        seed: Random seed.
-        dtype: Torch dtype (default: float16).
-        device_map: Device map ("auto" for multi-GPU).
-        **generate_kwargs: Extra arguments for `model.generate`.
+        generation_kwargs: Additional arguments for model.generate().
+                          Note: 'max_new_tokens', 'temperature', 'do_sample',
+                          'top_p', 'top_k' are handled separately.
+
+        # Benchmark:
+        output_file: Output JSONL file path for completions.
+        questions_path: Path to benchmark questions JSONL.
+        tables_path: Path to benchmark tables JSONL.
+        workdir_path: Working directory path.
+        num_fewshots: Number of few-shot examples (0, 1, or 5).
+        batch_size: Batch size for inference.
+        seed: Random seed for reproducibility.
 
     Returns:
-        List[dict[str, str]]: Generated SQL results.
+        List of generated SQL results with metadata.
     """
     # --- Setup ---
     _setup_seed(seed=seed)
@@ -121,53 +145,65 @@ def inference_transformers(
     workdir = Path(workdir_path)
     workdir.mkdir(parents=True, exist_ok=True)
 
-    if generate_kwargs is None:
-        generate_kwargs = {}
+    model_kwargs = model_kwargs or {}
+    tokenizer_kwargs = tokenizer_kwargs or {}
+    generation_kwargs = generation_kwargs or {}
 
-    model_args = model_args or {}
-    if "torch_dtype" in model_args:
-        dtype = model_args.pop("torch_dtype")
-    if "trust_remote_code" in model_args:
-        trust_remote_code = model_args.pop("trust_remote_code")
-
-    # --- Load model ---
+    # --- Load Model ---
     if isinstance(model_or_model_name_or_path, str):
-        model_args = model_args or {}
-        log.info(f"Loading model from: {model_or_model_name_or_path}")
+        load_args = {
+            "torch_dtype": dtype,
+            "device_map": device_map,
+            "trust_remote_code": trust_remote_code,
+            "token": hf_token,
+            **model_kwargs,
+        }
+
+        print(f"Loading model from: {model_or_model_name_or_path}")
         model = AutoModelForCausalLM.from_pretrained(
             model_or_model_name_or_path,
-            torch_dtype=dtype,
-            device_map=device_map,
-            token=hf_token,
-            trust_remote_code=trust_remote_code,
-            **model_args,
+            **load_args,
         )
     else:
         model = model_or_model_name_or_path
-        log.info(f"Using provided model object: {type(model)}")
+        print(f"Using provided model object: {type(model)}")
 
-    # --- Load tokenizer ---
+    # --- Load Tokenizer ---
     if tokenizer_or_name is None:
         if isinstance(model_or_model_name_or_path, str):
-            tokenizer = AutoTokenizer.from_pretrained(
-                model_or_model_name_or_path,
-                token=hf_token,
-                trust_remote_code=True,
-            )
+            tok_name = model_or_model_name_or_path
         else:
-            raise ValueError("Tokenizer must be provided if model is passed directly.")
+            raise ValueError(
+                "tokenizer_or_name must be provided when passing a model object directly."
+            )
     elif isinstance(tokenizer_or_name, str):
-        tokenizer = AutoTokenizer.from_pretrained(
-            tokenizer_or_name,
-            token=hf_token,
-            trust_remote_code=True,
-        )
+        tok_name = tokenizer_or_name
     else:
+        # Already a tokenizer object
         tokenizer = tokenizer_or_name
+        tok_name = None
 
-    # ensure pad token exists
+    if tok_name:
+        load_tok_args = {
+            "trust_remote_code": True,
+            "token": hf_token,
+            "padding_side": tokenizer_kwargs.get("padding_side", "left"),
+            **tokenizer_kwargs,
+        }
+        tokenizer = AutoTokenizer.from_pretrained(tok_name, **load_tok_args)
+
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
+
+    gen_params = {
+        "max_new_tokens": max_new_tokens,
+        "temperature": temperature,
+        "do_sample": do_sample,
+        "top_p": top_p,
+        "top_k": top_k,
+        "pad_token_id": tokenizer.pad_token_id,
+        **generation_kwargs,
+    }
 
     model.eval()
 
@@ -223,13 +259,7 @@ def inference_transformers(
 
         outputs = model.generate(
             **inputs,
-            max_new_tokens=max_new_tokens,
-            temperature=temperature if do_sample else 0.0,
-            do_sample=do_sample,
-            top_p=top_p,
-            top_k=top_k,
-            pad_token_id=tokenizer.pad_token_id,
-            **generate_kwargs,
+            **gen_params,
         )
 
         input_lengths = [len(ids) for ids in inputs["input_ids"]]
