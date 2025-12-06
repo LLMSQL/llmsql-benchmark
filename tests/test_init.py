@@ -7,12 +7,12 @@ class TestLazyImport:
     """Test lazy import mechanism in __init__.py."""
 
     def test_lazy_import_evaluator(self) -> None:
-        """Test that LLMSQLEvaluator can be imported via lazy loading."""
-        from llmsql import LLMSQLEvaluator
+        """Test that evaluate can be imported via lazy loading."""
+        from llmsql import evaluate
 
-        assert LLMSQLEvaluator is not None
+        assert evaluate is not None
         # Verify it's the correct class
-        assert LLMSQLEvaluator.__name__ == "LLMSQLEvaluator"
+        assert evaluate.__name__ == "evaluate"
 
     def test_lazy_import_inference_vllm(self) -> None:
         """Test that inference_vllm can be imported via lazy loading."""
@@ -49,6 +49,6 @@ class TestLazyImport:
         import llmsql
 
         assert hasattr(llmsql, "__all__")
-        assert "LLMSQLEvaluator" in llmsql.__all__
+        assert "evaluate" in llmsql.__all__
         assert "inference_vllm" in llmsql.__all__
         assert "inference_transformers" in llmsql.__all__
