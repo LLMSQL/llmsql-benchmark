@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Documentation
+    url: https://llmsql.github.io/llmsql-benchmark/
+    about: Project documentation for LLMSQL Benchmark
+  - name: Discord Community
+    url: https://discord.gg/n9ygeKu6Ba
+    about: Join the community Discord server for questions and support
