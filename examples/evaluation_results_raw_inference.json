@@ -1,0 +1,28 @@
+{
+  "total": 10,
+  "matches": 9,
+  "pred_none": 0,
+  "gold_none": 0,
+  "sql_errors": 0,
+  "accuracy": 0.9,
+  "mismatches": [
+    {
+      "question_id": 15842,
+      "question": "What are the total amount of numbers on the Toronto team in 2005-06?",
+      "gold_sql": "SELECT COUNT(\"No.\") FROM \"1-10015132-9\" WHERE \"Years in Toronto\" = '2005-06';",
+      "model_output": "SELECT SUM(\"No.\") FROM \"Table\" WHERE \"Years in Toronto\" = \"2005-06\";",
+      "gold_results": [
+        [
+          1
+        ]
+      ],
+      "prediction_results": [
+        [
+          13
+        ]
+      ]
+    }
+  ],
+  "timestamp": "2025-12-06T09:03:22.461692+00:00",
+  "input_mode": "dict_list"
+}

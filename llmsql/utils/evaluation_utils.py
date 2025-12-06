@@ -1,6 +1,12 @@
+import os
+from pathlib import Path
 import sqlite3
 from typing import Any
 
+from huggingface_hub import hf_hub_download
+
+from llmsql.config.config import REPO_ID
+from llmsql.loggers.logging_config import log
 from llmsql.utils.regex_extractor import find_sql
 
 
@@ -162,3 +168,23 @@ def evaluate_sample(
         mismatch_info,
         {"pred_none": pred_none, "gold_none": gold_none, "sql_error": sql_error},
     )
+
+
+def download_benchmark_file(filename: str, local_dir: Path) -> str:
+    """Download a benchmark file from HuggingFace Hub."""
+    file_path = hf_hub_download(
+        repo_id=REPO_ID,
+        filename=filename,
+        repo_type="dataset",
+        local_dir=local_dir,
+    )
+    assert isinstance(file_path, str)
+    log.info(f"Downloaded {filename} to: {file_path}")
+    return file_path
+
+
+def connect_sqlite(db_path: str) -> sqlite3.Connection:
+    """Create SQLite connection."""
+    if not os.path.exists(db_path):
+        raise FileNotFoundError(f"Database not found at: {db_path}")
+    return sqlite3.connect(db_path)

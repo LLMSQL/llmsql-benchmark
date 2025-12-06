@@ -41,6 +41,6 @@ def _maybe_download(filename: str, local_path: str | None) -> str:
             repo_type="dataset",
             local_dir=DEFAULT_WORKDIR_PATH,
         )
-        log.info(f"Saved {filename} to {local_path}")
+        log.info(f"Downloaded {filename} to: {local_path}")
         return local_path
     return str(target_path)
