@@ -168,3 +168,98 @@ async def test_evaluate_with_dict_list(monkeypatch, temp_dir, dummy_db_file):
     assert report["matches"] == 1
     assert report["accuracy"] == 1.0
     assert report["input_mode"] == "dict_list"
+
+
+def test_evaluate_with_list_outputs(mock_utils, mocker):
+    outputs = [{"question_id": 1, "completion": "SELECT 1"}]
+
+    report = evaluate(outputs, workdir_path=str(mock_utils))
+
+    assert report["total"] == 1
+    assert report["matches"] == 1
+    assert report["accuracy"] == 1.0
+    assert report["input_mode"] == "dict_list"
+
+
+def test_evaluate_with_jsonl_path(mock_utils, mocker):
+    # fake jsonl file
+    jsonl_path = mock_utils / "preds.jsonl"
+    jsonl_path.write_text("dummy", encoding="utf-8")
+
+    report = evaluate(str(jsonl_path), workdir_path=str(mock_utils))
+
+    assert report["total"] == 1
+    assert report["input_mode"] == "jsonl_path"
+
+
+def test_missing_workdir_and_no_questions_path_raises():
+    with pytest.raises(ValueError):
+        evaluate(
+            outputs=[{"question_id": 1, "completion": "x"}],
+            workdir_path=None,
+            questions_path=None,
+        )
+
+
+def test_missing_workdir_and_no_db_path_raises():
+    with pytest.raises(ValueError):
+        evaluate(
+            outputs=[{"question_id": 1, "completion": "x"}],
+            workdir_path=None,
+            db_path=None,
+        )
+
+
+def test_download_occurs_if_files_missing(mock_utils, mocker):
+    dl = mocker.patch("llmsql.evaluation.evaluate.download_benchmark_file")
+
+    evaluate(
+        [{"question_id": 1, "completion": "SELECT 1"}],
+        workdir_path=str(mock_utils),
+        questions_path=None,
+        db_path=None,
+    )
+
+    assert dl.call_count == 2  # questions + sqlite
+
+
+def test_saves_report_with_auto_filename(mock_utils, mocker):
+    save = mocker.patch("llmsql.evaluation.evaluate.save_json_report")
+
+    report = evaluate(
+        [{"question_id": 1, "completion": "SELECT 1"}],
+        workdir_path=str(mock_utils),
+        save_report=None,
+    )
+
+    # automatic UUID-based filename
+    args, kwargs = save.call_args
+    auto_filename = args[0]
+    assert auto_filename.startswith("evaluation_results_")
+    assert auto_filename.endswith(".json")
+
+    assert report["total"] == 1
+
+
+def test_mismatch_handling(mock_utils, mocker):
+    """Test branch where a mismatch is returned."""
+    mocker.patch(
+        "llmsql.evaluation.evaluate.evaluate_sample",
+        return_value=(
+            0,
+            {"info": "bad"},
+            {"pred_none": 0, "gold_none": 0, "sql_error": 0},
+        ),
+    )
+
+    log_mis = mocker.patch("llmsql.evaluation.evaluate.log_mismatch")
+
+    report = evaluate(
+        [{"question_id": 1, "completion": "SELECT X"}],
+        workdir_path=str(mock_utils),
+        max_mismatches=3,
+    )
+
+    assert report["matches"] == 0
+    assert len(report["mismatches"]) == 1
+    log_mis.assert_called_once()
