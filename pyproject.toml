@@ -61,6 +61,7 @@ dev = [
     "sphinx-autoapi>=3.6.0",
     "sphinx-autobuild>=2024.10.3",
     "sphinx-copybutton>=0.5.2",
+    "pytest-mock>=3.15.1",
 ]
 vllm = [
     "vllm>=0.4.2",

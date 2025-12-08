@@ -21,7 +21,7 @@ Our datasets are available for different scenarios on our [HuggingFace page](htt
 pip3 install llmsql
 ```
 
-This repository provides the **LLMSQL Benchmark** — a modernized, cleaned, and extended version of WikiSQL, designed for evaluating and fine-tuning large language models (LLMs) on **Text-to-SQL** tasks.
+This repository provides the **LLMSQL Benchmark** — a modernized, cleaned, and extended version of WikiSQL, designed for evaluating large language models (LLMs) on **Text-to-SQL** tasks.
 
 ### Note
 The package doesn't have the dataset, it is stored on our [HuggingFace page](https://huggingface.co/llmsql-bench).
@@ -79,6 +79,8 @@ pip3 install llmsql
 
 ### 1. Run Inference
 
+#### Transformers inference
+
 ```python
 from llmsql import inference_transformers
 
@@ -94,22 +96,9 @@ results = inference_transformers(
         "torch_dtype": "bfloat16",
     }
 )
-
 ```
 
-### 2. Evaluate Results
-
-```python
-from llmsql import LLMSQLEvaluator
-
-evaluator = LLMSQLEvaluator(workdir_path="llmsql_workdir")
-report = evaluator.evaluate(outputs_path="path_to_your_outputs.jsonl")
-print(report)
-```
-
-
-
-## Vllm inference (Recommended)
+#### Vllm inference (Recommended)
 
 To speed up your inference we recommend using vllm inference. You can do it with optional llmsql[vllm] dependency group
 ```bash
@@ -128,12 +117,36 @@ results = inference_vllm(
 ```
 for fast inference.
 
+### 2. Evaluate Results
+
+```python
+from llmsql import evaluate
+
+report =evaluate(outputs="path_to_your_outputs.jsonl")
+print(report)
+```
+
+Or with ther results from the infernece:
+
+```python
+from llmsql import evaluate
+
+# results = inference_transformers(...) or infernce_vllm(...)
+
+report =evaluate(outputs=results)
+print(report)
+```
+
+
+
+
+
 
 
 ## Suggested Workflow
 
-* **Primary**: Run inference on `dataset/questions.jsonl` with vllm → Evaluate with `evaluation/`.
-* **Secondary (optional)**: Fine-tune on `train/val` → Test on `test_questions.jsonl`.
+* **Primary**: Run inference on all questions with vllm or transformers → Evaluate with `evaluate()`.
+* **Secondary (optional)**: Fine-tune on `train/val` → Test on `test_questions.jsonl`. You can find the datasets here [HF Finetune Ready](https://huggingface.co/datasets/llmsql-bench/llmsql-benchmark-finetune-ready).
 
 
 ## Contributing
