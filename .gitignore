@@ -3,6 +3,7 @@ dataset/sqlite_tables.db
 *__pycache__
 .env
 dist/
+testenv
 
 *.egg-info/
 .pdm-python
