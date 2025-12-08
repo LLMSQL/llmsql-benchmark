@@ -138,9 +138,128 @@ print(report)
 ```
 
 
+## Command Line Interface (CLI)
+
+LLMSQL also exposes all inference and evaluation capabilities through a convenient command-line interface.
+After installing the package:
+
+```bash
+pip install llmsql
+```
+
+you can run:
+
+```bash
+llmsql --help
+```
+
+to view the top-level commands:
+
+```
+LLMSQL: LLM-powered SQL generation toolkit
+
+Top-level commands:
+  inference    Run SQL generation using a chosen LLM backend
+  evaluate     Evaluate predictions against the LLMSQL benchmark
+```
+
+### CLI Inference
+
+You can run inference with **Transformers** or **vLLM** directly from the CLI.
+
+### Transformers backend
+
+```bash
+llmsql inference --method transformers \
+    --model-or-model-name-or-path Qwen/Qwen2.5-1.5B-Instruct \
+    --output-file outputs/preds_transformers.jsonl \
+    --batch-size 8 \
+    --num-fewshots 5
+```
+
+With custom model init arguments:
+
+```bash
+llmsql inference --method transformers \
+    --model-or-model-name-or-path meta-llama/Llama-3-8b-instruct \
+    --output-file outputs/llama_preds.jsonl \
+    --model-kwargs '{"attn_implementation": "flash_attention_2", "torch_dtype": "bfloat16"}'
+```
+
+Override generation parameters:
+
+```bash
+llmsql inference --method transformers \
+    --model-or-model-name-or-path Qwen/Qwen2.5-1.5B-Instruct \
+    --output-file outputs/temp_0.9.jsonl \
+    --temperature 0.9 \
+    --generation-kwargs '{"do_sample": true, "top_p": 0.9, "top_k": 40}'
+```
 
 
+### vLLM backend (recommended for speed)
 
+Install the vLLM optional dependencies:
+
+```bash
+pip install llmsql[vllm]
+```
+
+Then run:
+
+```bash
+llmsql inference --method vllm \
+    --model-name Qwen/Qwen2.5-1.5B-Instruct \
+    --output-file outputs/preds_vllm.jsonl \
+    --batch-size 20000 \
+    --num-fewshots 5 \
+    --do-sample false
+```
+
+With `llm-kwargs`:
+
+```bash
+llmsql inference --method vllm \
+    --model-name mistralai/Mixtral-8x7B-Instruct-v0.1 \
+    --output-file outputs/mixtral_preds.jsonl \
+    --llm-kwargs '{"max_model_len": 4096, "gpu_memory_utilization": 0.9}'
+```
+
+
+### CLI Evaluation
+
+You can evaluate model predictions (either from a file or inline JSON):
+
+```bash
+llmsql evaluate \
+    --outputs outputs/preds_vllm.jsonl
+```
+
+Evaluate inline JSON:
+
+```bash
+llmsql evaluate \
+    --outputs '[{"id": 1, "sql": "SELECT ..."}]'
+```
+
+Specify custom paths:
+
+```bash
+llmsql evaluate \
+    --outputs outputs/preds.jsonl \
+    --questions-path data/questions.jsonl \
+    --db-path data/database.sqlite \
+    --show-mismatches true \
+    --max-mismatches 10
+```
+
+Specify where to save the evaluation report:
+
+```bash
+llmsql evaluate \
+    --outputs outputs/preds.jsonl \
+    --save-report results/eval_report.json
+```
 
 
 ## Suggested Workflow
