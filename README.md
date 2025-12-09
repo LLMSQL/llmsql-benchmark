@@ -92,7 +92,7 @@ results = inference_transformers(
     batch_size=8,
     max_new_tokens=256,
     do_sample=False,
-    model_args={
+    model_kwargs={
         "torch_dtype": "bfloat16",
     }
 )
