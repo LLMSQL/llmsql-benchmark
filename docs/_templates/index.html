@@ -129,10 +129,17 @@
 --generation-kwargs '{"do_sample": false, "top_p": 0.95}'</code></pre>
 
   <h3>3️⃣ Evaluation API (Python)</h3>
-<pre><code>from llmsql import LLMSQLEvaluator
+<pre><code>from llmsql import evaluate
 
-evaluator = LLMSQLEvaluator()
-report = evaluator.evaluate(outputs_path="path_to_your_outputs.jsonl")
+report =evaluate(outputs="path_to_your_outputs.jsonl")
+print(report)
+</code></pre>
+<p>Or with ther results from the infernece:</p>
+<pre><code>from llmsql import evaluate
+
+# results = inference_transformers(...) or infernce_vllm(...)
+
+report =evaluate(outputs=results)
 print(report)
 </code></pre>
 
