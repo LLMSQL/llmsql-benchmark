@@ -33,21 +33,21 @@ pip install llmsql[vllm]
 from llmsql import inference_transformers
 
 results = inference_transformers(
-    model_or_model_name_or_path="Qwen/Qwen2.5-1.5B-Instruct",
-    output_file="outputs/preds_transformers.jsonl",
-    questions_path="data/questions.jsonl",
-    tables_path="data/tables.jsonl",
-    num_fewshots=5,
-    batch_size=8,
-    max_new_tokens=256,
-    temperature=0.7,
-    model_args={
-        "torch_dtype": "bfloat16",
-    },
-    generate_kwargs={
-        "do_sample": False,
-    },
-)
+        model_or_model_name_or_path="Qwen/Qwen2.5-1.5B-Instruct",
+        output_file="outputs/preds_transformers.jsonl",
+        questions_path="data/questions.jsonl",
+        tables_path="data/tables.jsonl",
+        num_fewshots=5,
+        batch_size=8,
+        max_new_tokens=256,
+        temperature=0.7,
+        model_kwargs={
+            "torch_dtype": "bfloat16",
+        },
+        generation_kwargs={
+            "do_sample": False,
+        },
+    )
 ```
 
 ---

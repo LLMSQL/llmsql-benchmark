@@ -31,7 +31,7 @@ Examples:
   llmsql inference --method transformers \
       --model-or-model-name-or-path meta-llama/Llama-3-8b-instruct \
       --output-file outputs/llama_preds.jsonl \
-      --model-args '{"attn_implementation": "flash_attention_2", "torch_dtype": "bfloat16"}'
+      --model-kwargs '{"attn_implementation": "flash_attention_2", "torch_dtype": "bfloat16"}'
 
   # 4️⃣ Pass LLM init kwargs (for vLLM)
   llmsql inference --method vllm \
@@ -44,7 +44,7 @@ Examples:
       --model-or-model-name-or-path Qwen/Qwen2.5-1.5B-Instruct \
       --output-file outputs/temp_0.9.jsonl \
       --temperature 0.9 \
-      --generate-kwargs '{"do_sample": true, "top_p": 0.9, "top_k": 40}'
+      --generation-kwargs '{"do_sample": true, "top_p": 0.9, "top_k": 40}'
 """
 
     inf_parser = subparsers.add_parser(
@@ -127,15 +127,17 @@ Examples:
             except json.JSONDecodeError:
                 print("⚠️  Could not parse --llm-kwargs JSON, passing as string.")
 
-        if fn_kwargs.get("model_args") is not None:
+        if fn_kwargs.get("model_kwargs") is not None:
             try:
-                fn_kwargs["model_args"] = json.loads(fn_kwargs["model_args"])
+                fn_kwargs["model_kwargs"] = json.loads(fn_kwargs["model_kwargs"])
             except json.JSONDecodeError:
                 raise
 
-        if fn_kwargs.get("generate_kwargs") is not None:
+        if fn_kwargs.get("generation_kwargs") is not None:
             try:
-                fn_kwargs["generate_kwargs"] = json.loads(fn_kwargs["generate_kwargs"])
+                fn_kwargs["generation_kwargs"] = json.loads(
+                    fn_kwargs["generation_kwargs"]
+                )
             except json.JSONDecodeError:
                 raise
 
