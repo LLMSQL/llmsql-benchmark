@@ -8,7 +8,25 @@ There are several places information about LLMSQL package is located:
 
 - Our README.md files and comments. We tried to put separate README.md in all important parts of our package. We hope they will help you to understand the package better.
 - We created [examples files](https://github.com/LLMSQL/llmsql-benchmark/tree/main/examples), feel free to explore them
-- Our [documentation pages](https://llmsql.github.io/llmsql-benchmark/) is currently under development but we will try to serve documentation soon.
+- Our [documentation pages](https://llmsql.github.io/llmsql-benchmark/).
+
+- Feel free to reach us on any questions at our discord [LLMSQL discord](https://discord.gg/n9ygeKu6Ba)
+
+## How Can I Get Involved?
+
+To quickly get started, we maintain a list of good first issues, which can be found by [filtering GH Issues](https://github.com/LLMSQL/llmsql-benchmark/issues?q=is%3Aopen+label%3A%22good+first+issue%22+label%3A%22help+wanted%22). These are typically smaller code changes or self-contained features which can be added without extensive familiarity with library internals, and we recommend new contributors consider taking a stab at one of these first if they are feeling uncertain where to begin.
+
+There are a number of distinct ways to contribute to LLMSQL, and all are extremely helpful! A sampling of ways to contribute include:
+
+- **Improving documentation** - Improvements to the documentation, or noting pain points / gaps in documentation, are helpful in order for us to improve the user experience of the package and clarity + coverage of documentation.
+- **Testing and devops** - We are very grateful for any assistance in adding tests for the library that can be run for new PRs, and other devops workflows.
+- **Proposing or Contributing New Features** - We want LLMSQL to be the best way to interact (evaluate) models on our benchmark. If you have a feature that is not currently supported but desired, feel free to open an issue describing the feature and, if applicable, how you intend to implement it. We would be happy to give feedback on the cleanest way to implement new functionalities and are happy to coordinate with interested contributors.
+
+If you want to resolve an issue , please follow the guidelines in [Code style](#code-style) section.
+
+
+We hope that this has been helpful, and appreciate your interest in contributing!
+
 
 ## Code Style
 
@@ -64,6 +82,7 @@ We recommend a few best practices to make your contributions or reported errors 
 
 **For Pull Requests:**
 
+- If you contribute a change into [documentation](./docs/), please address your PR merge into `page` branch and not `main` branch. After merging to `page` your contribution will be merged to main.
 - PRs should be titled descriptively, and be opened with a brief description of the scope and intent of the new contribution.
 - New features should have appropriate documentation added alongside them.
 - Aim for code maintainability, and minimize code copying.
@@ -78,18 +97,3 @@ We recommend a few best practices to make your contributions or reported errors 
 - Provide a *reproducible example* - what is the command you run with our package that results in this error? Have you tried any other steps to resolve it?
 - Provide a *full error traceback* of the error that occurs, if applicable. A one-line error message or small screenshot snippet is unhelpful without the surrounding context.
 - Note what version of the codebase you are using, and any specifics of your environment and setup that may be relevant.
-
-
-
-
-## How Can I Get Involved?
-
-To quickly get started, we maintain a list of good first issues, which can be found by [filtering GH Issues](https://github.com/LLMSQL/llmsql-benchmark/issues?q=is%3Aopen+label%3A%22good+first+issue%22+label%3A%22help+wanted%22). These are typically smaller code changes or self-contained features which can be added without extensive familiarity with library internals, and we recommend new contributors consider taking a stab at one of these first if they are feeling uncertain where to begin.
-
-There are a number of distinct ways to contribute to LLMSQL, and all are extremely helpful! A sampling of ways to contribute include:
-
-- **Improving documentation** - Improvements to the documentation, or noting pain points / gaps in documentation, are helpful in order for us to improve the user experience of the package and clarity + coverage of documentation.
-- **Testing and devops** - We are very grateful for any assistance in adding tests for the library that can be run for new PRs, and other devops workflows.
-- **Proposing or Contributing New Features** - We want LLMSQL to be the best way to interact (evaluate) models on our benchmark. If you have a feature that is not currently supported but desired, feel free to open an issue describing the feature and, if applicable, how you intend to implement it. We would be happy to give feedback on the cleanest way to implement new functionalities and are happy to coordinate with interested contributors.
-
-We hope that this has been helpful, and appreciate your interest in contributing!
