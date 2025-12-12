@@ -2,9 +2,14 @@ import argparse
 import json
 import textwrap
 from typing import Any
+import platform
 
-from llmsql import inference_transformers, inference_vllm
+from llmsql import inference_transformers
+from llmsql import VLLM_SUPPORTED_PLATFORMS
 from llmsql.loggers.logging_config import log
+
+CURRENT_OS = platform.system()
+IS_OS_SUPPORTED = CURRENT_OS in VLLM_SUPPORTED_PLATFORMS
 
 
 def _json_arg(value: str | None) -> dict[str, Any] | Any:
@@ -69,34 +74,47 @@ See `llmsql inference --method vllm` or `llmsql inference --method transformers`
             formatter_class=argparse.RawTextHelpFormatter,
         )
 
-        # Top-level --method choice as a pseudo-subcommand
-        method_subparsers = parser.add_subparsers(
+        backend_subparsers = parser.add_subparsers(
             title="Backend",
             description="Select backend for inference",
-            dest="method",
+            dest="backend",
             required=True,
         )
 
-        InferenceCommand._register_vllm_parser(method_subparsers)
-        InferenceCommand._register_transformers_parser(method_subparsers)
+        InferenceCommand._register_transformers_parser(backend_subparsers)
+        if IS_OS_SUPPORTED:
+            InferenceCommand._register_vllm_parser(backend_subparsers)
 
         parser.set_defaults(func=InferenceCommand.dispatch)
 
     # ------------------------------------------------------------------
     @staticmethod
     def dispatch(args: Any) -> None:
-        """dispatch method"""
-        if args.method == "vllm":
-            results = inference_vllm(**vars(args))
+        """Dispatch to the correct backend"""
+        kwargs = vars(args).copy()  # copy to avoid modifying original
+        # Remove keys not used by the backend functions
+        kwargs.pop("func", None)      # added by set_defaults
+        kwargs.pop("command", None)   # top-level command
+        kwargs.pop("backend", None)   # subcommand itself
+
+        if args.backend == "vllm":
+            if not IS_OS_SUPPORTED:
+                raise RuntimeError(
+                    f"vLLM backend is not supported on {CURRENT_OS}. "
+                    f"Supported platforms: {', '.join(VLLM_SUPPORTED_PLATFORMS)}. "
+                    "Please choose the 'transformers' backend."
+                )
+            from llmsql import inference_vllm
+            results = inference_vllm(**kwargs)
         else:
-            results = inference_transformers(**vars(args))
+            results = inference_transformers(**kwargs)
 
         log.info(f"Generated {len(results)} results.")
 
     # ------------------------------------------------------------------
     @staticmethod
     def _register_vllm_parser(subparsers: Any) -> None:
-        """parser for vllm"""
+        """vLLM backend arguments"""
         parser = subparsers.add_parser(
             "vllm",
             help="Inference using vLLM backend",
@@ -192,7 +210,7 @@ See `llmsql inference --method vllm` or `llmsql inference --method transformers`
         )
         parser.add_argument(
             "--workdir-path",
-            default=None,
+            default="./llmsql_workdir",
             help="Directory to store downloaded data and temporary files.",
         )
         parser.add_argument(
@@ -217,11 +235,11 @@ See `llmsql inference --method vllm` or `llmsql inference --method transformers`
     # ------------------------------------------------------------------
     @staticmethod
     def _register_transformers_parser(subparsers: Any) -> None:
-        """parser for transformers"""
+        """vLLM backend arguments"""
         parser = subparsers.add_parser(
             "transformers",
-            help="Inference using Transformers backend",
-            description="Run SQL generation using the Transformers backend",
+            help="Inference using vLLM backend",
+            description="Run SQL generation using the vLLM backend",
             formatter_class=argparse.RawTextHelpFormatter,
         )
 
@@ -348,7 +366,7 @@ See `llmsql inference --method vllm` or `llmsql inference --method transformers`
         )
         parser.add_argument(
             "--workdir-path",
-            default=None,
+            default="./llmsql_workdir",
             help="Working directory path for downloads and temporary files.",
         )
         parser.add_argument(
