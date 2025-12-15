@@ -4,7 +4,7 @@ build-backend = "pdm.backend"
 
 [project]
 name = "llmsql"
-version = "0.1.13"
+version = "0.1.14"
 description = "A Text2SQL benchmark for evaluation of Large Language Models"
 keywords = ["llm", "sql", "benchmark", "evaluation", "ai", "nlp"]
 authors = [
