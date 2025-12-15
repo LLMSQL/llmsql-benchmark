@@ -42,7 +42,7 @@ The package doesn't have the dataset, it is stored on our [HuggingFace page](htt
 
 ## Latest News 📣
 
-<!-- * [2025/12] Evaluation class converted to function see [new `evaluate(...)` function](./llmsql/evaluation/evaluate.py#evaluate) -->
+* [2025/12] Evaluation class converted to function see [new `evaluate(...)` function](./llmsql/evaluation/evaluate.py#evaluate)
 
 * New page version added to [`https://llmsql.github.io/llmsql-benchmark/`](https://llmsql.github.io/llmsql-benchmark/)
 
