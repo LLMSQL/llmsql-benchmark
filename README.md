@@ -1,6 +1,6 @@
 <picture align="center">
   <source media="(prefers-color-scheme: dark)" srcset="./assets/logo_black.svg">
-  <img alt="Pandas Logo" src="./assets/logo_white.svg">
+  <img alt="LLMSQL Logo" src="./assets/logo_white.svg">
 </picture>
 
 
