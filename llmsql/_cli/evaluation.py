@@ -5,9 +5,29 @@ from llmsql.config.config import DEFAULT_WORKDIR_PATH
 from llmsql.evaluation.evaluate import evaluate
 
 
+def parse_limit(value: str | None) -> int | float | None:
+    if value is None:
+        return None
+
+    try:
+        if "." in value:
+            limit = float(value)
+            if not (0.0 < limit <= 1.0):
+                raise ValueError
+            return limit
+        else:
+            limit = int(value)
+            if limit <= 0:
+                raise ValueError
+            return limit
+    except ValueError as e:
+        raise argparse.ArgumentTypeError(
+            "--limit must be a positive integer or a float between 0.0 and 1.0"
+        ) from e
+    
+
 class EvaluationCommand:
     """CLI wrapper for the `evaluate()` function."""
-
     @staticmethod
     def register(subparsers: argparse._SubParsersAction) -> None:
         eval_parser = subparsers.add_parser(
@@ -26,6 +46,18 @@ class EvaluationCommand:
                 "  --outputs outputs/preds.jsonl\n"
                 '  --outputs \'[{"id":1,"sql":"SELECT ..."}]\''
             ),
+        )
+
+        eval_parser.add_argument(
+            "--limit",
+            required=False,
+            type=parse_limit,
+            default=None,
+            help=(
+                "Optional. Limit the number of evaluated samples.\n"
+                "Accepts an integer (e.g. 100) or a float between 0.0 and 1.0 (e.g. 0.1 for 10%).\n"
+                "Useful for debugging."
+            )
         )
 
         eval_parser.add_argument(
@@ -93,6 +125,8 @@ class EvaluationCommand:
         except Exception:
             outputs = args.outputs
 
+        limit = args.limit
+
         result = evaluate(
             outputs=outputs,
             workdir_path=args.workdir_path,
@@ -101,6 +135,7 @@ class EvaluationCommand:
             save_report=args.save_report,
             show_mismatches=args.show_mismatches,
             max_mismatches=args.max_mismatches,
+            limit=limit
         )
 
         print(json.dumps(result, indent=2))
