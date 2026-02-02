@@ -1,7 +1,12 @@
 LLMSQL package Documentation
 ============================
 
-`← Back to main page <../index.html>`__
+.. raw:: html
+
+   <a href="../index.html" class="sidebar-button">
+     ← Back to main page
+   </a>
+
 
 Welcome to the LLMSQL documentation!
 This guide covers everything you need to use the project, from running inference
