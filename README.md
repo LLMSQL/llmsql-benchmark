@@ -88,6 +88,7 @@ llmsql/
 
 ## Quickstart
 
+For the full tutorial, check out the Colab notebook: [Open in Colab](https://colab.research.google.com/drive/1i0A7t_iSnDTikGqzG5Gq3ETswFsK5RQw#scrollTo=jcUR9wxvRBBb)
 
 ### Install
 
