@@ -1,6 +1,8 @@
 import json
 import os
+from pathlib import Path
 import sqlite3
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -68,3 +70,44 @@ def fake_jsonl_files(tmp_path):
     tpath.write_text("\n".join(json.dumps(t) for t in tables))
 
     return str(qpath), str(tpath)
+
+
+@pytest.fixture
+def mock_utils(mocker, tmp_path):
+    """Mock all underlying I/O + DB functions."""
+    # load questions
+    mocker.patch(
+        "llmsql.evaluation.evaluate.load_jsonl_dict_by_key",
+        return_value={1: {"question_id": 1, "gold": "SELECT 1"}},
+    )
+
+    # predictions loader
+    mocker.patch(
+        "llmsql.evaluation.evaluate.load_jsonl",
+        return_value=[{"question_id": 1, "completion": "SELECT 1"}],
+    )
+
+    # DB connection
+    fake_conn = MagicMock()
+    mocker.patch("llmsql.evaluation.evaluate.connect_sqlite", return_value=fake_conn)
+
+    # evaluate_sample → always correct prediction
+    mocker.patch(
+        "llmsql.evaluation.evaluate.evaluate_sample",
+        return_value=(1, None, {"pred_none": 0, "gold_none": 0, "sql_error": 0}),
+    )
+
+    # rich logging
+    mocker.patch("llmsql.evaluation.evaluate.log_mismatch")
+    mocker.patch("llmsql.evaluation.evaluate.print_summary")
+
+    # download files
+    mocker.patch(
+        "llmsql.evaluation.evaluate.download_benchmark_file",
+        side_effect=lambda filename, wd: str(Path(wd) / filename),
+    )
+
+    # report writer
+    mocker.patch("llmsql.evaluation.evaluate.save_json_report")
+
+    return tmp_path

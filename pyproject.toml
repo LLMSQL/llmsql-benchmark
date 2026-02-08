@@ -4,7 +4,7 @@ build-backend = "pdm.backend"
 
 [project]
 name = "llmsql"
-version = "0.1.13"
+version = "0.1.14"
 description = "A Text2SQL benchmark for evaluation of Large Language Models"
 keywords = ["llm", "sql", "benchmark", "evaluation", "ai", "nlp"]
 authors = [
@@ -61,6 +61,7 @@ dev = [
     "sphinx-autoapi>=3.6.0",
     "sphinx-autobuild>=2024.10.3",
     "sphinx-copybutton>=0.5.2",
+    "pytest-mock>=3.15.1",
 ]
 vllm = [
     "vllm>=0.4.2",

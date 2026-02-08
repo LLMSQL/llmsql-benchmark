@@ -5,12 +5,12 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Inference API Reference &#8212; LLMSQL 0.1.13 documentation</title>
+    <title>Inference API Reference &#8212; LLMSQL 0.1.14 documentation</title>
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=5349f25f" />
-    <link rel="stylesheet" type="text/css" href="../_static/basic.css?v=5c69cfe2" />
+    <link rel="stylesheet" type="text/css" href="../_static/basic.css?v=29da98fa" />
     <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/front_page.css?v=9e26f69c" />
-    <script src="../_static/documentation_options.js?v=8d02545a"></script>
+    <script src="../_static/documentation_options.js?v=468bc497"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -20,7 +20,7 @@
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="Evaluation API Reference" href="evaluation.html" />
-    <link rel="prev" title="Usage Overview" href="usage.html" />
+    <link rel="prev" title="Usage Overview" href="usage.html" /> 
   </head><body>
     <div class="related" role="navigation" aria-label="Related">
       <h3>Navigation</h3>
@@ -29,168 +29,25 @@
           <a href="../genindex.html" title="General Index"
              accesskey="I">index</a></li>
         <li class="right" >
-          <a href="../py-modindex.html" title="Python Module Index"
-             >modules</a> |</li>
-        <li class="right" >
           <a href="evaluation.html" title="Evaluation API Reference"
              accesskey="N">next</a> |</li>
         <li class="right" >
           <a href="usage.html" title="Usage Overview"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">LLMSQL 0.1.13 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">LLMSQL 0.1.14 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">LLMSQL package Documentation</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">Inference API Reference</a></li>
+        <li class="nav-item nav-item-this"><a href="">Inference API Reference</a></li> 
       </ul>
-    </div>
+    </div>  
 
     <div class="document">
       <div class="documentwrapper">
         <div class="bodywrapper">
           <div class="body" role="main">
-
-  <section id="module-llmsql.inference.inference_transformers">
-<span id="inference-api-reference"></span><h1>Inference API Reference<a class="headerlink" href="#module-llmsql.inference.inference_transformers" title="Link to this heading">¶</a></h1>
-<section id="llmsql-transformers-inference-function">
-<h2>LLMSQL Transformers Inference Function<a class="headerlink" href="#llmsql-transformers-inference-function" title="Link to this heading">¶</a></h2>
-<p>This module provides a single function <cite>inference_transformers()</cite> that performs
-text-to-SQL generation using large language models via the Transformers backend.</p>
-<p class="rubric">Example</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">llmsql.inference</span><span class="w"> </span><span class="kn">import</span> <span class="n">inference_transformers</span>
-
-<span class="n">results</span> <span class="o">=</span> <span class="n">inference_transformers</span><span class="p">(</span>
-    <span class="n">model_or_model_name_or_path</span><span class="o">=</span><span class="s2">&quot;Qwen/Qwen2.5-1.5B-Instruct&quot;</span><span class="p">,</span>
-    <span class="n">output_file</span><span class="o">=</span><span class="s2">&quot;outputs/preds_transformers.jsonl&quot;</span><span class="p">,</span>
-    <span class="n">questions_path</span><span class="o">=</span><span class="s2">&quot;data/questions.jsonl&quot;</span><span class="p">,</span>
-    <span class="n">tables_path</span><span class="o">=</span><span class="s2">&quot;data/tables.jsonl&quot;</span><span class="p">,</span>
-    <span class="n">num_fewshots</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
-    <span class="n">batch_size</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
-    <span class="n">max_new_tokens</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span>
-    <span class="n">temperature</span><span class="o">=</span><span class="mf">0.7</span><span class="p">,</span>
-    <span class="n">model_args</span><span class="o">=</span><span class="p">{</span>
-        <span class="s2">&quot;torch_dtype&quot;</span><span class="p">:</span> <span class="s2">&quot;bfloat16&quot;</span><span class="p">,</span>
-    <span class="p">},</span>
-    <span class="n">generate_kwargs</span><span class="o">=</span><span class="p">{</span>
-        <span class="s2">&quot;do_sample&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
-    <span class="p">},</span>
-<span class="p">)</span>
-</pre></div>
-</div>
-<p class="rubric">Notes</p>
-<p>This function uses the HuggingFace Transformers backend and may produce
-slightly different outputs than the vLLM backend even with the same inputs
-due to differences in implementation and numerical precision.</p>
-</section>
-<dl class="py function">
-<dt class="sig sig-object py" id="llmsql.inference.inference_transformers.inference_transformers">
-<span class="sig-prename descclassname"><span class="pre">llmsql.inference.inference_transformers.</span></span><span class="sig-name descname"><span class="pre">inference_transformers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_or_model_name_or_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">AutoModelForCausalLM</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tokenizer_or_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Any</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">trust_remote_code</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dtype</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">torch.float16</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device_map</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'auto'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hf_token</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tokenizer_kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chat_template</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_new_tokens</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">256</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">temperature</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">do_sample</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">top_p</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">top_k</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">50</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">generation_kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'llm_sql_predictions.jsonl'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">questions_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tables_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">workdir_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'llmsql_workdir'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_fewshots</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">8</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">42</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/llmsql/inference/inference_transformers.html#inference_transformers"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#llmsql.inference.inference_transformers.inference_transformers" title="Link to this definition">¶</a></dt>
-<dd><p>Inference a causal model (Transformers) on the LLMSQL benchmark.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>model_or_model_name_or_path</strong> – Model object or HF model name/path.</p></li>
-<li><p><strong>tokenizer_or_name</strong> – Tokenizer object or HF tokenizer name/path.</p></li>
-<li><p><strong>Loading</strong> (<em># Tokenizer</em>)</p></li>
-<li><p><strong>trust_remote_code</strong> – Whether to trust remote code (default: True).</p></li>
-<li><p><strong>dtype</strong> – Torch dtype for model (default: float16).</p></li>
-<li><p><strong>device_map</strong> – Device placement strategy (default: “auto”).</p></li>
-<li><p><strong>hf_token</strong> – Hugging Face authentication token.</p></li>
-<li><p><strong>model_kwargs</strong> – Additional arguments for AutoModelForCausalLM.from_pretrained().
-Note: ‘dtype’, ‘device_map’, ‘trust_remote_code’, ‘token’
-are handled separately and will override values here.</p></li>
-<li><p><strong>Loading</strong></p></li>
-<li><p><strong>tokenizer_kwargs</strong> – Additional arguments for AutoTokenizer.from_pretrained(). ‘padding_side’ defaults to “left”.
-Note: ‘trust_remote_code’, ‘token’ are handled separately and will override values here.</p></li>
-<li><p><strong>Chat</strong> (<em># Prompt &amp;</em>)</p></li>
-<li><p><strong>chat_template</strong> – Optional chat template to apply before tokenization.</p></li>
-<li><p><strong>Generation</strong> (<em>#</em>)</p></li>
-<li><p><strong>max_new_tokens</strong> – Maximum tokens to generate per sequence.</p></li>
-<li><p><strong>temperature</strong> – Sampling temperature (0.0 = greedy).</p></li>
-<li><p><strong>do_sample</strong> – Whether to use sampling vs greedy decoding.</p></li>
-<li><p><strong>top_p</strong> – Nucleus sampling parameter.</p></li>
-<li><p><strong>top_k</strong> – Top-k sampling parameter.</p></li>
-<li><p><strong>generation_kwargs</strong> – Additional arguments for model.generate().
-Note: ‘max_new_tokens’, ‘temperature’, ‘do_sample’,
-‘top_p’, ‘top_k’ are handled separately.</p></li>
-<li><p><strong>Benchmark</strong> (<em>#</em>)</p></li>
-<li><p><strong>output_file</strong> – Output JSONL file path for completions.</p></li>
-<li><p><strong>questions_path</strong> – Path to benchmark questions JSONL.</p></li>
-<li><p><strong>tables_path</strong> – Path to benchmark tables JSONL.</p></li>
-<li><p><strong>workdir_path</strong> – Working directory path.</p></li>
-<li><p><strong>num_fewshots</strong> – Number of few-shot examples (0, 1, or 5).</p></li>
-<li><p><strong>batch_size</strong> – Batch size for inference.</p></li>
-<li><p><strong>seed</strong> – Random seed for reproducibility.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>List of generated SQL results with metadata.</p>
-</dd>
-</dl>
-</dd></dl>
-
+            
+  <section id="inference-api-reference">
+<h1>Inference API Reference<a class="headerlink" href="#inference-api-reference" title="Link to this heading">¶</a></h1>
 <p>—</p>
-<section id="llmsql-vllm-inference-function">
-<span id="module-llmsql.inference.inference_vllm"></span><h2>LLMSQL vLLM Inference Function<a class="headerlink" href="#llmsql-vllm-inference-function" title="Link to this heading">¶</a></h2>
-<p>This module provides a single function <cite>inference_vllm()</cite> that performs
-text-to-SQL generation using large language models via the vLLM backend.</p>
-<p class="rubric">Example</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">llmsql.inference</span><span class="w"> </span><span class="kn">import</span> <span class="n">inference_vllm</span>
-
-<span class="n">results</span> <span class="o">=</span> <span class="n">inference_vllm</span><span class="p">(</span>
-    <span class="n">model_name</span><span class="o">=</span><span class="s2">&quot;Qwen/Qwen2.5-1.5B-Instruct&quot;</span><span class="p">,</span>
-    <span class="n">output_file</span><span class="o">=</span><span class="s2">&quot;outputs/predictions.jsonl&quot;</span><span class="p">,</span>
-    <span class="n">questions_path</span><span class="o">=</span><span class="s2">&quot;data/questions.jsonl&quot;</span><span class="p">,</span>
-    <span class="n">tables_path</span><span class="o">=</span><span class="s2">&quot;data/tables.jsonl&quot;</span><span class="p">,</span>
-    <span class="n">num_fewshots</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
-    <span class="n">batch_size</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
-    <span class="n">max_new_tokens</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span>
-    <span class="n">temperature</span><span class="o">=</span><span class="mf">0.7</span><span class="p">,</span>
-    <span class="n">tensor_parallel_size</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
-<span class="p">)</span>
-</pre></div>
-</div>
-<p class="rubric">Notes</p>
-<p>This function uses the vLLM backend. Outputs may differ from the Transformers
-backend due to differences in implementation, batching, and numerical precision.</p>
-</section>
-<dl class="py function">
-<dt class="sig sig-object py" id="llmsql.inference.inference_vllm.inference_vllm">
-<span class="sig-prename descclassname"><span class="pre">llmsql.inference.inference_vllm.</span></span><span class="sig-name descname"><span class="pre">inference_vllm</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">trust_remote_code</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tensor_parallel_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hf_token</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">llm_kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_chat_template</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_new_tokens</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">256</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">temperature</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">do_sample</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampling_kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'llm_sql_predictions.jsonl'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">questions_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tables_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">workdir_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'llmsql_workdir'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_fewshots</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">8</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">42</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/llmsql/inference/inference_vllm.html#inference_vllm"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#llmsql.inference.inference_vllm.inference_vllm" title="Link to this definition">¶</a></dt>
-<dd><p>Run SQL generation using vLLM.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>model_name</strong> – Hugging Face model name or path.</p></li>
-<li><p><strong>Loading</strong> (<em># Model</em>)</p></li>
-<li><p><strong>trust_remote_code</strong> – Whether to trust remote code (default: True).</p></li>
-<li><p><strong>tensor_parallel_size</strong> – Number of GPUs for tensor parallelism (default: 1).</p></li>
-<li><p><strong>hf_token</strong> – Hugging Face authentication token.</p></li>
-<li><p><strong>llm_kwargs</strong> – Additional arguments for vllm.LLM().
-Note: ‘model’, ‘tokenizer’, ‘tensor_parallel_size’,
-‘trust_remote_code’ are handled separately and will
-override values here.</p></li>
-<li><p><strong>Generation</strong> (<em>#</em>)</p></li>
-<li><p><strong>max_new_tokens</strong> – Maximum tokens to generate per sequence.</p></li>
-<li><p><strong>temperature</strong> – Sampling temperature (0.0 = greedy).</p></li>
-<li><p><strong>do_sample</strong> – Whether to use sampling vs greedy decoding.</p></li>
-<li><p><strong>sampling_kwargs</strong> – Additional arguments for vllm.SamplingParams().
-Note: ‘temperature’, ‘max_tokens’ are handled
-separately and will override values here.</p></li>
-<li><p><strong>Benchmark</strong> (<em>#</em>)</p></li>
-<li><p><strong>output_file</strong> – Path to write outputs (will be overwritten).</p></li>
-<li><p><strong>questions_path</strong> – Path to questions.jsonl (auto-downloads if missing).</p></li>
-<li><p><strong>tables_path</strong> – Path to tables.jsonl (auto-downloads if missing).</p></li>
-<li><p><strong>workdir_path</strong> – Directory to store downloaded data.</p></li>
-<li><p><strong>num_fewshots</strong> – Number of few-shot examples (0, 1, or 5).</p></li>
-<li><p><strong>batch_size</strong> – Number of questions per generation batch.</p></li>
-<li><p><strong>seed</strong> – Random seed for reproducibility.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>List of dicts containing <cite>question_id</cite> and generated <cite>completion</cite>.</p>
-</dd>
-</dl>
-</dd></dl>
-
 <p>—</p>
 <div style="text-align:center; margin-top:2rem; color:#666;">
   💬 Made with ❤️ by the LLMSQL Team
@@ -203,19 +60,6 @@ separately and will override values here.</p></li>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="Main">
         <div class="sphinxsidebarwrapper">
-  <div>
-    <h3><a href="../index.html">Table of Contents</a></h3>
-    <ul>
-<li><a class="reference internal" href="#">Inference API Reference</a><ul>
-<li><a class="reference internal" href="#llmsql-transformers-inference-function">LLMSQL Transformers Inference Function</a></li>
-<li><a class="reference internal" href="#llmsql.inference.inference_transformers.inference_transformers"><code class="docutils literal notranslate"><span class="pre">inference_transformers()</span></code></a></li>
-<li><a class="reference internal" href="#llmsql-vllm-inference-function">LLMSQL vLLM Inference Function</a></li>
-<li><a class="reference internal" href="#llmsql.inference.inference_vllm.inference_vllm"><code class="docutils literal notranslate"><span class="pre">inference_vllm()</span></code></a></li>
-</ul>
-</li>
-</ul>
-
-  </div>
   <div>
     <h4>Previous topic</h4>
     <p class="topless"><a href="usage.html"
@@ -254,17 +98,14 @@ separately and will override values here.</p></li>
           <a href="../genindex.html" title="General Index"
              >index</a></li>
         <li class="right" >
-          <a href="../py-modindex.html" title="Python Module Index"
-             >modules</a> |</li>
-        <li class="right" >
           <a href="evaluation.html" title="Evaluation API Reference"
              >next</a> |</li>
         <li class="right" >
           <a href="usage.html" title="Usage Overview"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">LLMSQL 0.1.13 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">LLMSQL 0.1.14 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="index.html" >LLMSQL package Documentation</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">Inference API Reference</a></li>
+        <li class="nav-item nav-item-this"><a href="">Inference API Reference</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">

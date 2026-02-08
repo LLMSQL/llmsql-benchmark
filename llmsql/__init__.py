@@ -2,14 +2,14 @@
 LLMSQL — A Text2SQL benchmark for evaluation of Large Language Models
 """
 
-__version__ = "0.1.13"
+__version__ = "0.1.14"
 
 
 def __getattr__(name: str):  # type: ignore
-    if name == "LLMSQLEvaluator":
-        from .evaluation.evaluator import LLMSQLEvaluator
+    if name == "evaluate":
+        from .evaluation.evaluate import evaluate
 
-        return LLMSQLEvaluator
+        return evaluate
     elif name == "inference_vllm":
         try:
             from .inference.inference_vllm import inference_vllm
@@ -29,4 +29,4 @@ def __getattr__(name: str):  # type: ignore
     raise AttributeError(f"module {__name__} has no attribute {name!r}")
 
 
-__all__ = ["LLMSQLEvaluator", "inference_vllm", "inference_transformers"]
+__all__ = ["evaluate", "inference_vllm", "inference_transformers"]

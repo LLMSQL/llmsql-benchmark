@@ -5,12 +5,12 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Evaluation API Reference &#8212; LLMSQL 0.1.13 documentation</title>
+    <title>Evaluation API Reference &#8212; LLMSQL 0.1.14 documentation</title>
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=5349f25f" />
-    <link rel="stylesheet" type="text/css" href="../_static/basic.css?v=5c69cfe2" />
+    <link rel="stylesheet" type="text/css" href="../_static/basic.css?v=29da98fa" />
     <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/front_page.css?v=9e26f69c" />
-    <script src="../_static/documentation_options.js?v=8d02545a"></script>
+    <script src="../_static/documentation_options.js?v=468bc497"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -19,7 +19,7 @@
     <link rel="icon" href="../_static/favicon.png"/>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="prev" title="Inference API Reference" href="inference.html" />
+    <link rel="prev" title="Inference API Reference" href="inference.html" /> 
   </head><body>
     <div class="related" role="navigation" aria-label="Related">
       <h3>Navigation</h3>
@@ -28,87 +28,133 @@
           <a href="../genindex.html" title="General Index"
              accesskey="I">index</a></li>
         <li class="right" >
-          <a href="../py-modindex.html" title="Python Module Index"
-             >modules</a> |</li>
-        <li class="right" >
           <a href="inference.html" title="Inference API Reference"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">LLMSQL 0.1.13 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">LLMSQL 0.1.14 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">LLMSQL package Documentation</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">Evaluation API Reference</a></li>
+        <li class="nav-item nav-item-this"><a href="">Evaluation API Reference</a></li> 
       </ul>
-    </div>
+    </div>  
 
     <div class="document">
       <div class="documentwrapper">
         <div class="bodywrapper">
           <div class="body" role="main">
-
-  <section id="module-llmsql.evaluation.evaluator">
-<span id="evaluation-api-reference"></span><h1>Evaluation API Reference<a class="headerlink" href="#module-llmsql.evaluation.evaluator" title="Link to this heading">¶</a></h1>
-<p>LLMSQL Benchmark Evaluator</p>
-<p>This module provides a high-level class <cite>LLMSQLEvaluator</cite> for
-evaluating model-generated SQL queries against the gold benchmark,
-logging mismatches and generating detailed evaluation reports.</p>
-<p>Example usage:</p>
-<blockquote>
-<div><p>from llmsql import LLMSQLEvaluator</p>
-<p>evaluator = LLMSQLEvaluator(workdir_path=”llmsql_workdir”)
-report = evaluator.evaluate(“examples/test_output.jsonl”)
-print(report)</p>
-</div></blockquote>
-<p class="rubric">Notes</p>
+            
+  <section id="evaluation-api-reference">
+<h1>Evaluation API Reference<a class="headerlink" href="#evaluation-api-reference" title="Link to this heading">¶</a></h1>
+<p>The <cite>evaluate()</cite> function allows you to benchmark Text-to-SQL model outputs
+against the LLMSQL gold queries and SQLite database. It prints metrics, logs
+mismatches, and saves detailed reports automatically.</p>
+<section id="features">
+<h2>Features<a class="headerlink" href="#features" title="Link to this heading">¶</a></h2>
 <ul class="simple">
-<li><p>If <cite>questions.jsonl</cite> or <cite>sqlite_tables.db</cite> are not found locally, they
-will be automatically downloaded from the Hugging Face Hub.</p></li>
-<li><p>The <cite>evaluate</cite> method returns a metrics dictionary and optionally saves
-a JSON report with mismatches and statistics.</p></li>
+<li><p>Evaluate model predictions from JSONL files or Python dicts.</p></li>
+<li><p>Automatically download benchmark questions and SQLite DB if missing.</p></li>
+<li><p>Prints mismatch summaries and supports configurable reporting.</p></li>
+<li><p>Saves detailed JSON report with metrics, mismatches, timestamp, and input mode.</p></li>
 </ul>
-<dl class="py class">
-<dt class="sig sig-object py" id="llmsql.evaluation.evaluator.LLMSQLEvaluator">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">llmsql.evaluation.evaluator.</span></span><span class="sig-name descname"><span class="pre">LLMSQLEvaluator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">workdir_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'llmsql_workdir'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/llmsql/evaluation/evaluator.html#LLMSQLEvaluator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#llmsql.evaluation.evaluator.LLMSQLEvaluator" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<dl class="simple">
-<dt>High-level class for managing LLMSQL benchmark evaluation:</dt><dd><ul class="simple">
-<li><p>Downloading the benchmark SQLite database.</p></li>
-<li><p>Evaluating model predictions against gold queries.</p></li>
-</ul>
-</dd>
-</dl>
-<dl class="py method">
-<dt class="sig sig-object py" id="llmsql.evaluation.evaluator.LLMSQLEvaluator.evaluate">
-<span class="sig-name descname"><span class="pre">evaluate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">outputs_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">questions_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">db_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_report</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show_mismatches</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_mismatches</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">5</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="reference internal" href="../_modules/llmsql/evaluation/evaluator.html#LLMSQLEvaluator.evaluate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#llmsql.evaluation.evaluator.LLMSQLEvaluator.evaluate" title="Link to this definition">¶</a></dt>
-<dd><p>Evaluate predicted SQL queries against benchmark ground truth.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>outputs_path</strong> (<em>str</em>) – Path to JSONL file with model predictions.</p></li>
-<li><p><strong>questions_path</strong> (<em>str</em>) – Path to benchmark questions JSONL.</p></li>
-<li><p><strong>save_report</strong> (<em>str</em><em>, </em><em>optional</em>) – If set, saves detailed JSON report.</p></li>
-<li><p><strong>show_mismatches</strong> (<em>bool</em><em>, </em><em>optional</em>) – Print mismatches to log.</p></li>
-<li><p><strong>max_mismatches</strong> (<em>int</em><em>, </em><em>optional</em>) – Max mismatches to display.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Metrics summary.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Dict</p>
-</dd>
-</dl>
-<p class="rubric">Example</p>
-<p>from llmsql import LLMSQLEvaluator</p>
-<p>evaluator = LLMSQLEvaluator(workdir_path=”llmsql_workdir”)
-report = evaluator.evaluate(“examples/test_output.jsonl”)
-print(report)</p>
-</dd></dl>
+</section>
+<section id="usage-examples">
+<h2>Usage Examples<a class="headerlink" href="#usage-examples" title="Link to this heading">¶</a></h2>
+<p>Evaluate from a JSONL file:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">llmsql.evaluation.evaluate</span><span class="w"> </span><span class="kn">import</span> <span class="n">evaluate</span>
 
-</dd></dl>
+<span class="n">report</span> <span class="o">=</span> <span class="n">evaluate</span><span class="p">(</span><span class="s2">&quot;path_to_outputs.jsonl&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">report</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Evaluate from a list of Python dicts:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">predictions</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="p">{</span><span class="s2">&quot;question_id&quot;</span><span class="p">:</span> <span class="s2">&quot;1&quot;</span><span class="p">,</span> <span class="s2">&quot;predicted_sql&quot;</span><span class="p">:</span> <span class="s2">&quot;SELECT name FROM Table WHERE age &gt; 30&quot;</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">&quot;question_id&quot;</span><span class="p">:</span> <span class="s2">&quot;2&quot;</span><span class="p">,</span> <span class="s2">&quot;predicted_sql&quot;</span><span class="p">:</span> <span class="s2">&quot;SELECT COUNT(*) FROM Table&quot;</span><span class="p">},</span>
+<span class="p">]</span>
 
+<span class="n">report</span> <span class="o">=</span> <span class="n">evaluate</span><span class="p">(</span><span class="n">predictions</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">report</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Providing your own DB and questions (skip workdir):</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">report</span> <span class="o">=</span> <span class="n">evaluate</span><span class="p">(</span>
+    <span class="s2">&quot;path_to_outputs.jsonl&quot;</span><span class="p">,</span>
+    <span class="n">questions_path</span><span class="o">=</span><span class="s2">&quot;bench/questions.jsonl&quot;</span><span class="p">,</span>
+    <span class="n">db_path</span><span class="o">=</span><span class="s2">&quot;bench/sqlite_tables.db&quot;</span><span class="p">,</span>
+    <span class="n">workdir_path</span><span class="o">=</span><span class="kc">None</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="function-arguments">
+<h2>Function Arguments<a class="headerlink" href="#function-arguments" title="Link to this heading">¶</a></h2>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 20.0%" />
+<col style="width: 80.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Argument</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>outputs</p></td>
+<td><p>Path to JSONL file or a list of prediction dicts (required).</p></td>
+</tr>
+<tr class="row-odd"><td><p>workdir_path</p></td>
+<td><p>Directory for automatic benchmark downloads. Ignored if both questions_path and db_path are provided. Default: “llmsql_workdir”.</p></td>
+</tr>
+<tr class="row-even"><td><p>questions_path</p></td>
+<td><p>Optional path to benchmark questions JSONL file.</p></td>
+</tr>
+<tr class="row-odd"><td><p>db_path</p></td>
+<td><p>Optional path to SQLite DB with evaluation tables.</p></td>
+</tr>
+<tr class="row-even"><td><p>save_report</p></td>
+<td><p>Path to save detailed JSON report. Defaults to “evaluation_results_{uuid}.json”.</p></td>
+</tr>
+<tr class="row-odd"><td><p>show_mismatches</p></td>
+<td><p>Print mismatches while evaluating. Default True.</p></td>
+</tr>
+<tr class="row-even"><td><p>max_mismatches</p></td>
+<td><p>Maximum number of mismatches to display. Default 5.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="input-format">
+<h2>Input Format<a class="headerlink" href="#input-format" title="Link to this heading">¶</a></h2>
+<p>The predictions should be in JSONL format:</p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span><span class="nt">&quot;question_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;1&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;predicted_sql&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;SELECT name FROM Table WHERE age &gt; 30&quot;</span><span class="p">}</span>
+<span class="p">{</span><span class="nt">&quot;question_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;predicted_sql&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;SELECT COUNT(*) FROM Table&quot;</span><span class="p">}</span>
+<span class="p">{</span><span class="nt">&quot;question_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;3&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;predicted_sql&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;SELECT * FROM Table WHERE active=1&quot;</span><span class="p">}</span>
+</pre></div>
+</div>
+</section>
+<section id="output-metrics">
+<h2>Output Metrics<a class="headerlink" href="#output-metrics" title="Link to this heading">¶</a></h2>
+<p>The function returns a dictionary with the following keys:</p>
+<ul class="simple">
+<li><p>total – Total queries evaluated</p></li>
+<li><p>matches – Queries where predicted SQL results match gold results</p></li>
+<li><p>pred_none – Queries where the model returned NULL or no result</p></li>
+<li><p>gold_none – Queries where the reference result was NULL or no result</p></li>
+<li><p>sql_errors – Invalid SQL or execution errors</p></li>
+<li><p>accuracy – Overall exact match accuracy</p></li>
+<li><p>mismatches – List of mismatched queries with details</p></li>
+<li><p>timestamp – Evaluation timestamp</p></li>
+<li><p>input_mode – How results were provided (“jsonl_path” or “dict_list”)</p></li>
+</ul>
+</section>
+<section id="report-saving">
+<h2>Report Saving<a class="headerlink" href="#report-saving" title="Link to this heading">¶</a></h2>
+<p>By default, a report is saved automatically as <cite>evaluation_results_{uuid}.json</cite> in the current directory.
+It contains metrics, mismatches, timestamp, and input mode. You can override this path using <cite>save_report</cite>.</p>
+<p>—</p>
 <p>—</p>
 <div style="text-align:center; margin-top:2rem; color:#666;">
   💬 Made with ❤️ by the LLMSQL Team
 </div></section>
+</section>
 
 
             <div class="clearer"></div>
@@ -121,10 +167,12 @@ print(report)</p>
     <h3><a href="../index.html">Table of Contents</a></h3>
     <ul>
 <li><a class="reference internal" href="#">Evaluation API Reference</a><ul>
-<li><a class="reference internal" href="#llmsql.evaluation.evaluator.LLMSQLEvaluator"><code class="docutils literal notranslate"><span class="pre">LLMSQLEvaluator</span></code></a><ul>
-<li><a class="reference internal" href="#llmsql.evaluation.evaluator.LLMSQLEvaluator.evaluate"><code class="docutils literal notranslate"><span class="pre">LLMSQLEvaluator.evaluate()</span></code></a></li>
-</ul>
-</li>
+<li><a class="reference internal" href="#features">Features</a></li>
+<li><a class="reference internal" href="#usage-examples">Usage Examples</a></li>
+<li><a class="reference internal" href="#function-arguments">Function Arguments</a></li>
+<li><a class="reference internal" href="#input-format">Input Format</a></li>
+<li><a class="reference internal" href="#output-metrics">Output Metrics</a></li>
+<li><a class="reference internal" href="#report-saving">Report Saving</a></li>
 </ul>
 </li>
 </ul>
@@ -163,14 +211,11 @@ print(report)</p>
           <a href="../genindex.html" title="General Index"
              >index</a></li>
         <li class="right" >
-          <a href="../py-modindex.html" title="Python Module Index"
-             >modules</a> |</li>
-        <li class="right" >
           <a href="inference.html" title="Inference API Reference"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">LLMSQL 0.1.13 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">LLMSQL 0.1.14 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="index.html" >LLMSQL package Documentation</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">Evaluation API Reference</a></li>
+        <li class="nav-item nav-item-this"><a href="">Evaluation API Reference</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">

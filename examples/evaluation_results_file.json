@@ -1,0 +1,299 @@
+{
+  "total": 100,
+  "matches": 80,
+  "pred_none": 2,
+  "gold_none": 0,
+  "sql_errors": 0,
+  "accuracy": 0.8,
+  "mismatches": [
+    {
+      "question_id": 15842,
+      "question": "What are the total amount of numbers on the Toronto team in 2005-06?",
+      "gold_sql": "SELECT COUNT(\"No.\") FROM \"1-10015132-9\" WHERE \"Years in Toronto\" = '2005-06';",
+      "model_output": "SELECT SUM(\"No.\") FROM \"Table\" WHERE \"Years in Toronto\" = \"2005-06\";",
+      "gold_results": [
+        [
+          1
+        ]
+      ],
+      "prediction_results": [
+        [
+          13
+        ]
+      ]
+    },
+    {
+      "question_id": 15863,
+      "question": "When the value of \"Since Beginning of Big 12\" is synonymous with its' category, what are the in Ames values?",
+      "gold_sql": "SELECT \"in Ames\" FROM \"1-10429820-13\" WHERE \"Since Beginning of Big 12\" = 'Since Beginning of Big 12';",
+      "model_output": "SELECT \"in Ames\" FROM \"Table\" WHERE \"Since Beginning of Big 12\" = \"Iowa State vs.\";",
+      "gold_results": [
+        [
+          "in Ames"
+        ]
+      ],
+      "prediction_results": []
+    },
+    {
+      "question_id": 15864,
+      "question": "what's the u.s. open cup status for regular season of 4th, Atlantic Division ",
+      "gold_sql": "SELECT \"U.S. Open Cup\" FROM \"1-1046170-5\" WHERE \"Regular Season\" = '4th, Atlantic Division';",
+      "model_output": "SELECT \"U.S. Open Cup\" FROM \"Table\" WHERE \"Regular Season\" = \"4th, Atlantic Division\" AND \"Division\" = \"Atlantic Division\";",
+      "gold_results": [
+        [
+          "Did Not Enter"
+        ]
+      ],
+      "prediction_results": []
+    },
+    {
+      "question_id": 15865,
+      "question": "how many division  Did Not Qualify for u.s. open cup in 2003",
+      "gold_sql": "SELECT \"Division\" FROM \"1-1046170-5\" WHERE \"U.S. Open Cup\" = 'Did Not Qualify' AND \"Year\" = 2003.0;",
+      "model_output": "SELECT COUNT(*) FROM \"Table\" WHERE \"Year\" = 2003 AND \"U.S. Open Cup\" = \"Did Not Qualify\";",
+      "gold_results": [
+        [
+          "2"
+        ]
+      ],
+      "prediction_results": [
+        [
+          1
+        ]
+      ]
+    },
+    {
+      "question_id": 15866,
+      "question": "which round is u.s. open cup Division Semifinals",
+      "gold_sql": "SELECT \"U.S. Open Cup\" FROM \"1-1046170-5\" WHERE \"Playoffs\" = 'Division Semifinals';",
+      "model_output": "SELECT \"U.S. Open Cup\" FROM \"Table\" WHERE \"Division\" = \"Semifinals\";",
+      "gold_results": [
+        [
+          "3rd Round"
+        ]
+      ],
+      "prediction_results": []
+    },
+    {
+      "question_id": 15875,
+      "question": "What is the highest Rd that Tom Sneva had the pole position in?",
+      "gold_sql": "SELECT MAX(\"Rd\") FROM \"1-10706961-2\" WHERE \"Pole Position\" = 'Tom Sneva';",
+      "model_output": "SELECT MAX(\"Rd\") FROM \"Table\" WHERE \"Name\" = \"Tom Sneva\" AND \"Pole Position\" = \"Tom Sneva\";",
+      "gold_results": [
+        [
+          7.0
+        ]
+      ],
+      "prediction_results": [
+        [
+          null
+        ]
+      ]
+    },
+    {
+      "question_id": 15890,
+      "question": "How many fastest laps were there for a rd that equals 10?",
+      "gold_sql": "SELECT COUNT(\"Fastest Lap\") FROM \"1-10706879-3\" WHERE \"Rd\" = 10.0;",
+      "model_output": "SELECT COUNT(\"Fastest Lap\") FROM \"Table\" WHERE \"Rd\" = 10 AND \"Fastest Lap\" != \"Unknown\";",
+      "gold_results": [
+        [
+          1
+        ]
+      ],
+      "prediction_results": [
+        [
+          0
+        ]
+      ]
+    },
+    {
+      "question_id": 15893,
+      "question": "Name the total number of percentage growth 2000-2008 of Uganda?",
+      "gold_sql": "SELECT COUNT(\"% growth (2000–2008)\") FROM \"1-10733530-3\" WHERE \"Nation\" = 'Uganda';",
+      "model_output": "SELECT \"% growth (2000–2008)\" FROM \"Table\" WHERE \"Nation\" = \"Uganda\";",
+      "gold_results": [
+        [
+          1
+        ]
+      ],
+      "prediction_results": [
+        [
+          4900.0
+        ]
+      ]
+    },
+    {
+      "question_id": 15905,
+      "question": "The canadian airdate of 11 February 2008 applied to what series number?",
+      "gold_sql": "SELECT COUNT(\"No. in series\") FROM \"1-10935205-1\" WHERE \"Canadian airdate\" = '11 February 2008';",
+      "model_output": "SELECT \"No. in series\" FROM \"Table\" WHERE \"Canadian airdate\" = \"11 February 2008\";",
+      "gold_results": [
+        [
+          1
+        ]
+      ],
+      "prediction_results": [
+        [
+          125.0
+        ]
+      ]
+    },
+    {
+      "question_id": 15906,
+      "question": "The U.S. airdate of 4 April 2008 had a production code of what?",
+      "gold_sql": "SELECT MAX(\"Production code\") FROM \"1-10935205-1\" WHERE \"US airdate\" = '4 April 2008';",
+      "model_output": "SELECT \"Production code\" FROM \"Table\" WHERE \"US airdate\" = \"4 April 2008\";",
+      "gold_results": [
+        [
+          714.0
+        ]
+      ],
+      "prediction_results": [
+        [
+          713.0
+        ],
+        [
+          714.0
+        ]
+      ]
+    },
+    {
+      "question_id": 15907,
+      "question": "The episode titled \"Don't Stop Believin'\" was what highest number of the season?",
+      "gold_sql": "SELECT MAX(\"No. in season\") FROM \"1-10935205-1\" WHERE \"Title\" = '\"Don''t Stop Believin''\"';",
+      "model_output": "SELECT \"No. in season\" FROM \"Table\" WHERE \"Title\" = \"Don't Stop Believin'\";",
+      "gold_results": [
+        [
+          22.0
+        ]
+      ],
+      "prediction_results": []
+    },
+    {
+      "question_id": 15909,
+      "question": "The canadian airdate of 17 March 2008 had how many numbers in the season?",
+      "gold_sql": "SELECT COUNT(\"No. in season\") FROM \"1-10935205-1\" WHERE \"Canadian airdate\" = '17 March 2008';",
+      "model_output": "SELECT \"No. in season\" FROM \"Table\" WHERE \"Canadian airdate\" = \"17 March 2008\";",
+      "gold_results": [
+        [
+          1
+        ]
+      ],
+      "prediction_results": [
+        [
+          11.0
+        ]
+      ]
+    },
+    {
+      "question_id": 15911,
+      "question": "Who directed the episode \"Great Sexpectations (2)\"?",
+      "gold_sql": "SELECT \"Director\" FROM \"1-10953197-5\" WHERE \"Title\" = '\"Great Sexpectations (2)\"';",
+      "model_output": "SELECT \"Director\" FROM \"Table\" WHERE \"Title\" = \"Great Sexpectations (2)\";",
+      "gold_results": [
+        [
+          "Richard Lang"
+        ]
+      ],
+      "prediction_results": []
+    },
+    {
+      "question_id": 15912,
+      "question": "Which player from the 2004 CFL draft attended Wilfrid Laurier?",
+      "gold_sql": "SELECT \"Player\" FROM \"1-10975034-2\" WHERE \"College\" = 'Wilfrid Laurier';",
+      "model_output": "SELECT \"Player\" FROM \"Table\" WHERE \"College\" = \"Wilfrid Laurier\" AND \"Pick #\" = 2004;",
+      "gold_results": [
+        [
+          "Ryan Jeffrey"
+        ]
+      ],
+      "prediction_results": []
+    },
+    {
+      "question_id": 15915,
+      "question": "How many foreigners in percentage terms had a population of 4.911?",
+      "gold_sql": "SELECT COUNT(\"Foreign nationals in %\") FROM \"1-10992-3\" WHERE \"Population\" = '4.911';",
+      "model_output": "SELECT \"Foreign nationals in %\" FROM \"Table\" WHERE \"Population\" = \"4.911\";",
+      "gold_results": [
+        [
+          1
+        ]
+      ],
+      "prediction_results": [
+        [
+          "23,3%"
+        ]
+      ]
+    },
+    {
+      "question_id": 15916,
+      "question": "What is the number of the city district of stadtteil where foreigners are 5.162?",
+      "gold_sql": "SELECT COUNT(\"City district (Stadtteil)\") FROM \"1-10992-3\" WHERE \"Foreign nationals\" = '5.162';",
+      "model_output": "SELECT \"No\" FROM \"Table\" WHERE \"City district (Stadtteil)\" = \"stadtteil\" AND \"Foreign nationals\" = \"5.162\";",
+      "gold_results": [
+        [
+          1
+        ]
+      ],
+      "prediction_results": []
+    },
+    {
+      "question_id": 15927,
+      "question": "what's the total number of final epbeingode count with character being Rick Stetler",
+      "gold_sql": "SELECT COUNT(\"Final Episode Count\") FROM \"1-11210576-4\" WHERE \"Character\" = 'Rick Stetler';",
+      "model_output": "SELECT SUM(\"Final Episode Count\") FROM \"Table\" WHERE \"Character\" = \"Rick Stetler\";",
+      "gold_results": [
+        [
+          1
+        ]
+      ],
+      "prediction_results": [
+        [
+          34.0
+        ]
+      ]
+    },
+    {
+      "question_id": 15928,
+      "question": "what are all the actor where first episode is \"Ambush\"",
+      "gold_sql": "SELECT \"Actor\" FROM \"1-11210576-4\" WHERE \"First Episode\" = '\"Ambush\"';",
+      "model_output": "SELECT \"Actor\" FROM \"Table\" WHERE \"First Episode\" = \"Ambush\";",
+      "gold_results": [
+        [
+          "Kim Coates"
+        ]
+      ],
+      "prediction_results": []
+    },
+    {
+      "question_id": 15930,
+      "question": "what's the total number of final epbeingode count with first epbeingode being \"L.A.\"",
+      "gold_sql": "SELECT COUNT(\"Final Episode Count\") FROM \"1-11210576-4\" WHERE \"First Episode\" = '\"L.A.\"';",
+      "model_output": "SELECT SUM(\"Final Episode Count\") FROM \"Table\" WHERE \"First Episode\" = \"L.A.\";",
+      "gold_results": [
+        [
+          1
+        ]
+      ],
+      "prediction_results": [
+        [
+          null
+        ]
+      ]
+    },
+    {
+      "question_id": 15932,
+      "question": "what's the first epbeingode with final epbeingode being \"Rio\"",
+      "gold_sql": "SELECT \"First Episode\" FROM \"1-11210576-4\" WHERE \"Final Episode\" = '\"Rio\"';",
+      "model_output": "SELECT \"First Episode\" FROM \"Table\" WHERE \"Final Episode\" = \"Rio\";",
+      "gold_results": [
+        [
+          "\"Rampage\""
+        ]
+      ],
+      "prediction_results": []
+    }
+  ],
+  "timestamp": "2025-12-06T09:03:04.128392+00:00",
+  "input_mode": "jsonl_path"
+}

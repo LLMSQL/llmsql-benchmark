@@ -1,3 +1,10 @@
+<picture align="center">
+  <source media="(prefers-color-scheme: dark)" srcset="./assets/logo_black.svg">
+  <img alt="LLMSQL Logo" src="./assets/logo_white.svg">
+</picture>
+
+
+
 ![Downloads](https://img.shields.io/pypi/dm/llmsql)
 [![codecov](https://codecov.io/gh/LLMSQL/llmsql-benchmark/branch/main/graph/badge.svg)](https://codecov.io/gh/LLMSQL/llmsql-benchmark)
 ![PyPI Version](https://img.shields.io/pypi/v/llmsql)
@@ -11,7 +18,6 @@ Patched and improved version of the original large crowd-sourced dataset for dev
 
 
 Our datasets are available for different scenarios on our [HuggingFace page](https://huggingface.co/llmsql-bench).
----
 
 ## Overview
 
@@ -21,7 +27,7 @@ Our datasets are available for different scenarios on our [HuggingFace page](htt
 pip3 install llmsql
 ```
 
-This repository provides the **LLMSQL Benchmark** — a modernized, cleaned, and extended version of WikiSQL, designed for evaluating and fine-tuning large language models (LLMs) on **Text-to-SQL** tasks.
+This repository provides the **LLMSQL Benchmark** — a modernized, cleaned, and extended version of WikiSQL, designed for evaluating large language models (LLMs) on **Text-to-SQL** tasks.
 
 ### Note
 The package doesn't have the dataset, it is stored on our [HuggingFace page](https://huggingface.co/llmsql-bench).
@@ -32,7 +38,21 @@ The package doesn't have the dataset, it is stored on our [HuggingFace page](htt
 - Support for Hugging Face models out-of-the-box.
 - Structured for reproducibility and benchmarking.
 
----
+
+
+## Latest News 📣
+
+* [2025/12] Evaluation class converted to function see [new `evaluate(...)` function](./llmsql/evaluation/evaluate.py#evaluate)
+
+* New page version added to [`https://llmsql.github.io/llmsql-benchmark/`](https://llmsql.github.io/llmsql-benchmark/)
+
+* Vllm inference method now supports chat templates, see [`inference_vllm(...)`](./llmsql/inference/inference_vllm.py#inference_vllm).
+* Transformers inference now supports custom chat tempalates with `chat_template` argument, see [`inference_transformers(...)`](./llmsql/inference/inference_transformers.py#inference_transformers)
+
+* More stable and deterministic inference with  [`inference_vllm(...)`](./llmsql/inference/inference_vllm.py#inference_vllm) function added by setting [some envars](./llmsql/inference/inference_vllm.py)
+
+* `padding_side` argument added to [`inference_transformers(...)`](./llmsql/inference/inference_transformers.py#inference_transformers) function with default `left` option.
+
 
 ## Usage Recommendations
 
@@ -53,7 +73,7 @@ We therefore recommend that most users:
 
 > [!Tip]
 > vllm based inference require vllm optional dependency group installed: `pip install llmsql[vllm]`
----
+
 
 ## Repository Structure
 
@@ -79,6 +99,8 @@ pip3 install llmsql
 
 ### 1. Run Inference
 
+#### Transformers inference
+
 ```python
 from llmsql import inference_transformers
 
@@ -90,26 +112,13 @@ results = inference_transformers(
     batch_size=8,
     max_new_tokens=256,
     do_sample=False,
-    model_args={
+    model_kwargs={
         "torch_dtype": "bfloat16",
     }
 )
-
 ```
 
-### 2. Evaluate Results
-
-```python
-from llmsql import LLMSQLEvaluator
-
-evaluator = LLMSQLEvaluator(workdir_path="llmsql_workdir")
-report = evaluator.evaluate(outputs_path="path_to_your_outputs.jsonl")
-print(report)
-```
-
-
-
-## Vllm inference (Recommended)
+#### Vllm inference (Recommended)
 
 To speed up your inference we recommend using vllm inference. You can do it with optional llmsql[vllm] dependency group
 ```bash
@@ -128,21 +137,45 @@ results = inference_vllm(
 ```
 for fast inference.
 
+### 2. Evaluate Results
+
+```python
+from llmsql import evaluate
+
+report =evaluate(outputs="path_to_your_outputs.jsonl")
+print(report)
+```
+
+Or with ther results from the infernece:
+
+```python
+from llmsql import evaluate
+
+# results = inference_transformers(...) or infernce_vllm(...)
+
+report =evaluate(outputs=results)
+print(report)
+```
+
+
+
+
+
 
 
 ## Suggested Workflow
 
-* **Primary**: Run inference on `dataset/questions.jsonl` with vllm → Evaluate with `evaluation/`.
-* **Secondary (optional)**: Fine-tune on `train/val` → Test on `test_questions.jsonl`.
+* **Primary**: Run inference on all questions with vllm or transformers → Evaluate with `evaluate()`.
+* **Secondary (optional)**: Fine-tune on `train/val` → Test on `test_questions.jsonl`. You can find the datasets here [HF Finetune Ready](https://huggingface.co/datasets/llmsql-bench/llmsql-benchmark-finetune-ready).
 
 
 ## Contributing
 
-Check out our [open issues](https://github.com/LLMSQL/llmsql-benchmark/issues) and feel free to submit pull requests!
+Check out our [open issues](https://github.com/LLMSQL/llmsql-benchmark/issues), fork this repo and feel free to submit pull requests!
 
 We also encourage you to submit new issues!
 
-To get started with development, first fork the repository and install the dev dependencies.
+To get started with development, first fork the repository and install basic dependencies with dev dependencies.
 
 For more information on the contributing: check [CONTRIBUTING.md](./CONTRIBUTING.md) and our [documentation page](https://llmsql.github.io/llmsql-benchmark/).
 
