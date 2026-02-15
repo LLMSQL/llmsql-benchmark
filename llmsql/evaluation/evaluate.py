@@ -14,7 +14,7 @@ import uuid
 
 from rich.progress import track
 
-from llmsql.config.config import DEFAULT_WORKDIR_PATH
+from llmsql.config.config import DEFAULT_WORKDIR_PATH, DEFAULT_LLMSQL_VERSION, get_repo_id
 from llmsql.utils.evaluation_utils import (
     connect_sqlite,
     download_benchmark_file,
@@ -27,6 +27,7 @@ from llmsql.utils.utils import load_jsonl, load_jsonl_dict_by_key, save_json_rep
 def evaluate(
     outputs: str | list[dict[int, str | int]],
     *,
+    version: str = DEFAULT_LLMSQL_VERSION,
     workdir_path: str | None = DEFAULT_WORKDIR_PATH,
     questions_path: str | None = None,
     db_path: str | None = None,
@@ -38,6 +39,7 @@ def evaluate(
     Evaluate predicted SQL queries against the LLMSQL benchmark.
 
     Args:
+        version: LLMSQL version
         outputs: Either a JSONL file path or a list of dicts.
         workdir_path: Directory for auto-downloads (ignored if all paths provided).
         questions_path: Manual path to benchmark questions JSONL.
@@ -52,6 +54,8 @@ def evaluate(
 
     # Determine input type
     input_mode = "jsonl_path" if isinstance(outputs, str) else "dict_list"
+
+    repo_id = get_repo_id(version)
 
     # --- Resolve inputs if needed ---
     workdir = Path(workdir_path) if workdir_path else None
@@ -68,7 +72,7 @@ def evaluate(
         questions_path = (
             str(local_q)
             if local_q.is_file()
-            else download_benchmark_file("questions.jsonl", workdir)
+            else download_benchmark_file(repo_id, "questions.jsonl", workdir)
         )
 
     if db_path is None:
@@ -81,7 +85,7 @@ def evaluate(
         db_path = (
             str(local_db)
             if local_db.is_file()
-            else download_benchmark_file("sqlite_tables.db", workdir)
+            else download_benchmark_file(repo_id, "sqlite_tables.db", workdir)
         )
 
     # --- Load benchmark questions ---
