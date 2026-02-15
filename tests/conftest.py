@@ -104,7 +104,7 @@ def mock_utils(mocker, tmp_path):
     # download files
     mocker.patch(
         "llmsql.evaluation.evaluate.download_benchmark_file",
-        side_effect=lambda filename, wd: str(Path(wd) / filename),
+        side_effect=lambda repo_id, filename, local_dir: str(Path(local_dir) / filename),
     )
 
     # report writer
