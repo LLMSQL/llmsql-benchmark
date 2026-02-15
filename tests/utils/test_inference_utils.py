@@ -6,7 +6,7 @@ import numpy as np
 import pytest
 import torch
 
-from llmsql.config.config import DEFAULT_WORKDIR_PATH, REPO_ID
+from llmsql.config.config import DEFAULT_WORKDIR_PATH, get_repo_id
 from llmsql.utils import inference_utils as mod
 
 
@@ -16,7 +16,7 @@ async def test_download_file(monkeypatch, tmp_path):
     expected_path = str(tmp_path / "questions.jsonl")
 
     def fake_hf_hub_download(repo_id, filename, repo_type, local_dir):
-        assert repo_id == REPO_ID
+        assert repo_id == get_repo_id()
         assert repo_type == "dataset"
         assert local_dir == DEFAULT_WORKDIR_PATH
         assert filename == "questions.jsonl"
@@ -80,5 +80,5 @@ async def test_maybe_download_calls_hf_hub(monkeypatch, tmp_path):
 
     path = mod._maybe_download(filename, local_path=None)
     assert Path(path).exists()
-    assert called["repo_id"] == REPO_ID
+    assert called["repo_id"] == get_repo_id()
     assert called["filename"] == filename

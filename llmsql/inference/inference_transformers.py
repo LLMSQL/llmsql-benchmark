@@ -14,6 +14,7 @@ Example
 
     results = inference_transformers(
         model_or_model_name_or_path="Qwen/Qwen2.5-1.5B-Instruct",
+        repo_id="llmsql-bench/llmsql-2.0",
         output_file="outputs/preds_transformers.jsonl",
         questions_path="data/questions.jsonl",
         tables_path="data/tables.jsonl",
@@ -46,7 +47,7 @@ import torch
 from tqdm import tqdm
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
-from llmsql.config.config import DEFAULT_WORKDIR_PATH
+from llmsql.config.config import DEFAULT_WORKDIR_PATH, DEFAULT_LLMSQL_VERSION, get_repo_id
 from llmsql.loggers.logging_config import log
 from llmsql.utils.inference_utils import _maybe_download, _setup_seed
 from llmsql.utils.utils import (
@@ -85,6 +86,7 @@ def inference_transformers(
     top_k: int = 50,
     generation_kwargs: dict[str, Any] | None = None,
     # --- Benchmark Parameters ---
+    version: str = DEFAULT_LLMSQL_VERSION,
     output_file: str = "llm_sql_predictions.jsonl",
     questions_path: str | None = None,
     tables_path: str | None = None,
@@ -128,6 +130,7 @@ def inference_transformers(
                           'top_p', 'top_k' are handled separately.
 
         # Benchmark:
+        version: LLMSQL version
         output_file: Output JSONL file path for completions.
         questions_path: Path to benchmark questions JSONL.
         tables_path: Path to benchmark tables JSONL.
@@ -208,8 +211,18 @@ def inference_transformers(
     model.eval()
 
     # --- Load necessary files ---
-    questions_path = _maybe_download("questions.jsonl", questions_path)
-    tables_path = _maybe_download("tables.jsonl", tables_path)
+    repo_id = get_repo_id(version)
+    
+    questions_path = _maybe_download(
+        "questions.jsonl",
+        questions_path,
+        repo_id,
+    )
+    tables_path = _maybe_download(
+        "tables.jsonl",
+        tables_path,
+        repo_id,
+    )
 
     questions = load_jsonl(questions_path)
     tables_list = load_jsonl(tables_path)

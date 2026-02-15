@@ -1,6 +1,7 @@
 import argparse
 import inspect
 import json
+from llmsql.config.config import get_available_versions, DEFAULT_LLMSQL_VERSION
 
 
 def main() -> None:
@@ -45,6 +46,13 @@ Examples:
       --output-file outputs/temp_0.9.jsonl \
       --temperature 0.9 \
       --generation-kwargs '{"do_sample": true, "top_p": 0.9, "top_k": 40}'
+
+  # 6️⃣ Specify llmsql version (2.0 by default)
+  llmsql inference --version 1.0 --method transformers \
+      --model-or-model-name-or-path Qwen/Qwen2.5-1.5B-Instruct \
+      --output-file outputs/preds_transformers.jsonl \
+      --batch-size 8 \
+      --num-fewshots 5
 """
 
     inf_parser = subparsers.add_parser(
@@ -62,6 +70,14 @@ Examples:
         required=True,
         choices=["transformers", "vllm"],
         help="Inference backend to use ('transformers' or 'vllm').",
+    )
+
+    inf_parser.add_argument(
+        "--version",
+        type=str,
+        default=DEFAULT_LLMSQL_VERSION,
+        choices=get_available_versions(),
+        help="Run inference using available version of LLMSQL (2.0 by default)",
     )
 
     # ================================================================
