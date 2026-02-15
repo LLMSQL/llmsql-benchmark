@@ -136,14 +136,14 @@ def inference_vllm(
     repo_id = get_repo_id(version) 
 
     questions_path = _maybe_download(
-        "questions.jsonl",
-        questions_path,
         repo_id,
+        "questions.jsonl",
+        questions_path
     )
     tables_path = _maybe_download(
-        "tables.jsonl",
-        tables_path,
         repo_id,
+        "tables.jsonl",
+        tables_path
     )
 
     questions = load_jsonl(questions_path)

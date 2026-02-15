@@ -30,9 +30,9 @@ def _setup_seed(seed: int) -> None:
 
 
 def _maybe_download(
+    repo_id: str,
     filename: str,
-    local_path: str | None,
-    repo_id: str
+    local_path: str | None
 ) -> str:
     if local_path is not None:
         return local_path
