@@ -52,13 +52,21 @@ async def test_maybe_download_existing_file(tmp_path, monkeypatch):
     existing.write_text("dummy")
     monkeypatch.setattr(mod, "hf_hub_download", lambda *a, **kw: "FAIL")
     # Should return local path directly
-    path = mod._maybe_download("questions.jsonl", local_path=str(existing))
+    path = mod._maybe_download(
+        get_repo_id(DEFAULT_LLMSQL_VERSION),
+        "questions.jsonl", 
+        local_path=str(existing)
+    )
     assert path == str(existing)
 
     # Should also return target_path if file exists in DEFAULT_WORKDIR_PATH
     monkeypatch.setattr(mod, "hf_hub_download", lambda *a, **kw: "FAIL")
     monkeypatch.setattr(mod, "DEFAULT_WORKDIR_PATH", str(tmp_path))
-    path2 = mod._maybe_download("questions.jsonl", local_path=None)
+    path2 = mod._maybe_download(
+        get_repo_id(DEFAULT_LLMSQL_VERSION),
+        "questions.jsonl",
+        local_path=None
+    )
     assert Path(path2).exists() or path2.endswith("questions.jsonl")
 
 
@@ -78,7 +86,11 @@ async def test_maybe_download_calls_hf_hub(monkeypatch, tmp_path):
 
     monkeypatch.setattr(mod, "hf_hub_download", fake_hf_hub_download)
 
-    path = mod._maybe_download(filename, local_path=None)
+    path = mod._maybe_download(
+        get_repo_id(DEFAULT_LLMSQL_VERSION),
+        filename, 
+        local_path=None
+    )
     assert Path(path).exists()
     assert called["repo_id"] == get_repo_id(DEFAULT_LLMSQL_VERSION)
     assert called["filename"] == filename
