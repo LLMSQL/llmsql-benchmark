@@ -23,7 +23,7 @@ async def test_download_file(monkeypatch, tmp_path):
         return expected_path
 
     monkeypatch.setattr(mod, "hf_hub_download", fake_hf_hub_download)
-    path = mod._download_file("questions.jsonl")
+    path = mod._download_file(get_repo_id(DEFAULT_LLMSQL_VERSION), "questions.jsonl")
     assert path == expected_path
 
 

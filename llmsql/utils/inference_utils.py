@@ -10,7 +10,7 @@ from llmsql.loggers.logging_config import log
 
 
 # --- Load benchmark data ---
-def _download_file(filename: str, repo_id: str) -> str:
+def _download_file(repo_id: str, filename: str) -> str:
     path = hf_hub_download(
         repo_id=repo_id,
         filename=filename,
