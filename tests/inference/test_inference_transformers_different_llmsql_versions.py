@@ -7,7 +7,6 @@ import pytest
 from llmsql.config.config import get_available_versions
 from llmsql.inference.inference_transformers import inference_transformers
 
-# --- Minimal fake benchmark data for testing ---
 questions = [
     {"question_id": "q1", "table_id": "t1", "question": "Select name from students;"},
     {"question_id": "q2", "table_id": "t1", "question": "Count students older than 20;"},
