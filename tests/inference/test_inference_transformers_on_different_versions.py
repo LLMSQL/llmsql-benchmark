@@ -4,6 +4,7 @@ import tempfile
 
 import pytest
 
+from llmsql.config.config import get_available_versions
 from llmsql.inference.inference_transformers import inference_transformers
 
 # --- Minimal fake benchmark data for testing ---
@@ -20,6 +21,9 @@ tables = [
     }
 ]
 
+VALID_LLMSQL_VERSIONS = [None] + get_available_versions()
+INVALID_LLMSQL_VERSION = "1.1"
+
 
 # Save minimal JSONL files for testing
 def _write_jsonl(data, path: Path):
@@ -29,7 +33,7 @@ def _write_jsonl(data, path: Path):
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("version_arg", [None, "2.0", "1.0"])
+@pytest.mark.parametrize("version_arg", VALID_LLMSQL_VERSIONS)
 async def test_inference_stability_on_valid_version_flags(version_arg):
     with tempfile.TemporaryDirectory() as tmpdir:
         tmpdir_path = Path(tmpdir)
@@ -87,7 +91,7 @@ async def test_inference_stability_on_invalid_version_flag():
             "max_new_tokens": 8,
             "temperature": 0.0,
             "do_sample": False,
-            "version": "1.1",  # invalid version
+            "version": INVALID_LLMSQL_VERSION,  # invalid version
         }
 
         with pytest.raises(Exception):
