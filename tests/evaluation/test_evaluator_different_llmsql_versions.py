@@ -26,9 +26,17 @@ def test_evaluate_runs_with_valid_versions(monkeypatch, tmp_path, version_arg):
 
     # --- Patch heavy evaluation internals ---
     monkeypatch.setattr(
-        "llmsql.evaluation.evaluate.evaluate_sample",
-        lambda *a, **k: (1, None, {})
-    )
+    "llmsql.evaluation.evaluate.evaluate_sample",
+    lambda *a, **k: (
+        1,
+        None,
+        {
+            "pred_none": 0,
+            "gold_none": 0,
+            "sql_errors": 0,
+        },
+    ),
+)
     monkeypatch.setattr(
         "llmsql.evaluation.evaluate.log_mismatch",
         lambda **k: None
