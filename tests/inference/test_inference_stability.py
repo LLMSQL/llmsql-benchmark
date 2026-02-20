@@ -81,7 +81,7 @@ async def test_inference_vllm_download_if_missing(monkeypatch, tmp_path):
 
     called = {"q": 0, "t": 0}
 
-    def fake_download(filename, path, **_):
+    def fake_download(repo_id, filename, path, **_):
         called["q" if "questions" in filename else "t"] += 1
         path = tmp_path / filename
         # Write minimal JSONL for subsequent load_jsonl
