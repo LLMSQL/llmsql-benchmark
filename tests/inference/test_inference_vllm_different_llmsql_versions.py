@@ -1,14 +1,20 @@
 import json
 from pathlib import Path
+import re
 from unittest.mock import MagicMock
+
 import pytest
 
+from llmsql.config.config import REPO_IDs, get_available_versions
 import llmsql.inference.inference_vllm as mod
-from llmsql.config.config import get_available_versions
 
 questions = [
     {"question_id": "q1", "table_id": "t1", "question": "Select name from students;"},
-    {"question_id": "q2", "table_id": "t1", "question": "Count students older than 20;"},
+    {
+        "question_id": "q2",
+        "table_id": "t1",
+        "question": "Count students older than 20;",
+    },
 ]
 tables = [
     {
@@ -34,10 +40,13 @@ async def test_inference_vllm_valid_versions(monkeypatch, tmp_path, version_arg)
     q_file.write_text("\n".join(json.dumps(q) for q in questions))
     t_file.write_text("\n".join(json.dumps(t) for t in tables))
 
-    monkeypatch.setattr(mod, "load_jsonl",
-                        lambda path: [json.loads(line) for line in Path(path).read_text().splitlines()])
-    monkeypatch.setattr(mod, "overwrite_jsonl", lambda path: None)
-    monkeypatch.setattr(mod, "save_jsonl_lines", lambda path, lines: None)
+    monkeypatch.setattr(
+        mod,
+        "load_jsonl",
+        lambda path: [json.loads(line) for line in Path(path).read_text().splitlines()],
+    )
+    monkeypatch.setattr(mod, "overwrite_jsonl", lambda path: Path(path).touch())
+    monkeypatch.setattr(mod, "save_jsonl_lines", lambda path, lines: Path(path).touch())
     monkeypatch.setattr(mod, "choose_prompt_builder", lambda shots: lambda *a: "PROMPT")
 
     fake_llm = MagicMock()
@@ -74,8 +83,11 @@ async def test_inference_vllm_invalid_version(monkeypatch, tmp_path):
     q_file.write_text("\n".join(json.dumps(q) for q in questions))
     t_file.write_text("\n".join(json.dumps(t) for t in tables))
 
-    monkeypatch.setattr(mod, "load_jsonl",
-                        lambda path: [json.loads(line) for line in Path(path).read_text().splitlines()])
+    monkeypatch.setattr(
+        mod,
+        "load_jsonl",
+        lambda path: [json.loads(line) for line in Path(path).read_text().splitlines()],
+    )
     monkeypatch.setattr(mod, "overwrite_jsonl", lambda path: None)
     monkeypatch.setattr(mod, "save_jsonl_lines", lambda path, lines: None)
     monkeypatch.setattr(mod, "choose_prompt_builder", lambda shots: lambda *a: "PROMPT")
@@ -96,5 +108,10 @@ async def test_inference_vllm_invalid_version(monkeypatch, tmp_path):
         "version": INVALID_LLMSQL_VERSION,  # invalid version
     }
 
-    with pytest.raises(Exception):
+    expected = (
+        f"version should be one of: {list(REPO_IDs.keys())}, "
+        f"not {INVALID_LLMSQL_VERSION}"
+    )
+
+    with pytest.raises(ValueError, match=re.escape(expected)):
         mod.inference_vllm(**kwargs)
