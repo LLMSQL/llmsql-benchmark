@@ -40,14 +40,18 @@ due to differences in implementation and numerical precision.
 """
 
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 from dotenv import load_dotenv
 import torch
 from tqdm import tqdm
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
-from llmsql.config.config import DEFAULT_WORKDIR_PATH, DEFAULT_LLMSQL_VERSION, get_repo_id
+from llmsql.config.config import (
+    DEFAULT_LLMSQL_VERSION,
+    DEFAULT_WORKDIR_PATH,
+    get_repo_id,
+)
 from llmsql.loggers.logging_config import log
 from llmsql.utils.inference_utils import _maybe_download, _setup_seed
 from llmsql.utils.utils import (
@@ -86,13 +90,14 @@ def inference_transformers(
     top_k: int = 50,
     generation_kwargs: dict[str, Any] | None = None,
     # --- Benchmark Parameters ---
-    version: str = DEFAULT_LLMSQL_VERSION,
+    version: Literal["1.0", "2.0"] = DEFAULT_LLMSQL_VERSION,
     output_file: str = "llm_sql_predictions.jsonl",
     questions_path: str | None = None,
     tables_path: str | None = None,
     workdir_path: str = DEFAULT_WORKDIR_PATH,
     num_fewshots: int = 5,
     batch_size: int = 8,
+    limit: int | float | None = None,
     seed: int = 42,
 ) -> list[dict[str, str]]:
     """
@@ -138,6 +143,9 @@ def inference_transformers(
         num_fewshots: Number of few-shot examples (0, 1, or 5).
         batch_size: Batch size for inference.
         seed: Random seed for reproducibility.
+        limit: Limit the number of questions to evaluate. If an integer, evaluates
+               the first N samples. If a float between 0.0 and 1.0, evaluates the
+               first X*100% of samples. If None, evaluates all samples (default).
 
     Returns:
         List of generated SQL results with metadata.
@@ -212,21 +220,30 @@ def inference_transformers(
 
     # --- Load necessary files ---
     repo_id = get_repo_id(version)
-    
-    questions_path = _maybe_download(
-        repo_id,
-        "questions.jsonl",
-        questions_path
-    )
-    tables_path = _maybe_download(
-        repo_id,
-        "tables.jsonl",
-        tables_path
-    )
+
+    questions_path = _maybe_download(repo_id, "questions.jsonl", questions_path)
+    tables_path = _maybe_download(repo_id, "tables.jsonl", tables_path)
 
     questions = load_jsonl(questions_path)
     tables_list = load_jsonl(tables_path)
     tables = {t["table_id"]: t for t in tables_list}
+
+    # --- Apply limit ---
+    if limit is not None:
+        if isinstance(limit, float):
+            if not (0.0 < limit <= 1.0):
+                raise ValueError(
+                    f"When a float, `limit` must be between 0.0 and 1.0, got {limit}."
+                )
+            limit = max(1, int(len(questions) * limit))
+        if not isinstance(limit, int) or limit < 1:
+            raise ValueError(
+                f"`limit` must be a positive integer or a float in (0.0, 1.0], got {limit!r}."
+            )
+        log.info(
+            f"Limiting evaluation to first {limit} questions out of {len(questions)}"
+        )
+        questions = questions[:limit]
 
     # --- Chat template setup ---
     use_chat_template = chat_template or getattr(tokenizer, "chat_template", None)

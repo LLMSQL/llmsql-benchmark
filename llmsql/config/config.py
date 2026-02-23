@@ -1,8 +1,11 @@
+from typing import Literal
+
 REPO_IDs: dict[str, str] = {
     "1.0": "llmsql-bench/llmsql-benchmark",
     "2.0": "llmsql-bench/llmsql-2.0",
 }
-DEFAULT_LLMSQL_VERSION = "2.0"
+
+DEFAULT_LLMSQL_VERSION: Literal["1.0", "2.0"] = "2.0"
 DEFAULT_WORKDIR_PATH = "llmsql_workdir"
 
 

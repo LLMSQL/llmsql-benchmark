@@ -29,22 +29,24 @@ def _setup_seed(seed: int) -> None:
         torch.cuda.manual_seed_all(seed)
 
 
-def _maybe_download(
-    repo_id: str,
-    filename: str,
-    local_path: str | None
-) -> str:
+def _maybe_download(repo_id: str, filename: str, local_path: str | None) -> str:
     if local_path is not None:
         return local_path
+
     target_path = Path(DEFAULT_WORKDIR_PATH) / filename
-    if not target_path.exists():
-        log.info(f"Downloading {filename} from Hugging Face Hub...")
-        local_path = hf_hub_download(
-            repo_id=repo_id,
-            filename=filename,
-            repo_type="dataset",
-            local_dir=DEFAULT_WORKDIR_PATH,
-        )
-        log.info(f"Downloaded {filename} to: {local_path}")
-        return local_path
-    return str(target_path)
+
+    if target_path.exists():
+        log.info(f"Removing existing path: {target_path}")
+        if target_path.is_file() or target_path.is_symlink():
+            target_path.unlink()
+
+    log.info(f"Downloading {filename} from Hugging Face Hub...")
+    local_path = hf_hub_download(
+        repo_id=repo_id,
+        filename=filename,
+        repo_type="dataset",
+        local_dir=DEFAULT_WORKDIR_PATH,
+    )
+    log.info(f"Downloaded {filename} to: {local_path}")
+
+    return local_path
