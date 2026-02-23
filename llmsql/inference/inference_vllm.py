@@ -77,10 +77,7 @@ def inference_vllm(
     llm_kwargs: dict[str, Any] | None = None,
     use_chat_template: bool = True,
     # === LoRA Parameters ===
-    lora_path: str | None = None,
-    lora_name: str = "default",
-    lora_scale: float = 1.0,
-    max_lora_rank: int = 64,
+    lora_config: dict[str, Any] | None = None,  # new optional dict
     # === Generation Parameters ===
     max_new_tokens: int = 256,
     temperature: float = 1.0,
@@ -112,11 +109,15 @@ def inference_vllm(
                    'trust_remote_code' are handled separately and will
                    override values here.
 
-        # LoRA:
-        lora_path: Path to pretrained LoRA adapter (optional).
-        lora_name: Logical name of the LoRA adapter.
-        lora_scale: Scaling factor for LoRA weights.
-        max_lora_rank: Maximum LoRA rank supported by vLLM.
+        lora_config: Optional dict with LoRA parameters:
+            - lora_path: Path to the pretrained LoRA adapter (required if enable_lora)
+            - lora_name: Logical name for the LoRA adapter
+            - lora_scale: Scaling factor for LoRA weights
+            - max_lora_rank: Maximum LoRA rank supported by vLLM
+             LoRA usage rules:
+                - If `lora_config` is provided, `enable_lora` must be True in `llm_kwargs`.
+                - If `enable_lora` is True, a valid `lora_config` must be provided.
+                - Otherwise, an exception is raised to prevent inconsistent configuration.
 
         # Generation:
         max_new_tokens: Maximum tokens to generate per sequence.
@@ -182,28 +183,39 @@ def inference_vllm(
         )
         questions = questions[:limit]
 
+    # --- Validate LoRA usage ---
+    enable_lora = llm_kwargs.get("enable_lora", False)
+    if lora_config is not None and not enable_lora:
+        raise ValueError(
+            "LoRA config provided but `enable_lora` is not True in llm_kwargs."
+        )
+    if enable_lora and lora_config is None:
+        raise ValueError("`enable_lora` is True but no `lora_config` was provided.")
+    if lora_config is not None and not enable_lora:
+        raise ValueError(
+            "`lora_config` provided but `enable_lora` is not True in llm_kwargs."
+        )
+
     # --- init model ---
     llm_init_args = {
         "model": model_name,
         "tokenizer": model_name,
         "tensor_parallel_size": tensor_parallel_size,
         "trust_remote_code": trust_remote_code,
-        "enable_lora": lora_path is not None,
-        "max_lora_rank": max_lora_rank,
-        **llm_kwargs,  # User kwargs come first, but explicit params above will override
+        **llm_kwargs,  # user overrides
     }
 
     log.info(f"Loading vLLM model '{model_name}' (tp={tensor_parallel_size})...")
-
     llm = LLM(**llm_init_args)
 
+    # --- LoRA request ---
     lora_request = None
-    if lora_path is not None:
-        log.info(f"Loading LoRA adapter from {lora_path}")
+    if enable_lora and lora_config is not None:
+        log.info(f"Loading LoRA adapter from {lora_config['lora_path']}")
         lora_request = LoRARequest(
-            lora_name=lora_name,
-            lora_path=lora_path,
-            scaling=lora_scale,
+            lora_name=lora_config["lora_name"],
+            lora_path=lora_config["lora_path"],
+            scaling=lora_config["lora_scale"],
         )
 
     tokenizer = llm.get_tokenizer()
