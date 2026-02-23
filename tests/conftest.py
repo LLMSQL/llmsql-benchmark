@@ -1,3 +1,4 @@
+import glob
 import json
 import os
 from pathlib import Path
@@ -7,6 +8,14 @@ from unittest.mock import MagicMock
 import pytest
 
 import llmsql.inference.inference_vllm as inference_vllm
+
+
+@pytest.fixture(scope="session", autouse=True)
+def cleanup_evaluation_results():
+    """Remove evaluation_results* files produced during tests."""
+    yield
+    for path in glob.glob("evaluation_results*"):
+        os.remove(path)
 
 
 @pytest.fixture
@@ -104,7 +113,9 @@ def mock_utils(mocker, tmp_path):
     # download files
     mocker.patch(
         "llmsql.evaluation.evaluate.download_benchmark_file",
-        side_effect=lambda repo_id, filename, local_dir: str(Path(local_dir) / filename),
+        side_effect=lambda repo_id, filename, local_dir: str(
+            Path(local_dir) / filename
+        ),
     )
 
     # report writer
