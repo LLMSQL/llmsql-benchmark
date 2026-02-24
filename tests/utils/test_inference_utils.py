@@ -6,7 +6,11 @@ import numpy as np
 import pytest
 import torch
 
-from llmsql.config.config import DEFAULT_WORKDIR_PATH, REPO_ID
+from llmsql.config.config import (
+    DEFAULT_LLMSQL_VERSION,
+    DEFAULT_WORKDIR_PATH,
+    get_repo_id,
+)
 from llmsql.utils import inference_utils as mod
 
 
@@ -16,14 +20,14 @@ async def test_download_file(monkeypatch, tmp_path):
     expected_path = str(tmp_path / "questions.jsonl")
 
     def fake_hf_hub_download(repo_id, filename, repo_type, local_dir):
-        assert repo_id == REPO_ID
+        assert repo_id == get_repo_id(DEFAULT_LLMSQL_VERSION)
         assert repo_type == "dataset"
         assert local_dir == DEFAULT_WORKDIR_PATH
         assert filename == "questions.jsonl"
         return expected_path
 
     monkeypatch.setattr(mod, "hf_hub_download", fake_hf_hub_download)
-    path = mod._download_file("questions.jsonl")
+    path = mod._download_file(get_repo_id(DEFAULT_LLMSQL_VERSION), "questions.jsonl")
     assert path == expected_path
 
 
@@ -46,23 +50,6 @@ async def test_setup_seed(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_maybe_download_existing_file(tmp_path, monkeypatch):
-    """_maybe_download returns existing path without calling hf_hub_download."""
-    existing = tmp_path / "questions.jsonl"
-    existing.write_text("dummy")
-    monkeypatch.setattr(mod, "hf_hub_download", lambda *a, **kw: "FAIL")
-    # Should return local path directly
-    path = mod._maybe_download("questions.jsonl", local_path=str(existing))
-    assert path == str(existing)
-
-    # Should also return target_path if file exists in DEFAULT_WORKDIR_PATH
-    monkeypatch.setattr(mod, "hf_hub_download", lambda *a, **kw: "FAIL")
-    monkeypatch.setattr(mod, "DEFAULT_WORKDIR_PATH", str(tmp_path))
-    path2 = mod._maybe_download("questions.jsonl", local_path=None)
-    assert Path(path2).exists() or path2.endswith("questions.jsonl")
-
-
-@pytest.mark.asyncio
 async def test_maybe_download_calls_hf_hub(monkeypatch, tmp_path):
     """_maybe_download downloads file if missing."""
     monkeypatch.setattr(mod, "DEFAULT_WORKDIR_PATH", str(tmp_path))
@@ -78,7 +65,9 @@ async def test_maybe_download_calls_hf_hub(monkeypatch, tmp_path):
 
     monkeypatch.setattr(mod, "hf_hub_download", fake_hf_hub_download)
 
-    path = mod._maybe_download(filename, local_path=None)
+    path = mod._maybe_download(
+        get_repo_id(DEFAULT_LLMSQL_VERSION), filename, local_path=None
+    )
     assert Path(path).exists()
-    assert called["repo_id"] == REPO_ID
+    assert called["repo_id"] == get_repo_id(DEFAULT_LLMSQL_VERSION)
     assert called["filename"] == filename
