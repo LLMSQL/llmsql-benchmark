@@ -5,7 +5,6 @@ from typing import Any
 
 from huggingface_hub import hf_hub_download
 
-from llmsql.config.config import REPO_ID
 from llmsql.loggers.logging_config import log
 from llmsql.utils.regex_extractor import find_sql
 
@@ -170,10 +169,14 @@ def evaluate_sample(
     )
 
 
-def download_benchmark_file(filename: str, local_dir: Path) -> str:
+def download_benchmark_file(
+    repo_id: str,
+    filename: str,
+    local_dir: Path
+) -> str:
     """Download a benchmark file from HuggingFace Hub."""
     file_path = hf_hub_download(
-        repo_id=REPO_ID,
+        repo_id=repo_id,
         filename=filename,
         repo_type="dataset",
         local_dir=local_dir,
