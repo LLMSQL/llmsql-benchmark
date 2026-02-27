@@ -5,21 +5,21 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Evaluation API Reference &#8212; LLMSQL 0.1.13 documentation</title>
+    <title>Evaluation API Reference &#8212; LLMSQL 0.1.15 documentation</title>
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=5349f25f" />
-    <link rel="stylesheet" type="text/css" href="../_static/basic.css?v=5c69cfe2" />
+    <link rel="stylesheet" type="text/css" href="../_static/basic.css?v=29da98fa" />
     <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
-    <link rel="stylesheet" type="text/css" href="../_static/styles/front_page.css?v=9e26f69c" />
-    <script src="../_static/documentation_options.js?v=8d02545a"></script>
+    <link rel="stylesheet" type="text/css" href="../_static/styles/front_page.css?v=047bfc79" />
+    <script src="../_static/documentation_options.js?v=e2f3408e"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
     <script src="../_static/copybutton.js?v=ccdb6887"></script>
-    <script src="../_static/scripts/front_page.js?v=a59558f4"></script>
+    <script src="../_static/scripts/front_page.js?v=0a79e239"></script>
     <link rel="icon" href="../_static/favicon.png"/>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="prev" title="Inference API Reference" href="inference.html" />
+    <link rel="prev" title="Inference API Reference" href="inference.html" /> 
   </head><body>
     <div class="related" role="navigation" aria-label="Related">
       <h3>Navigation</h3>
@@ -28,22 +28,19 @@
           <a href="../genindex.html" title="General Index"
              accesskey="I">index</a></li>
         <li class="right" >
-          <a href="../py-modindex.html" title="Python Module Index"
-             >modules</a> |</li>
-        <li class="right" >
           <a href="inference.html" title="Inference API Reference"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">LLMSQL 0.1.13 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">LLMSQL 0.1.15 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">LLMSQL package Documentation</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">Evaluation API Reference</a></li>
+        <li class="nav-item nav-item-this"><a href="">Evaluation API Reference</a></li> 
       </ul>
-    </div>
+    </div>  
 
     <div class="document">
       <div class="documentwrapper">
         <div class="bodywrapper">
           <div class="body" role="main">
-
+            
   <section id="evaluation-api-reference">
 <h1>Evaluation API Reference<a class="headerlink" href="#evaluation-api-reference" title="Link to this heading">¶</a></h1>
 <p>The <cite>evaluate()</cite> function allows you to benchmark Text-to-SQL model outputs
@@ -153,37 +150,6 @@ mismatches, and saves detailed reports automatically.</p>
 <p>By default, a report is saved automatically as <cite>evaluation_results_{uuid}.json</cite> in the current directory.
 It contains metrics, mismatches, timestamp, and input mode. You can override this path using <cite>save_report</cite>.</p>
 <p>—</p>
-<section id="llmsql-evaluation-module">
-<span id="module-llmsql.evaluation.evaluate"></span><h3>LLMSQL Evaluation Module<a class="headerlink" href="#llmsql-evaluation-module" title="Link to this heading">¶</a></h3>
-<p>Provides the <cite>evaluate()</cite> function to benchmark Text-to-SQL model outputs
-on the LLMSQL benchmark.</p>
-<p>See the documentation for full usage details.</p>
-</section>
-<dl class="py function">
-<dt class="sig sig-object py" id="llmsql.evaluation.evaluate.evaluate">
-<span class="sig-prename descclassname"><span class="pre">llmsql.evaluation.evaluate.</span></span><span class="sig-name descname"><span class="pre">evaluate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">outputs</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">workdir_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'llmsql_workdir'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">questions_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">db_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_report</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show_mismatches</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_mismatches</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">5</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="reference internal" href="../_modules/llmsql/evaluation/evaluate.html#evaluate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#llmsql.evaluation.evaluate.evaluate" title="Link to this definition">¶</a></dt>
-<dd><p>Evaluate predicted SQL queries against the LLMSQL benchmark.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>outputs</strong> – Either a JSONL file path or a list of dicts.</p></li>
-<li><p><strong>workdir_path</strong> – Directory for auto-downloads (ignored if all paths provided).</p></li>
-<li><p><strong>questions_path</strong> – Manual path to benchmark questions JSONL.</p></li>
-<li><p><strong>db_path</strong> – Manual path to SQLite benchmark DB.</p></li>
-<li><p><strong>save_report</strong> – Optional manual save path. If None → auto-generated.</p></li>
-<li><p><strong>show_mismatches</strong> – Print mismatches while evaluating.</p></li>
-<li><p><strong>max_mismatches</strong> – Max mismatches to print.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Metrics and mismatches.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>dict</p>
-</dd>
-</dl>
-</dd></dl>
-
 <p>—</p>
 <div style="text-align:center; margin-top:2rem; color:#666;">
   💬 Made with ❤️ by the LLMSQL Team
@@ -206,11 +172,7 @@ on the LLMSQL benchmark.</p>
 <li><a class="reference internal" href="#function-arguments">Function Arguments</a></li>
 <li><a class="reference internal" href="#input-format">Input Format</a></li>
 <li><a class="reference internal" href="#output-metrics">Output Metrics</a></li>
-<li><a class="reference internal" href="#report-saving">Report Saving</a><ul>
-<li><a class="reference internal" href="#llmsql-evaluation-module">LLMSQL Evaluation Module</a></li>
-<li><a class="reference internal" href="#llmsql.evaluation.evaluate.evaluate"><code class="docutils literal notranslate"><span class="pre">evaluate()</span></code></a></li>
-</ul>
-</li>
+<li><a class="reference internal" href="#report-saving">Report Saving</a></li>
 </ul>
 </li>
 </ul>
@@ -249,14 +211,11 @@ on the LLMSQL benchmark.</p>
           <a href="../genindex.html" title="General Index"
              >index</a></li>
         <li class="right" >
-          <a href="../py-modindex.html" title="Python Module Index"
-             >modules</a> |</li>
-        <li class="right" >
           <a href="inference.html" title="Inference API Reference"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">LLMSQL 0.1.13 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">LLMSQL 0.1.15 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="index.html" >LLMSQL package Documentation</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">Evaluation API Reference</a></li>
+        <li class="nav-item nav-item-this"><a href="">Evaluation API Reference</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">

@@ -48,3 +48,86 @@ if (searchInput) {
     }
   });
 }
+
+document.addEventListener("DOMContentLoaded", async () => {
+  const container = document.getElementById('leaderboard-container');
+  if (!container) return;
+
+  try {
+    const response = await fetch('_static/leaderboard.json');
+    const rows = await response.json();
+    renderLeaderboard(rows);
+  } catch (e) {
+    container.innerHTML = '<p>Error loading leaderboard 😢</p>';
+    console.error(e);
+  }
+});
+
+function renderLeaderboard(rows) {
+  const container = document.getElementById('leaderboard-container');
+  container.innerHTML = '';
+
+  const table = document.createElement('table');
+  table.className = 'leaderboard-table';
+
+  const thead = document.createElement('thead');
+  thead.innerHTML = `
+    <tr>
+      <th>Rank</th>
+      <th>Model</th>
+      <th>Type</th>
+      <th>Fewshots</th>
+      <th>Backend</th>
+      <th>Accuracy</th>
+      <th>Date</th>
+    </tr>`;
+  table.appendChild(thead);
+
+  const tbody = document.createElement('tbody');
+  rows.forEach((row, i) => {
+    const tr = document.createElement('tr');
+
+    const modelName = row.model.includes('/') ? row.model.split('/')[1] : row.model;
+
+    const modelCell = document.createElement('td');
+    if (row.url) {
+      const a = document.createElement('a');
+      a.href = row.url;
+      a.target = "_blank";
+      a.rel = "noopener";
+      a.textContent = modelName;   // <-- здесь только вторая часть
+      modelCell.appendChild(a);
+    } else {
+      modelCell.textContent = modelName;
+    }
+
+    // Accuracy
+    const accuracyCell = document.createElement('td');
+    const barContainer = document.createElement('div');
+    barContainer.className = 'accuracy-bar';
+    const fill = document.createElement('div');
+    fill.className = 'fill';
+    fill.style.width = `${(row.accuracy*100).toFixed(2)}%`;
+    const text = document.createElement('span');
+    text.textContent = `${(row.accuracy*100).toFixed(2)}%`;
+    barContainer.appendChild(fill);
+    barContainer.appendChild(text);
+    accuracyCell.appendChild(barContainer);
+
+
+    tr.innerHTML += `<td>${i+1}</td>`;
+    tr.appendChild(modelCell);
+    tr.innerHTML += `
+      <td>${row.type}</td>
+      <td>${row.fewshots}</td>
+      <td>${row.backend}</td>
+    `;
+    tr.appendChild(accuracyCell);
+    tr.innerHTML += `<td>${row.date}</td>`;
+
+    tbody.appendChild(tr);
+  });
+
+  table.appendChild(tbody);
+  container.appendChild(table);
+}
