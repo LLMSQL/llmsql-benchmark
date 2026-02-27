@@ -13,3 +13,5 @@ llmsql_workdir
 
 evaluation_*
 coverage.xml
+
+.idea
