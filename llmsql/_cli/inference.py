@@ -38,10 +38,16 @@ class Inference(SubCommand):
             help="Use vLLM backend",
         )
 
+        self._parser_api = inference_subparsers.add_parser(
+            "api",
+            help="Use OpenAI-compatible API backend",
+        )
+
         self._add_args()
 
         self._parser_transformers.set_defaults(func=self._execute_transformers)
         self._parser_vllm.set_defaults(func=self._execute_vllm)
+        self._parser_api.set_defaults(func=self._execute_api)
 
     def _add_args(self) -> None:
         # =========================
@@ -101,7 +107,6 @@ class Inference(SubCommand):
         )
         self._parser_transformers.add_argument("--chat-template")
 
-        # Generation
         add_common_generation_args(self._parser_transformers, 0.0, False)
         self._parser_transformers.add_argument("--top-p", type=float, default=1.0)
         self._parser_transformers.add_argument("--top-k", type=int, default=50)
@@ -112,8 +117,6 @@ class Inference(SubCommand):
         )
 
         add_common_benchmark_args(self._parser_transformers)
-
-        self._parser_transformers.set_defaults(func=self._execute_transformers)
 
         # =========================
         # vLLM
@@ -155,7 +158,42 @@ class Inference(SubCommand):
 
         add_common_benchmark_args(self._parser_vllm)
 
-        self._parser_vllm.set_defaults(func=self._execute_vllm)
+        # =========================
+        # OpenAI-compatible API
+        # =========================
+        self._parser_api.add_argument(
+            "--model-name",
+            required=True,
+            help="Target model name expected by the API",
+        )
+        self._parser_api.add_argument(
+            "--base-url",
+            required=True,
+            help="API base URL, e.g. https://api.openai.com/v1",
+        )
+        self._parser_api.add_argument(
+            "--endpoint",
+            default="chat/completions",
+            help="Completion endpoint path relative to --base-url",
+        )
+        self._parser_api.add_argument("--api-key")
+        self._parser_api.add_argument("--timeout", type=float, default=120.0)
+        self._parser_api.add_argument(
+            "--requests-per-minute",
+            type=float,
+            help="Rate limit for API requests",
+        )
+        self._parser_api.add_argument(
+            "--api-kwargs",
+            type=json.loads,
+            help="JSON string merged into API request payload",
+        )
+        self._parser_api.add_argument(
+            "--request-headers",
+            type=json.loads,
+            help="JSON string merged into HTTP request headers",
+        )
+        add_common_benchmark_args(self._parser_api)
 
     @staticmethod
     def _execute_transformers(args: argparse.Namespace) -> None:
@@ -211,5 +249,28 @@ class Inference(SubCommand):
             limit=args.limit,
             num_fewshots=args.num_fewshots,
             batch_size=args.batch_size,
+            seed=args.seed,
+        )
+
+    @staticmethod
+    def _execute_api(args: argparse.Namespace) -> None:
+        from llmsql import inference_api
+
+        inference_api(
+            model_name=args.model_name,
+            base_url=args.base_url,
+            endpoint=args.endpoint,
+            api_key=args.api_key,
+            timeout=args.timeout,
+            requests_per_minute=args.requests_per_minute,
+            api_kwargs=args.api_kwargs,
+            request_headers=args.request_headers,
+            version=args.version,
+            output_file=args.output_file,
+            questions_path=args.questions_path,
+            tables_path=args.tables_path,
+            workdir_path=args.workdir_path,
+            limit=args.limit,
+            num_fewshots=args.num_fewshots,
             seed=args.seed,
         )

@@ -42,31 +42,27 @@ The package doesn't have the dataset, it is stored on our [HuggingFace page](htt
 
 ## Latest News 📣
 
+* [2026/03] Added support for API inference, for now only for OpenAI-compatable APIs, see [`inference_api()` function](./llmsql/inference/inference_api.py#inference_api)
+
+* [2026/03] The page now contains first version of [leaderboard](https://llmsql.github.io/llmsql-benchmark/#:~:text=%F0%9F%93%8A%20Leaderboard%20%E2%80%94%20Execution%20Accuracy%20%28EX)!
+
+* [2026/02] The new LLMSQL 2.0 version is out now! See the [dataset](https://huggingface.co/datasets/llmsql-bench/llmsql-2.0). The support is already added with the `version` parameter to each `inference` function.
+
 * [2025/12] Evaluation class converted to function see [new `evaluate(...)` function](./llmsql/evaluation/evaluate.py#evaluate)
 
-* New page version added to [`https://llmsql.github.io/llmsql-benchmark/`](https://llmsql.github.io/llmsql-benchmark/)
-
-* Vllm inference method now supports chat templates, see [`inference_vllm(...)`](./llmsql/inference/inference_vllm.py#inference_vllm).
-* Transformers inference now supports custom chat tempalates with `chat_template` argument, see [`inference_transformers(...)`](./llmsql/inference/inference_transformers.py#inference_transformers)
-
-* More stable and deterministic inference with  [`inference_vllm(...)`](./llmsql/inference/inference_vllm.py#inference_vllm) function added by setting [some envars](./llmsql/inference/inference_vllm.py)
-
-* `padding_side` argument added to [`inference_transformers(...)`](./llmsql/inference/inference_transformers.py#inference_transformers) function with default `left` option.
 
 
 ## Usage Recommendations
 
-Modern LLMs are already strong at **producing SQL queries without finetuning**.
+Modern LLMs are already strong at producing SQL queries without finetuning.
 We therefore recommend that most users:
 
 1. **Run inference** directly on the full benchmark:
-    model_or_model_name_or_path="Qwen/Qwen2.5-1.5B-Instruct",
-    output_file="path_to_your_outputs.jsonl",
-   - Use [`llmsql.inference_transformers`](./llmsql/inference/inference_transformers.py) (the function for transformers inference) for generation of SQL predictions with your model. If you want to do vllm based inference, use [`llmsql.inference_vllm`](./llmsql/inference/inference_vllm.py). Works both with HF model id, e.g. `Qwen/Qwen2.5-1.5B-Instruct` and model instance passed directly, e.g. `inference_transformers(model_or_model_name_or_path=model, ...)`
+   - Use [`llmsql.inference_transformers`](./llmsql/inference/inference_transformers.py) (the function for transformers inference) for generation of SQL predictions with your model. If you want to do vllm based inference, use [`llmsql.inference_vllm`](./llmsql/inference/inference_vllm.py). Works both with HF model id, e.g. `Qwen/Qwen2.5-1.5B-Instruct` and model instance passed directly, e.g. `inference_transformers(model_or_model_name_or_path=model, ...)`. The api inference is also supported, see [`inference_api()`](./llmsql/inference/inference_api.py#inference_api)
    - Evaluate results against the benchmark with the [`llmsql.evaluate`](./llmsql/evaluation/evaluator.py) function.
 
 2. **Optional finetuning**:
-   - For research or domain adaptation, we provide finetuning version for HF models. Use [Finetune Ready](https://huggingface.co/datasets/llmsql-bench/llmsql-benchmark-finetune-ready) dataset from HuggingFace.
+   - For research or domain adaptation, we provide finetuning version for HF models. Use [Finetune Ready](https://huggingface.co/collections/llmsql-bench/fine-tune-ready-versions-of-the-llmsql-benchmark) datasets from HuggingFace.
 
 > [!Tip]
 > You can find additional manuals in the README files of each folder([Inferece Readme](./llmsql/inference/README.md), [Evaluation Readme](./llmsql/evaluation/README.md))
@@ -80,7 +76,7 @@ We therefore recommend that most users:
 ```
 
 llmsql/
-├── evaluation/          # Scripts for downloading DB + evaluating predictions
+├── evaluation/          # Scripts for evaluation
 └── inference/           # Generate SQL queries with your LLM
 ```
 
@@ -159,10 +155,12 @@ print(report)
 ```
 
 
+For more examples check the [examples folder](./examples/)
+
 ## Prompt Template
 
-The prompt defines explicit constraints on the generated output. 
-The model is instructed to output only a valid SQL `SELECT` query, to use a fixed table name (`"Table"`) **(which will be replaced with the actual table name during evaluation)**, to quote all table and column names, and to restrict generation to the specified SQL functions, condition operators, and keywords. 
+The prompt defines explicit constraints on the generated output.
+The model is instructed to output only a valid SQL `SELECT` query, to use a fixed table name (`"Table"`) **(which will be replaced with the actual table name during evaluation)**, to quote all table and column names, and to restrict generation to the specified SQL functions, condition operators, and keywords.
 The full prompt specification is provided in the prompt template.
 
 Below is an example of the **5-shot prompt template** used during inference.
@@ -222,13 +220,6 @@ SQL:"""
 
 Implementations of 0-shot, 1-shot, and 5-shot prompt templates are available here:
 👉 [link-to-file](./llmsql/prompts/prompts.py)
-
-
-
-## Suggested Workflow
-
-* **Primary**: Run inference on all questions with vllm or transformers → Evaluate with `evaluate()`.
-* **Secondary (optional)**: Fine-tune on `train/val` → Test on `test_questions.jsonl`. You can find the datasets here [HF Finetune Ready](https://huggingface.co/datasets/llmsql-bench/llmsql-benchmark-finetune-ready).
 
 
 ## Contributing
