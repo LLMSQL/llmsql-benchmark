@@ -263,6 +263,20 @@ class TestInferenceApi:
                 limit=1.5,  # float out of (0, 1]
             )
 
+    def test_negative_limit_raises(self, monkeypatch, tmp_path):
+        self._patch_session(monkeypatch)
+        qpath, tpath, outpath = _make_fixtures(tmp_path)
+
+        with pytest.raises(ValueError):
+            inference_api(
+                model_name="dummy",
+                base_url="http://localhost:9999/v1",
+                output_file=str(outpath),
+                questions_path=str(qpath),
+                tables_path=str(tpath),
+                limit=-10,  # float out of (0, 1]
+            )
+
     def test_api_key_set_in_header(self, monkeypatch, tmp_path):
         """Authorization header must be forwarded to the session."""
         captured_headers: dict = {}
