@@ -1,0 +1,59 @@
+date: 2026-02-24
+# =====================
+# Model Information
+# =====================
+model:
+  name: nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B-BF16
+  revision: main
+  commit_hash: 5a48de7e98cce824b3456eb9857ded839c3b6475
+  parameter_count: 30B
+  dtype: bfloat16
+  thinking: true
+
+type: open-source  # open-source | proprietary
+
+# =====================
+# Package Information
+# =====================
+llmsql:
+  version: 0.1.15
+  commit_hash: 79175212c90b1fc094abd2c9666c23d903060014
+
+# =====================
+# Benchmark Information
+# =====================
+version: 2.0
+
+# =====================
+# Environment Information
+# =====================
+os_name: Ubuntu 24.04.3 LTS
+python_version: 3.12.12
+pip_freeze: requirements.txt
+device: 4xH200
+
+# =====================
+# Function Inputs / Inference Backend
+# =====================
+inference:
+  backend: vllm  # vllm | transformers
+  arguments:
+    batch_size: 20000
+    tetensor_parallel_size: 4
+    do_sample: true
+    max_new_tokens: 1024
+    temperature: 1.0
+    sampling_kwargs:
+      top_p: 1.0
+    num_fewshots: 5
+    seed: 42
+    llm_kwargs:
+      dtype: bfloat16
+
+
+# =====================
+# Results
+# =====================
+results:
+  execution_accuracy: 0.8519
+  answers_path: https://huggingface.co/datasets/llmsql-bench/benchmark-evaluation-results/blob/main/NVIDIA-Nemotron-3-Nano-30B-A3B-BF16/5fewshots/NVIDIA-Nemotron-3-Nano-30B-A3B-BF16_outputs.jsonl

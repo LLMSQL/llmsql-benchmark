@@ -13,3 +13,11 @@ llmsql_workdir
 
 evaluation_*
 coverage.xml
+
+.idea
+
+# Sphinx build
+docs/_build/
+docs/.doctrees/
+*.doctree
+*.pickle

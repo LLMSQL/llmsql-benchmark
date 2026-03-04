@@ -1,0 +1,56 @@
+date: 2026-02-24
+# =====================
+# Model Information
+# =====================
+model:
+  name: mistralai/Mistral-Nemo-Instruct-2407
+  revision: main
+  commit_hash: 04d8a90549d23fc6bd7f642064003592df51e9b3
+  parameter_count: 12B
+  dtype: bfloat16
+  thinking: false
+
+type: open-source  # open-source | proprietary
+
+# =====================
+# Package Information
+# =====================
+llmsql:
+  version: 0.1.15
+  commit_hash: 79175212c90b1fc094abd2c9666c23d903060014
+
+# =====================
+# Benchmark Information
+# =====================
+version: 2.0
+
+# =====================
+# Environment Information
+# =====================
+os_name: Ubuntu 24.04.3 LTS
+python_version: 3.12.12
+pip_freeze: requirements.txt
+device: 4xH200
+
+# =====================
+# Function Inputs / Inference Backend
+# =====================
+inference:
+  backend: vllm  # vllm | transformers
+  arguments:
+    batch_size: 20000
+    tetensor_parallel_size: 4
+    do_sample: false
+    max_new_tokens: 256
+    temperature: 0.0
+    num_fewshots: 5
+    seed: 42
+    llm_kwargs:
+      dtype: bfloat16
+
+# =====================
+# Results
+# =====================
+results:
+  execution_accuracy: 0.7599
+  answers_path: https://huggingface.co/datasets/llmsql-bench/benchmark-evaluation-results/blob/main/Mistral-Nemo-Instruct-2407/5fewshots/Mistral-Nemo-Instruct-2407_outputs.jsonl
