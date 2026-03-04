@@ -138,3 +138,43 @@ async def test_help_shows_without_crashing(monkeypatch, capsys):
 
     captured = capsys.readouterr()
     assert "usage:" in captured.err.lower() or "usage:" in captured.out.lower()
+
+
+
+@pytest.mark.asyncio
+async def test_evaluate_command_called(monkeypatch):
+    """
+    Ensure the evaluate command is correctly invoked with arguments.
+    """
+    
+    mock_evaluate = AsyncMock(return_value={})
+
+    
+    monkeypatch.setattr(
+        "llmsql._cli.evaluate.evaluate",
+        mock_evaluate,
+    )
+    
+    test_args = [
+        "llmsql",
+        "evaluate",
+        "--outputs",
+        "dummy_file.jsonl",
+        "--show-mismatches",
+        "--max-mismatches",
+        "10"
+    ]
+
+    monkeypatch.setattr(sys, "argv", test_args)
+
+    
+    cli = ParserCLI()
+    args = cli.parse_args()
+    cli.execute(args)
+    
+    mock_evaluate.assert_called_once() 
+
+    call_kwargs = mock_evaluate.call_args.kwargs
+    assert call_kwargs["outputs"] == "dummy_file.jsonl"
+    assert call_kwargs["show_mismatches"] is True 
+    assert call_kwargs["max_mismatches"] == 10

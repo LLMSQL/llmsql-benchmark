@@ -2,6 +2,7 @@
 dataset/sqlite_tables.db
 *__pycache__
 .env
+venv
 dist/
 
 *.egg-info/
