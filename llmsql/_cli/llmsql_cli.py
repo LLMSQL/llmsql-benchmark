@@ -2,7 +2,7 @@ import argparse
 import textwrap
 
 from llmsql._cli.inference import Inference
-
+from llmsql._cli.evaluate import Evaluate
 
 class ParserCLI:
     """Main CLI parser that manages all subcommands."""
@@ -58,6 +58,7 @@ class ParserCLI:
         )
 
         Inference(self._subparsers)
+        Evaluate(self._subparsers)
 
     def parse_args(self) -> argparse.Namespace:
         """Parse CLI arguments."""
