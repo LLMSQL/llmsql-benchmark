@@ -38,6 +38,12 @@ class ParserCLI:
                 --model-name mistralai/Mixtral-8x7B-Instruct-v0.1 \
                 --llm-kwargs '{"max_model_len": 4096}'
 
+            # 5️⃣ OpenAI-compatible API backend
+            llmsql inference api \
+                --model-name gpt-5-mini \
+                --base-url https://api.openai.com/v1 \
+                --requests-per-minute 30
+
             Visit https://github.com/LLMSQL/llmsql-benchmark for more
             """),
             formatter_class=argparse.RawDescriptionHelpFormatter,

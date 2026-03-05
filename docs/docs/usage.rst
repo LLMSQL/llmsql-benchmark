@@ -77,6 +77,41 @@ Using vllm backend.
     print(report)
 
 
+Using OpenAI-compateble API.
+
+.. code-block:: python
+
+    from llmsql import inference_api
+    from dotenv import load_dotenv
+    import os
+    load_dotenv()
+
+    # Run inference (will take some time)
+    results = inference_api(
+        model_name="gpt-5-mini",
+        base_url="https://api.openai.com/v1/",
+        api_key=os.environ["OPENAI_API_KEY"],
+        api_kwargs={
+            "response_format": {
+                    "type": "text"
+                },
+                "verbosity": "medium",
+                "reasoning_effort": "medium",
+                "store": False
+        },
+        requests_per_minute=100,
+        output_file="test_output_api.jsonl",
+        limit=50,
+        num_fewshots = 5,
+        seed=42,
+        version="2.0"
+    )
+
+    # Evaluate the results
+    evaluator = LLMSQLEvaluator()
+    report = evaluator.evaluate(outputs_path="outputs/preds_transformers.jsonl")
+    print(report)
+
 ---
 
 .. raw:: html

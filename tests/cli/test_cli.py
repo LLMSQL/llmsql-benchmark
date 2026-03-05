@@ -85,6 +85,45 @@ async def test_vllm_backend_called(monkeypatch):
 
 
 @pytest.mark.asyncio
+async def test_api_backend_called(monkeypatch):
+    """
+    Ensure API backend is correctly invoked.
+    """
+    mock_inference = AsyncMock(return_value=[])
+
+    monkeypatch.setattr(
+        "llmsql.inference_api",
+        mock_inference,
+    )
+
+    test_args = [
+        "llmsql",
+        "inference",
+        "api",
+        "--model-name",
+        "gpt-4o-mini",
+        "--base-url",
+        "https://api.openai.com/v1",
+        "--requests-per-minute",
+        "30",
+    ]
+
+    monkeypatch.setattr(sys, "argv", test_args)
+
+    cli = ParserCLI()
+    args = cli.parse_args()
+
+    cli.execute(args)
+
+    mock_inference.assert_called_once()
+
+    call_kwargs = mock_inference.call_args.kwargs
+    assert call_kwargs["model_name"] == "gpt-4o-mini"
+    assert call_kwargs["base_url"] == "https://api.openai.com/v1"
+    assert call_kwargs["requests_per_minute"] == 30.0
+
+
+@pytest.mark.asyncio
 async def test_missing_backend_errors(monkeypatch):
     """
     Ensure missing backend fails.

@@ -113,7 +113,7 @@
   <h3>2️⃣ Inference from CLI</h3>
 
 <p><strong>vLLM Backend (Recommended)</strong></p>
-<pre><code>llmsql inference --method vllm \
+<pre><code>llmsql inference vllm \
 --model-name Qwen/Qwen2.5-1.5B-Instruct \
 --output-file outputs/preds.jsonl \
 --batch-size 8 \
@@ -121,7 +121,7 @@
 --temperature 0.0</code></pre>
 
 <p><strong>Transformers Backend</strong></p>
-<pre><code>llmsql inference --method transformers \
+<pre><code>llmsql inference transformers \
 --model-or-model-name-or-path Qwen/Qwen2.5-1.5B-Instruct \
 --output-file outputs/preds.jsonl \
 --batch-size 8 \
@@ -163,7 +163,7 @@ print(report)
     <pre><code>@inproceedings{llmsql_bench,
   title={LLMSQL: Upgrading WikiSQL for the LLM Era of Text-to-SQL},
   author={Pihulski, Dzmitry and Charchut, Karol and Novogrodskaia, Viktoria and Koco{'n}, Jan},
-  booktitle={2025 IEEE ICувцDMW},
+  booktitle={2025 IEEE International Conference on Data Mining Workshops (ICDMW)},
   year={2025},
   organization={IEEE}
 }
