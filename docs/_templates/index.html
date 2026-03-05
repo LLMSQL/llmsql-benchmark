@@ -210,7 +210,6 @@ async function loadLatestNews() {
     );
 
     const data = await response.json();
-
     const content = atob(data.content);
 
     const match = content.match(
@@ -226,7 +225,9 @@ async function loadLatestNews() {
       .replace("## Latest News 📣", "")
       .trim();
 
-    const lines = newsMarkdown.split("\n").filter(l => l.startsWith("*"));
+    const lines = newsMarkdown
+      .split("\n")
+      .filter(l => l.startsWith("*"));
 
     const htmlList = `
       <ul>
@@ -235,7 +236,22 @@ async function loadLatestNews() {
 
           const withLinks = text.replace(
             /\[([^\]]+)\]\(([^)]+)\)/g,
-            '<a href="https://github.com/LLMSQL/llmsql-benchmark/blob/main/$2" target="_blank">$1</a>'
+            (match, label, url) => {
+              if (url.startsWith("http://") || url.startsWith("https://")) {
+                return `<a href="${url}" target="_blank" rel="noopener">${label}</a>`;
+              }
+
+              const cleanPath = url.replace(/^\.\//, "");
+
+              const [path, anchor] = cleanPath.split("#");
+
+              const githubUrl =
+                "https://github.com/LLMSQL/llmsql-benchmark/blob/main/" +
+                path +
+                (anchor ? `#${anchor}` : "");
+
+              return `<a href="${githubUrl}" target="_blank" rel="noopener">${label}</a>`;
+            }
           );
 
           return `<li>${withLinks}</li>`;
@@ -247,7 +263,7 @@ async function loadLatestNews() {
 
   } catch (error) {
     container.innerHTML =
-      "<p>Unable to load latest news from GitHub.</p>";
+      "<p>Unable to load latest news from GitHub. See the repo yourself: https://github.com/LLMSQL/llmsql-benchmark/blob/main/</p>";
   }
 }
 
