@@ -42,13 +42,13 @@ The package doesn't have the dataset, it is stored on our [HuggingFace page](htt
 
 ## Latest News 📣
 
+* [2026/03] Fully functional CLI commands for inference and evaluation. See this [guide](./llmsql/_cli/README.md).
+
 * [2026/03] Added support for API inference, for now only for OpenAI-compatable APIs, see [`inference_api()` function](./llmsql/inference/inference_api.py#inference_api)
 
 * [2026/03] The page now contains first version of [leaderboard](https://llmsql.github.io/llmsql-benchmark/#:~:text=%F0%9F%93%8A%20Leaderboard%20%E2%80%94%20Execution%20Accuracy%20%28EX)!
 
 * [2026/02] The new LLMSQL 2.0 version is out now! See the [dataset](https://huggingface.co/datasets/llmsql-bench/llmsql-2.0). The support is already added with the `version` parameter to each `inference` function.
-
-* [2025/12] Evaluation class converted to function see [new `evaluate(...)` function](./llmsql/evaluation/evaluate.py#evaluate)
 
 
 
