@@ -167,6 +167,6 @@ uvloop==0.22.1
 vllm==0.15.1
 watchfiles==1.1.1
 websockets==16.0
-xgrammar==0.1.29
+xgrammar==0.1.32
 xxhash==3.6.0
 yarl==1.22.0
