@@ -56,6 +56,7 @@ from llmsql.config.config import (
 from llmsql.loggers.logging_config import log
 from llmsql.utils.inference_utils import _maybe_download, _setup_seed
 from llmsql.utils.utils import (
+    build_all_requests,
     choose_prompt_builder,
     load_jsonl,
     overwrite_jsonl,
@@ -201,37 +202,27 @@ def inference_vllm(
 
     sampling_params = SamplingParams(**sampling_params_args)
 
+    # --- build all requests ---
+    prompts = build_all_requests(
+        questions,
+        tables,
+        prompt_builder,
+        tokenizer=tokenizer if use_chat_template else None,
+        use_chat_template=bool(use_chat_template),
+    )
+
     # --- main inference loop ---
     all_results: list[dict[str, str]] = []
     total = len(questions)
 
     for batch_start in tqdm(range(0, total, batch_size), desc="Generating"):
-        batch = questions[batch_start : batch_start + batch_size]
+        batch_prompts = prompts[batch_start : batch_start + batch_size]
+        batch_questions = questions[batch_start : batch_start + batch_size]
 
-        prompts = []
-        for q in batch:
-            tbl = tables[q["table_id"]]
-            example_row = tbl["rows"][0] if tbl["rows"] else []
-
-            raw_text = prompt_builder(
-                q["question"], tbl["header"], tbl["types"], example_row
-            )
-
-            if use_chat_template:
-                messages = [{"role": "user", "content": raw_text}]
-
-                final_prompt = tokenizer.apply_chat_template(
-                    messages, tokenize=False, add_generation_prompt=True
-                )
-            else:
-                final_prompt = raw_text
-
-            prompts.append(final_prompt)
-
-        outputs = llm.generate(prompts, sampling_params)
+        outputs = llm.generate(batch_prompts, sampling_params)
 
         batch_results: list[dict[str, str]] = []
-        for q, out in zip(batch, outputs, strict=False):
+        for q, out in zip(batch_questions, outputs, strict=False):
             text = out.outputs[0].text
             batch_results.append(
                 {

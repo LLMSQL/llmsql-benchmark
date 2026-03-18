@@ -27,6 +27,7 @@ from llmsql.config.config import (
 from llmsql.loggers.logging_config import log
 from llmsql.utils.inference_utils import _maybe_download, _setup_seed
 from llmsql.utils.utils import (
+    build_all_requests,
     choose_prompt_builder,
     load_jsonl,
     overwrite_jsonl,
@@ -114,13 +115,10 @@ async def _inference_api_async(
 
     async with aiohttp.ClientSession(headers=headers) as session:
 
-        async def process_question(q: dict[str, Any]) -> dict[str, str]:
-            tbl = tables[q["table_id"]]
-            example_row = tbl["rows"][0] if tbl["rows"] else []
-            prompt = prompt_builder(
-                q["question"], tbl["header"], tbl["types"], example_row
-            )
+        # Pre-build all prompts using the shared function
+        prompts = build_all_requests(questions, tables, prompt_builder)
 
+        async def process_question(q: dict[str, Any], prompt: str) -> dict[str, str]:
             payload = {
                 "model": model_name,
                 "messages": [
@@ -152,7 +150,7 @@ async def _inference_api_async(
 
             return result
 
-        tasks = [process_question(q) for q in questions]
+        tasks = [process_question(q, p) for q, p in zip(questions, prompts)]
         for coro in tqdm(
             asyncio.as_completed(tasks),
             total=len(tasks),
