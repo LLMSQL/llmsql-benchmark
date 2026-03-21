@@ -9,7 +9,11 @@ from llmsql.inference.inference_transformers import inference_transformers
 
 questions = [
     {"question_id": "q1", "table_id": "t1", "question": "Select name from students;"},
-    {"question_id": "q2", "table_id": "t1", "question": "Count students older than 20;"},
+    {
+        "question_id": "q2",
+        "table_id": "t1",
+        "question": "Count students older than 20;",
+    },
 ]
 tables = [
     {
@@ -47,8 +51,7 @@ async def test_inference_stability_on_valid_version_flags(version_arg):
             "model_or_model_name_or_path": "sshleifer/tiny-gpt2",
             "tokenizer_or_name": "sshleifer/tiny-gpt2",
             "output_file": str(output_file),
-            "questions_path": str(questions_file),
-            "tables_path": str(tables_file),
+            "workdir_path": str(tmpdir_path),
             "batch_size": 1,
             "max_new_tokens": 8,
             "temperature": 0.0,
@@ -56,7 +59,7 @@ async def test_inference_stability_on_valid_version_flags(version_arg):
         }
 
         if version_arg is not None:
-            kwargs["version"] = version_arg  
+            kwargs["version"] = version_arg
 
         results = inference_transformers(**kwargs)
 
@@ -66,7 +69,7 @@ async def test_inference_stability_on_valid_version_flags(version_arg):
 
         if version_arg is not None:
             for r in results:
-                assert "completion" in r 
+                assert "completion" in r
 
 
 @pytest.mark.asyncio
@@ -84,8 +87,7 @@ async def test_inference_stability_on_invalid_version_flag():
             "model_or_model_name_or_path": "sshleifer/tiny-gpt2",
             "tokenizer_or_name": "sshleifer/tiny-gpt2",
             "output_file": str(out_file),
-            "questions_path": str(q_file),
-            "tables_path": str(t_file),
+            "workdir_path": str(tmpdir_path),
             "batch_size": 1,
             "max_new_tokens": 8,
             "temperature": 0.0,
@@ -93,5 +95,5 @@ async def test_inference_stability_on_invalid_version_flag():
             "version": INVALID_LLMSQL_VERSION,  # invalid version
         }
 
-        with pytest.raises(Exception):
+        with pytest.raises(ValueError):
             inference_transformers(**kwargs)

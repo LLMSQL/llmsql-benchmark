@@ -48,8 +48,7 @@ async def test_inference_stability():
             model_or_model_name_or_path="sshleifer/tiny-gpt2",  # tiny HF model for fast tests
             tokenizer_or_name="sshleifer/tiny-gpt2",
             output_file=str(output_file),
-            questions_path=str(questions_file),
-            tables_path=str(tables_file),
+            workdir_path=str(tmpdir_path),
             batch_size=1,
             max_new_tokens=8,
             temperature=0.0,

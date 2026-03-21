@@ -6,11 +6,7 @@ import numpy as np
 import pytest
 import torch
 
-from llmsql.config.config import (
-    DEFAULT_LLMSQL_VERSION,
-    DEFAULT_WORKDIR_PATH,
-    get_repo_id,
-)
+from llmsql.config.config import DEFAULT_LLMSQL_VERSION, get_repo_id
 from llmsql.utils import inference_utils as mod
 
 
@@ -22,12 +18,14 @@ async def test_download_file(monkeypatch, tmp_path):
     def fake_hf_hub_download(repo_id, filename, repo_type, local_dir):
         assert repo_id == get_repo_id(DEFAULT_LLMSQL_VERSION)
         assert repo_type == "dataset"
-        assert local_dir == DEFAULT_WORKDIR_PATH
+        assert Path(local_dir).is_dir()
         assert filename == "questions.jsonl"
         return expected_path
 
     monkeypatch.setattr(mod, "hf_hub_download", fake_hf_hub_download)
-    path = mod._download_file(get_repo_id(DEFAULT_LLMSQL_VERSION), "questions.jsonl")
+    path = mod._download_file(
+        get_repo_id(DEFAULT_LLMSQL_VERSION), "questions.jsonl", tmp_path
+    )
     assert path == expected_path
 
 
@@ -52,7 +50,6 @@ async def test_setup_seed(monkeypatch):
 @pytest.mark.asyncio
 async def test_maybe_download_calls_hf_hub(monkeypatch, tmp_path):
     """_maybe_download downloads file if missing."""
-    monkeypatch.setattr(mod, "DEFAULT_WORKDIR_PATH", str(tmp_path))
     filename = "questions.jsonl"
     called = {}
 
@@ -66,7 +63,7 @@ async def test_maybe_download_calls_hf_hub(monkeypatch, tmp_path):
     monkeypatch.setattr(mod, "hf_hub_download", fake_hf_hub_download)
 
     path = mod._maybe_download(
-        get_repo_id(DEFAULT_LLMSQL_VERSION), filename, local_path=None
+        get_repo_id(DEFAULT_LLMSQL_VERSION), filename, workdir_path=tmp_path
     )
     assert Path(path).exists()
     assert called["repo_id"] == get_repo_id(DEFAULT_LLMSQL_VERSION)

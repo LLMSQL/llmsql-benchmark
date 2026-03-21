@@ -10,7 +10,6 @@ from __future__ import annotations
 
 import asyncio
 import os
-from pathlib import Path
 import time
 from typing import Any, Literal
 
@@ -21,11 +20,14 @@ from tqdm.asyncio import tqdm
 
 from llmsql.config.config import (
     DEFAULT_LLMSQL_VERSION,
-    DEFAULT_WORKDIR_PATH,
     get_repo_id,
 )
 from llmsql.loggers.logging_config import log
-from llmsql.utils.inference_utils import _maybe_download, _setup_seed
+from llmsql.utils.inference_utils import (
+    _maybe_download,
+    _setup_seed,
+    resolve_workdir_path,
+)
 from llmsql.utils.utils import (
     choose_prompt_builder,
     load_jsonl,
@@ -176,9 +178,7 @@ def inference_api(
     request_headers: dict[str, str] | None = None,
     version: Literal["1.0", "2.0"] = DEFAULT_LLMSQL_VERSION,
     output_file: str = "llm_sql_predictions.jsonl",
-    questions_path: str | None = None,
-    tables_path: str | None = None,
-    workdir_path: str = DEFAULT_WORKDIR_PATH,
+    workdir_path: str | None = None,
     limit: int | float | None = None,
     num_fewshots: int = 5,
     seed: int = 42,
@@ -199,9 +199,8 @@ def inference_api(
         # Benchmark:
         version: LLMSQL version
         output_file: Path to write outputs (will be overwritten).
-        questions_path: Path to questions.jsonl (auto-downloads if missing).
-        tables_path: Path to tables.jsonl (auto-downloads if missing).
-        workdir_path: Directory to store downloaded data.
+        workdir_path: Directory to store downloaded benchmark files. If omitted, a
+            temporary directory is created automatically.
         num_fewshots: Number of few-shot examples (0, 1, or 5).
         batch_size: Number of questions per generation batch.
         seed: Random seed for reproducibility.
@@ -216,12 +215,11 @@ def inference_api(
     api_kwargs = api_kwargs or {}
     request_headers = request_headers or {}
 
-    workdir = Path(workdir_path)
-    workdir.mkdir(parents=True, exist_ok=True)
+    workdir = resolve_workdir_path(workdir_path)
 
     repo_id = get_repo_id(version)
-    questions_path = _maybe_download(repo_id, "questions.jsonl", questions_path)
-    tables_path = _maybe_download(repo_id, "tables.jsonl", tables_path)
+    questions_path = _maybe_download(repo_id, "questions.jsonl", workdir)
+    tables_path = _maybe_download(repo_id, "tables.jsonl", workdir)
 
     questions = load_jsonl(questions_path)
     tables_list = load_jsonl(tables_path)

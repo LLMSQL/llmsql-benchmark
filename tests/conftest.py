@@ -110,12 +110,10 @@ def mock_utils(mocker, tmp_path):
     mocker.patch("llmsql.evaluation.evaluate.log_mismatch")
     mocker.patch("llmsql.evaluation.evaluate.print_summary")
 
-    # download files
+    # benchmark file resolver
     mocker.patch(
-        "llmsql.evaluation.evaluate.download_benchmark_file",
-        side_effect=lambda repo_id, filename, local_dir: str(
-            Path(local_dir) / filename
-        ),
+        "llmsql.evaluation.evaluate._maybe_download",
+        side_effect=lambda repo_id, filename, workdir: str(Path(workdir) / filename),
     )
 
     # report writer
