@@ -43,9 +43,7 @@ print(report)
 evaluate(
     outputs,
     *,
-    workdir_path: str | None = "llmsql_workdir",
-    questions_path: str | None = None,
-    db_path: str | None = None,
+    workdir_path: str | None = None,
     save_report: str | None = None,
     show_mismatches: bool = True,
     max_mismatches: int = 5,
@@ -55,9 +53,7 @@ evaluate(
 | Argument          | Description                                                                                                                                     |
 | ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
 | `outputs`         | **Required**. Either a path to a JSONL file or a list of dicts with predictions.                                                                |
-| `workdir_path`    | Directory for automatic download of benchmark files (ignored if both `questions_path` and `db_path` are provided). Default: `"llmsql_workdir"`. |
-| `questions_path`  | Optional path to benchmark questions JSONL file.                                                                                                |
-| `db_path`         | Optional path to SQLite DB with evaluation tables.                                                                                              |
+| `workdir_path`    | Directory used to cache downloaded benchmark files. If omitted, a temporary directory is created automatically. |
 | `save_report`     | Optional path to save detailed JSON report. Defaults to `evaluation_results_{uuid}.json`.                                                       |
 | `show_mismatches` | Print mismatches while evaluating. Default: `True`.                                                                                             |
 | `max_mismatches`  | Maximum number of mismatches to print. Default: `5`.                                                                                            |

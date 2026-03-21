@@ -56,8 +56,7 @@ async def test_inference_vllm_valid_versions(monkeypatch, tmp_path, version_arg)
     kwargs = {
         "model_name": "dummy-model",
         "output_file": str(out_file),
-        "questions_path": str(q_file),
-        "tables_path": str(t_file),
+        "workdir_path": str(tmp_path),
         "num_fewshots": 1,
         "batch_size": 1,
         "max_new_tokens": 8,
@@ -99,8 +98,7 @@ async def test_inference_vllm_invalid_version(monkeypatch, tmp_path):
     kwargs = {
         "model_name": "dummy-model",
         "output_file": str(out_file),
-        "questions_path": str(q_file),
-        "tables_path": str(t_file),
+        "workdir_path": str(tmp_path),
         "num_fewshots": 1,
         "batch_size": 1,
         "max_new_tokens": 8,

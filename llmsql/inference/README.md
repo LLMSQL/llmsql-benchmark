@@ -36,8 +36,7 @@ from llmsql import inference_transformers
 results = inference_transformers(
         model_or_model_name_or_path="Qwen/Qwen2.5-1.5B-Instruct",
         output_file="outputs/preds_transformers.jsonl",
-        questions_path="data/questions.jsonl",
-        tables_path="data/tables.jsonl",
+        workdir_path="./benchmark-cache",
         num_fewshots=5,
         batch_size=8,
         max_new_tokens=256,
@@ -168,9 +167,7 @@ Runs inference using the Hugging Face `transformers` backend.
 | Argument                        | Type    | Default                   | Description                                      |
 | ------------------------------- | ------- | ------------------------- | ------------------------------------------------ |
 | `output_file`                   | `str`   | `"outputs/predictions.jsonl"` | Path to write predictions as JSONL.          |
-| `questions_path`                | `str \| None` | `None`          | Path to questions.jsonl (auto-downloads if missing). |
-| `tables_path`                   | `str \| None` | `None`          | Path to tables.jsonl (auto-downloads if missing).    |
-| `workdir_path`                  | `str`   | `"llmsql_workdir"`        | Working directory for downloaded files.          |
+| `workdir_path`                  | `str \| None`   | `None`        | Directory used to cache downloaded benchmark files. If omitted, a temporary directory is created automatically.   |
 | `num_fewshots`                  | `int`   | `5`                       | Number of few-shot examples (0, 1, or 5).        |
 | `batch_size`                    | `int`   | `8`                       | Batch size for inference.                        |
 | `seed`                          | `int`   | `42`                      | Random seed for reproducibility.                 |
@@ -210,9 +207,7 @@ Runs inference using the [vLLM](https://github.com/vllm-project/vllm) backend fo
 | Argument                        | Type           | Default                       | Description                                      |
 | ------------------------------- | -------------- | ----------------------------- | ------------------------------------------------ |
 | `output_file`                   | `str`          | `"outputs/predictions.jsonl"` | Path to write predictions as JSONL.              |
-| `questions_path`                | `str \| None`  | `None`                        | Path to questions.jsonl (auto-downloads if missing). |
-| `tables_path`                   | `str \| None`  | `None`                        | Path to tables.jsonl (auto-downloads if missing).    |
-| `workdir_path`                  | `str`          | `"llmsql_workdir"`            | Working directory for downloaded files.          |
+| `workdir_path`                  | `str \| None`          | `None`            | Directory used to cache downloaded benchmark files. If omitted, a temporary directory is created automatically.          |
 | `num_fewshots`                  | `int`          | `5`                           | Number of few-shot examples (0, 1, or 5).        |
 | `batch_size`                    | `int`          | `8`                           | Number of prompts per batch.                     |
 | `seed`                          | `int`          | `42`                          | Random seed for reproducibility.                 |

@@ -1,4 +1,6 @@
 import json
+from pathlib import Path
+import shutil
 
 import pytest
 
@@ -20,6 +22,8 @@ async def test_evaluate_with_mock(monkeypatch, temp_dir, dummy_db_file):
         )
     )
 
+    shutil.copy(dummy_db_file, temp_dir / "sqlite_tables.db")
+
     # Fake outputs.jsonl
     outputs_path = temp_dir / "outputs.jsonl"
     outputs_path.write_text(json.dumps({"question_id": 1, "completion": "SELECT 1"}))
@@ -34,8 +38,7 @@ async def test_evaluate_with_mock(monkeypatch, temp_dir, dummy_db_file):
 
     report = evaluate(
         outputs=str(outputs_path),
-        questions_path=str(questions_path),
-        db_path=dummy_db_file,
+        workdir_path=str(temp_dir),
         show_mismatches=False,
     )
 
@@ -55,6 +58,7 @@ async def test_evaluate_saves_report(monkeypatch, temp_dir, dummy_db_file):
             {"question_id": 1, "table_id": 1, "question": "Test", "sql": "SELECT 1"}
         )
     )
+    shutil.copy(dummy_db_file, temp_dir / "sqlite_tables.db")
 
     outputs_path = temp_dir / "outputs.jsonl"
     outputs_path.write_text(json.dumps({"question_id": 1, "completion": "SELECT 1"}))
@@ -71,8 +75,7 @@ async def test_evaluate_saves_report(monkeypatch, temp_dir, dummy_db_file):
 
     evaluate(
         outputs=str(outputs_path),
-        questions_path=str(questions_path),
-        db_path=dummy_db_file,
+        workdir_path=str(temp_dir),
         save_report=str(report_path),
         show_mismatches=False,
     )
@@ -94,6 +97,7 @@ async def test_evaluate_with_jsonl_file(monkeypatch, temp_dir, dummy_db_file):
             {"question_id": 1, "table_id": 1, "question": "Sample", "sql": "SELECT 1"}
         )
     )
+    shutil.copy(dummy_db_file, temp_dir / "sqlite_tables.db")
 
     # Create fake outputs.jsonl
     outputs_path = temp_dir / "outputs.jsonl"
@@ -115,8 +119,7 @@ async def test_evaluate_with_jsonl_file(monkeypatch, temp_dir, dummy_db_file):
 
     report = evaluate(
         outputs=str(outputs_path),
-        questions_path=str(questions_path),
-        db_path=dummy_db_file,
+        workdir_path=str(temp_dir),
         show_mismatches=False,
     )
 
@@ -135,6 +138,7 @@ async def test_evaluate_with_dict_list(monkeypatch, temp_dir, dummy_db_file):
             {"question_id": 1, "table_id": 1, "question": "Sample", "sql": "SELECT 1"}
         )
     )
+    shutil.copy(dummy_db_file, temp_dir / "sqlite_tables.db")
 
     # Output as a list of dicts
     outputs_list = [{"question_id": 1, "completion": "SELECT 1"}]
@@ -159,8 +163,7 @@ async def test_evaluate_with_dict_list(monkeypatch, temp_dir, dummy_db_file):
 
     report = evaluate(
         outputs=outputs_list,
-        questions_path=str(questions_path),
-        db_path=dummy_db_file,
+        workdir_path=str(temp_dir),
         show_mismatches=False,
     )
 
@@ -192,32 +195,26 @@ def test_evaluate_with_jsonl_path(mock_utils, mocker):
     assert report["input_mode"] == "jsonl_path"
 
 
-def test_missing_workdir_and_no_questions_path_raises():
-    with pytest.raises(ValueError):
-        evaluate(
-            outputs=[{"question_id": 1, "completion": "x"}],
-            workdir_path=None,
-            questions_path=None,
-        )
+def test_auto_temp_workdir_is_used_when_not_provided(mocker):
+    resolve = mocker.patch(
+        "llmsql.evaluation.evaluate.resolve_workdir_path",
+        return_value=Path("/tmp/llmsql-test"),
+    )
 
-
-def test_missing_workdir_and_no_db_path_raises():
-    with pytest.raises(ValueError):
-        evaluate(
-            outputs=[{"question_id": 1, "completion": "x"}],
-            workdir_path=None,
-            db_path=None,
-        )
+    evaluate([{"question_id": 1, "completion": "x"}], workdir_path=None)
+    resolve.assert_called_once_with(None)
 
 
 def test_download_occurs_if_files_missing(mock_utils, mocker):
-    dl = mocker.patch("llmsql.evaluation.evaluate.download_benchmark_file")
+    dl = mocker.patch("llmsql.evaluation.evaluate._maybe_download")
+    dl.side_effect = [
+        str(mock_utils / "questions.jsonl"),
+        str(mock_utils / "sqlite_tables.db"),
+    ]
 
     evaluate(
         [{"question_id": 1, "completion": "SELECT 1"}],
         workdir_path=str(mock_utils),
-        questions_path=None,
-        db_path=None,
     )
 
     assert dl.call_count == 2  # questions + sqlite

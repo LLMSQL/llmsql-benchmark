@@ -15,8 +15,6 @@ Example
     results = inference_vllm(
         model_name="Qwen/Qwen2.5-1.5B-Instruct",
         version="2.0",
-        output_file="outputs/predictions.jsonl",
-        questions_path="data/questions.jsonl",
         tables_path="data/tables.jsonl",
         num_fewshots=5,
         batch_size=8,
@@ -41,7 +39,6 @@ os.environ["VLLM_USE_V1"] = "0"
 os.environ["CUBLAS_WORKSPACE_CONFIG"] = ":4096:8"
 os.environ["VLLM_ENABLE_V1_MULTIPROCESSING"] = "0"
 
-from pathlib import Path
 from typing import Any, Literal
 
 from dotenv import load_dotenv
@@ -50,11 +47,14 @@ from vllm import LLM, SamplingParams
 
 from llmsql.config.config import (
     DEFAULT_LLMSQL_VERSION,
-    DEFAULT_WORKDIR_PATH,
     get_repo_id,
 )
 from llmsql.loggers.logging_config import log
-from llmsql.utils.inference_utils import _maybe_download, _setup_seed
+from llmsql.utils.inference_utils import (
+    _maybe_download,
+    _setup_seed,
+    resolve_workdir_path,
+)
 from llmsql.utils.utils import (
     choose_prompt_builder,
     load_jsonl,
@@ -82,9 +82,7 @@ def inference_vllm(
     # === Benchmark Parameters ===
     version: Literal["1.0", "2.0"] = DEFAULT_LLMSQL_VERSION,
     output_file: str = "llm_sql_predictions.jsonl",
-    questions_path: str | None = None,
-    tables_path: str | None = None,
-    workdir_path: str = DEFAULT_WORKDIR_PATH,
+    workdir_path: str | None = None,
     limit: int | float | None = None,
     num_fewshots: int = 5,
     batch_size: int = 8,
@@ -116,9 +114,8 @@ def inference_vllm(
         # Benchmark:
         version: LLMSQL version
         output_file: Path to write outputs (will be overwritten).
-        questions_path: Path to questions.jsonl (auto-downloads if missing).
-        tables_path: Path to tables.jsonl (auto-downloads if missing).
-        workdir_path: Directory to store downloaded data.
+        workdir_path: Directory to store downloaded benchmark files. If omitted, a
+            temporary directory is created automatically.
         num_fewshots: Number of few-shot examples (0, 1, or 5).
         batch_size: Number of questions per generation batch.
         seed: Random seed for reproducibility.
@@ -135,16 +132,15 @@ def inference_vllm(
     _setup_seed(seed=seed)
 
     hf_token = hf_token or os.environ.get("HF_TOKEN")
-    workdir = Path(workdir_path)
-    workdir.mkdir(parents=True, exist_ok=True)
 
     # --- load input data ---
     log.info("Preparing questions and tables...")
 
+    workdir = resolve_workdir_path(workdir_path)
     repo_id = get_repo_id(version)
 
-    questions_path = _maybe_download(repo_id, "questions.jsonl", questions_path)
-    tables_path = _maybe_download(repo_id, "tables.jsonl", tables_path)
+    questions_path = _maybe_download(repo_id, "questions.jsonl", workdir)
+    tables_path = _maybe_download(repo_id, "tables.jsonl", workdir)
 
     questions = load_jsonl(questions_path)
     tables_list = load_jsonl(tables_path)
