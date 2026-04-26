@@ -59,3 +59,45 @@ def choose_prompt_builder(
     if shots == 5:
         return build_prompt_5shot
     raise ValueError("shots must be one of {0, 1, 5}")
+
+
+def build_all_requests(
+    questions: list[dict],
+    tables: dict,
+    prompt_builder: Callable[[str, list[str], list[str], list[str | float | int]], str],
+    tokenizer=None,
+    use_chat_template: bool = True,
+) -> list[str]:
+    """
+    Build all prompts from questions and tables.
+
+    Args:
+        questions: List of question dicts with 'question' and 'table_id' keys.
+        tables: Dict mapping table_id to table metadata (with 'header', 'types', 'rows').
+        prompt_builder: Function to build raw prompt text.
+        tokenizer: Optional tokenizer with apply_chat_template method.
+        use_chat_template: Whether to apply chat template (if tokenizer provided).
+
+    Returns:
+        List of final prompts (with chat template applied if requested).
+    """
+    prompts = []
+    for q in questions:
+        tbl = tables[q["table_id"]]
+        example_row = tbl["rows"][0] if tbl["rows"] else []
+
+        raw_text = prompt_builder(
+            q["question"], tbl["header"], tbl["types"], example_row
+        )
+
+        if tokenizer and use_chat_template:
+            messages = [{"role": "user", "content": raw_text}]
+            final_prompt = tokenizer.apply_chat_template(
+                messages, tokenize=False, add_generation_prompt=True
+            )
+        else:
+            final_prompt = raw_text
+
+        prompts.append(final_prompt)
+
+    return prompts
