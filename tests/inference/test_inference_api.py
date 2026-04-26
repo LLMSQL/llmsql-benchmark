@@ -193,8 +193,7 @@ class TestInferenceApi:
             model_name="dummy",
             base_url="http://localhost:9999/v1",
             output_file=str(outpath),
-            questions_path=str(qpath),
-            tables_path=str(tpath),
+            workdir_path=str(tmp_path),
         )
 
         assert len(results) == 2
@@ -208,8 +207,7 @@ class TestInferenceApi:
             model_name="dummy",
             base_url="http://localhost:9999/v1",
             output_file=str(outpath),
-            questions_path=str(qpath),
-            tables_path=str(tpath),
+            workdir_path=str(tmp_path),
         )
 
         lines = outpath.read_text().strip().splitlines()
@@ -227,8 +225,7 @@ class TestInferenceApi:
             model_name="dummy",
             base_url="http://localhost:9999/v1",
             output_file=str(outpath),
-            questions_path=str(qpath),
-            tables_path=str(tpath),
+            workdir_path=str(tmp_path),
             limit=1,
         )
 
@@ -242,8 +239,7 @@ class TestInferenceApi:
             model_name="dummy",
             base_url="http://localhost:9999/v1",
             output_file=str(outpath),
-            questions_path=str(qpath),
-            tables_path=str(tpath),
+            workdir_path=str(tmp_path),
             limit=0.5,  # 50% of 2 questions → 1
         )
 
@@ -258,8 +254,7 @@ class TestInferenceApi:
                 model_name="dummy",
                 base_url="http://localhost:9999/v1",
                 output_file=str(outpath),
-                questions_path=str(qpath),
-                tables_path=str(tpath),
+                workdir_path=str(tmp_path),
                 limit=1.5,  # float out of (0, 1]
             )
 
@@ -272,8 +267,7 @@ class TestInferenceApi:
                 model_name="dummy",
                 base_url="http://localhost:9999/v1",
                 output_file=str(outpath),
-                questions_path=str(qpath),
-                tables_path=str(tpath),
+                workdir_path=str(tmp_path),
                 limit=-10,  # float out of (0, 1]
             )
 
@@ -299,8 +293,7 @@ class TestInferenceApi:
             base_url="http://localhost:9999/v1",
             api_key="sk-test-key",
             output_file=str(outpath),
-            questions_path=str(qpath),
-            tables_path=str(tpath),
+            workdir_path=str(tmp_path),
         )
 
         assert captured_headers.get("Authorization") == "Bearer sk-test-key"
@@ -314,8 +307,7 @@ class TestInferenceApi:
             model_name="dummy",
             base_url="http://localhost:9999/v1",
             output_file=str(outpath),
-            questions_path=str(qpath),
-            tables_path=str(tpath),
+            workdir_path=str(tmp_path),
             requests_per_minute=None,
         )
 
@@ -343,8 +335,7 @@ class TestInferenceApi:
                 model_name="dummy",
                 base_url="http://localhost:9999/v1",
                 output_file=str(outpath),
-                questions_path=str(qpath),
-                tables_path=str(tpath),
+                workdir_path=str(tmp_path),
             )
 
         import nest_asyncio

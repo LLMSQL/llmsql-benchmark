@@ -36,15 +36,13 @@ Evaluate from a list of Python dicts:
     report = evaluate(predictions)
     print(report)
 
-Providing your own DB and questions (skip workdir):
+Using a persistent cache directory for benchmark downloads:
 
 .. code-block:: python
 
     report = evaluate(
         "path_to_outputs.jsonl",
-        questions_path="bench/questions.jsonl",
-        db_path="bench/sqlite_tables.db",
-        workdir_path=None
+        workdir_path="./benchmark-cache",
     )
 
 Function Arguments
@@ -59,11 +57,7 @@ Function Arguments
    * - outputs
      - Path to JSONL file or a list of prediction dicts (required).
    * - workdir_path
-     - Directory for automatic benchmark downloads. Ignored if both questions_path and db_path are provided. Default: "llmsql_workdir".
-   * - questions_path
-     - Optional path to benchmark questions JSONL file.
-   * - db_path
-     - Optional path to SQLite DB with evaluation tables.
+     - Directory used to cache downloaded benchmark files. If omitted, a temporary directory is created automatically.
    * - save_report
      - Path to save detailed JSON report. Defaults to "evaluation_results_{uuid}.json".
    * - show_mismatches

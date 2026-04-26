@@ -9,21 +9,19 @@ See the documentation for full usage details.
 """
 
 from datetime import datetime, timezone
-from pathlib import Path
 import uuid
 
 from rich.progress import track
 
 from llmsql.config.config import (
     DEFAULT_LLMSQL_VERSION,
-    DEFAULT_WORKDIR_PATH,
     get_repo_id,
 )
 from llmsql.utils.evaluation_utils import (
     connect_sqlite,
-    download_benchmark_file,
     evaluate_sample,
 )
+from llmsql.utils.inference_utils import _maybe_download, resolve_workdir_path
 from llmsql.utils.rich_utils import log_mismatch, print_summary
 from llmsql.utils.utils import load_jsonl, load_jsonl_dict_by_key, save_json_report
 
@@ -32,9 +30,7 @@ def evaluate(
     outputs: str | list[dict[int, str | int]],
     *,
     version: str = DEFAULT_LLMSQL_VERSION,
-    workdir_path: str | None = DEFAULT_WORKDIR_PATH,
-    questions_path: str | None = None,
-    db_path: str | None = None,
+    workdir_path: str | None = None,
     save_report: str | None = None,
     show_mismatches: bool = True,
     max_mismatches: int = 5,
@@ -45,9 +41,8 @@ def evaluate(
     Args:
         version: LLMSQL version
         outputs: Either a JSONL file path or a list of dicts.
-        workdir_path: Directory for auto-downloads (ignored if all paths provided).
-        questions_path: Manual path to benchmark questions JSONL.
-        db_path: Manual path to SQLite benchmark DB.
+        workdir_path: Directory to store downloaded benchmark files. If omitted, a
+            temporary directory is created automatically.
         save_report: Optional manual save path. If None → auto-generated.
         show_mismatches: Print mismatches while evaluating.
         max_mismatches: Max mismatches to print.
@@ -58,39 +53,12 @@ def evaluate(
 
     # Determine input type
     input_mode = "jsonl_path" if isinstance(outputs, str) else "dict_list"
+    workdir = resolve_workdir_path(workdir_path)
 
     repo_id = get_repo_id(version)
 
-    # --- Resolve inputs if needed ---
-    workdir = Path(workdir_path) if workdir_path else None
-    if workdir_path is not None and (questions_path is None or db_path is None):
-        workdir.mkdir(parents=True, exist_ok=True)  # type: ignore
-
-    if questions_path is None:
-        if workdir is None:
-            raise ValueError(
-                "questions_path not provided, and workdir_path disabled. "
-                "Enable workdir or provide questions_path explicitly."
-            )
-        local_q = workdir / "questions.jsonl"
-        questions_path = (
-            str(local_q)
-            if local_q.is_file()
-            else download_benchmark_file(repo_id, "questions.jsonl", workdir)
-        )
-
-    if db_path is None:
-        if workdir is None:
-            raise ValueError(
-                "db_path not provided, and workdir_path disabled. "
-                "Enable workdir or provide db_path explicitly."
-            )
-        local_db = workdir / "sqlite_tables.db"
-        db_path = (
-            str(local_db)
-            if local_db.is_file()
-            else download_benchmark_file(repo_id, "sqlite_tables.db", workdir)
-        )
+    questions_path = _maybe_download(repo_id, "questions.jsonl", workdir)
+    db_path = _maybe_download(repo_id, "sqlite_tables.db", workdir)
 
     # --- Load benchmark questions ---
     questions = load_jsonl_dict_by_key(questions_path, key="question_id")

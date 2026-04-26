@@ -1,9 +1,10 @@
 import json
+import shutil
+
 import pytest
 
 from llmsql import evaluate
 from llmsql.config.config import get_available_versions
-
 
 VALID_LLMSQL_VERSIONS = [None] + get_available_versions()
 INVALID_LLMSQL_VERSION = "1.1"
@@ -27,11 +28,11 @@ async def test_evaluate_runs_with_valid_versions(
         )
     )
 
+    shutil.copy(dummy_db_file, temp_dir / "sqlite_tables.db")
+
     # Fake outputs.jsonl
     outputs_path = temp_dir / "outputs.jsonl"
-    outputs_path.write_text(
-        json.dumps({"question_id": 1, "completion": "SELECT 1"})
-    )
+    outputs_path.write_text(json.dumps({"question_id": 1, "completion": "SELECT 1"}))
 
     # Monkeypatch exactly like reference file
     monkeypatch.setattr(
@@ -47,8 +48,7 @@ async def test_evaluate_runs_with_valid_versions(
 
     kwargs = {
         "outputs": str(outputs_path),
-        "questions_path": str(questions_path),
-        "db_path": dummy_db_file,
+        "workdir_path": str(temp_dir),
         "show_mismatches": False,
     }
 
@@ -56,7 +56,6 @@ async def test_evaluate_runs_with_valid_versions(
         kwargs["version"] = version_arg
 
     evaluate(**kwargs)
-
 
 
 @pytest.mark.asyncio
@@ -74,11 +73,10 @@ async def test_evaluate_raises_with_invalid_version(
             }
         )
     )
+    shutil.copy(dummy_db_file, temp_dir / "sqlite_tables.db")
 
     outputs_path = temp_dir / "outputs.jsonl"
-    outputs_path.write_text(
-        json.dumps({"question_id": 1, "completion": "SELECT 1"})
-    )
+    outputs_path.write_text(json.dumps({"question_id": 1, "completion": "SELECT 1"}))
 
     monkeypatch.setattr(
         "llmsql.utils.evaluation_utils.evaluate_sample",
@@ -91,11 +89,10 @@ async def test_evaluate_raises_with_invalid_version(
     monkeypatch.setattr("llmsql.utils.rich_utils.log_mismatch", lambda **k: None)
     monkeypatch.setattr("llmsql.utils.rich_utils.print_summary", lambda *a, **k: None)
 
-    with pytest.raises(Exception):
+    with pytest.raises(ValueError):
         evaluate(
             outputs=str(outputs_path),
-            questions_path=str(questions_path),
-            db_path=dummy_db_file,
+            workdir_path=str(temp_dir),
             show_mismatches=False,
             version=INVALID_LLMSQL_VERSION,
         )

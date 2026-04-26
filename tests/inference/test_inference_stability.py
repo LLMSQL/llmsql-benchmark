@@ -58,8 +58,7 @@ async def test_inference_vllm_with_local_files(monkeypatch, tmp_path):
     results = mod.inference_vllm(
         model_name="dummy-model",
         output_file=str(out_file),
-        questions_path=str(qpath),
-        tables_path=str(tpath),
+        workdir_path=str(tmp_path),
         num_fewshots=1,
         batch_size=1,
         max_new_tokens=5,
@@ -122,8 +121,6 @@ async def test_inference_vllm_download_if_missing(monkeypatch, tmp_path):
     results = mod.inference_vllm(
         model_name="dummy-model",
         output_file=str(out_file),
-        questions_path=None,
-        tables_path=None,
         workdir_path=str(tmp_path),
     )
 

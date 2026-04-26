@@ -56,9 +56,11 @@ class Inference(SubCommand):
         def add_common_benchmark_args(parser: argparse.ArgumentParser) -> None:
             parser.add_argument("--version", default="2.0", choices=["1.0", "2.0"])
             parser.add_argument("--output-file", default="llm_sql_predictions.jsonl")
-            parser.add_argument("--questions-path")
-            parser.add_argument("--tables-path")
-            parser.add_argument("--workdir-path", default="./workdir")
+            parser.add_argument(
+                "--workdir-path",
+                default=None,
+                help="Directory for benchmark downloads. If omitted, a temporary directory is used.",
+            )
             parser.add_argument("--num-fewshots", type=int, default=5)
             parser.add_argument("--batch-size", type=int, default=8)
             parser.add_argument("--seed", type=int, default=42)
@@ -217,8 +219,6 @@ class Inference(SubCommand):
             generation_kwargs=args.generation_kwargs,
             version=args.version,
             output_file=args.output_file,
-            questions_path=args.questions_path,
-            tables_path=args.tables_path,
             workdir_path=args.workdir_path,
             num_fewshots=args.num_fewshots,
             batch_size=args.batch_size,
@@ -243,8 +243,6 @@ class Inference(SubCommand):
             sampling_kwargs=args.sampling_kwargs,
             version=args.version,
             output_file=args.output_file,
-            questions_path=args.questions_path,
-            tables_path=args.tables_path,
             workdir_path=args.workdir_path,
             limit=args.limit,
             num_fewshots=args.num_fewshots,
@@ -267,8 +265,6 @@ class Inference(SubCommand):
             request_headers=args.request_headers,
             version=args.version,
             output_file=args.output_file,
-            questions_path=args.questions_path,
-            tables_path=args.tables_path,
             workdir_path=args.workdir_path,
             limit=args.limit,
             num_fewshots=args.num_fewshots,

@@ -6,7 +6,6 @@ REPO_IDs: dict[str, str] = {
 }
 
 DEFAULT_LLMSQL_VERSION: Literal["1.0", "2.0"] = "2.0"
-DEFAULT_WORKDIR_PATH = "llmsql_workdir"
 
 
 def get_repo_id(version: str = DEFAULT_LLMSQL_VERSION) -> str:

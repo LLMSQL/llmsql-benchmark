@@ -117,8 +117,7 @@ class TestInferenceVllmLimit:
         results = vllm_mod.inference_vllm(
             model_name="dummy",
             output_file=str(tmp_path / "out.jsonl"),
-            questions_path=str(qpath),
-            tables_path=str(tpath),
+            workdir_path=str(tmp_path),
             limit=3,
         )
 
@@ -136,8 +135,7 @@ class TestInferenceVllmLimit:
         results = vllm_mod.inference_vllm(
             model_name="dummy",
             output_file=str(tmp_path / "out.jsonl"),
-            questions_path=str(qpath),
-            tables_path=str(tpath),
+            workdir_path=str(tmp_path),
             limit=0.4,
         )
 
@@ -155,8 +153,7 @@ class TestInferenceVllmLimit:
         results = vllm_mod.inference_vllm(
             model_name="dummy",
             output_file=str(tmp_path / "out.jsonl"),
-            questions_path=str(qpath),
-            tables_path=str(tpath),
+            workdir_path=str(tmp_path),
             limit=None,
         )
 
@@ -173,8 +170,7 @@ class TestInferenceVllmLimit:
         results = vllm_mod.inference_vllm(
             model_name="dummy",
             output_file=str(tmp_path / "out.jsonl"),
-            questions_path=str(qpath),
-            tables_path=str(tpath),
+            workdir_path=str(tmp_path),
             limit=1.0,
         )
 
@@ -192,8 +188,7 @@ class TestInferenceVllmLimit:
             vllm_mod.inference_vllm(
                 model_name="dummy",
                 output_file=str(tmp_path / "out.jsonl"),
-                questions_path=str(qpath),
-                tables_path=str(tpath),
+                workdir_path=str(tmp_path),
                 limit=1.5,
             )
 
@@ -209,8 +204,7 @@ class TestInferenceVllmLimit:
             vllm_mod.inference_vllm(
                 model_name="dummy",
                 output_file=str(tmp_path / "out.jsonl"),
-                questions_path=str(qpath),
-                tables_path=str(tpath),
+                workdir_path=str(tmp_path),
                 limit=0,
             )
 
@@ -225,8 +219,7 @@ class TestInferenceVllmLimit:
         results = vllm_mod.inference_vllm(
             model_name="dummy",
             output_file=str(tmp_path / "out.jsonl"),
-            questions_path=str(qpath),
-            tables_path=str(tpath),
+            workdir_path=str(tmp_path),
             limit=9999,
         )
 
@@ -249,8 +242,7 @@ class TestInferenceTransformersLimit:
             transformers_mod.inference_transformers(
                 model_or_model_name_or_path="dummy",
                 output_file=str(tmp_path / "out.jsonl"),
-                questions_path=str(qpath),
-                tables_path=str(tpath),
+                workdir_path=str(tmp_path),
                 limit=2.0,
             )
 
@@ -264,7 +256,6 @@ class TestInferenceTransformersLimit:
             transformers_mod.inference_transformers(
                 model_or_model_name_or_path="dummy",
                 output_file=str(tmp_path / "out.jsonl"),
-                questions_path=str(qpath),
-                tables_path=str(tpath),
+                workdir_path=str(tmp_path),
                 limit=-1,
             )

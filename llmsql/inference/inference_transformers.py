@@ -16,8 +16,6 @@ Example
         model_or_model_name_or_path="Qwen/Qwen2.5-1.5B-Instruct",
         repo_id="llmsql-bench/llmsql-2.0",
         output_file="outputs/preds_transformers.jsonl",
-        questions_path="data/questions.jsonl",
-        tables_path="data/tables.jsonl",
         num_fewshots=5,
         batch_size=8,
         max_new_tokens=256,
@@ -39,7 +37,6 @@ due to differences in implementation and numerical precision.
 
 """
 
-from pathlib import Path
 from typing import Any, Literal
 
 from dotenv import load_dotenv
@@ -49,11 +46,14 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 
 from llmsql.config.config import (
     DEFAULT_LLMSQL_VERSION,
-    DEFAULT_WORKDIR_PATH,
     get_repo_id,
 )
 from llmsql.loggers.logging_config import log
-from llmsql.utils.inference_utils import _maybe_download, _setup_seed
+from llmsql.utils.inference_utils import (
+    _maybe_download,
+    _setup_seed,
+    resolve_workdir_path,
+)
 from llmsql.utils.utils import (
     choose_prompt_builder,
     load_jsonl,
@@ -92,9 +92,7 @@ def inference_transformers(
     # --- Benchmark Parameters ---
     version: Literal["1.0", "2.0"] = DEFAULT_LLMSQL_VERSION,
     output_file: str = "llm_sql_predictions.jsonl",
-    questions_path: str | None = None,
-    tables_path: str | None = None,
-    workdir_path: str = DEFAULT_WORKDIR_PATH,
+    workdir_path: str | None = None,
     num_fewshots: int = 5,
     batch_size: int = 8,
     limit: int | float | None = None,
@@ -137,9 +135,8 @@ def inference_transformers(
         # Benchmark:
         version: LLMSQL version
         output_file: Output JSONL file path for completions.
-        questions_path: Path to benchmark questions JSONL.
-        tables_path: Path to benchmark tables JSONL.
-        workdir_path: Working directory path.
+        workdir_path: Directory to store downloaded benchmark files. If omitted, a
+            temporary directory is created automatically.
         num_fewshots: Number of few-shot examples (0, 1, or 5).
         batch_size: Batch size for inference.
         seed: Random seed for reproducibility.
@@ -152,9 +149,6 @@ def inference_transformers(
     """
     # --- Setup ---
     _setup_seed(seed=seed)
-
-    workdir = Path(workdir_path)
-    workdir.mkdir(parents=True, exist_ok=True)
 
     model_kwargs = model_kwargs or {}
     tokenizer_kwargs = tokenizer_kwargs or {}
@@ -219,10 +213,11 @@ def inference_transformers(
     model.eval()
 
     # --- Load necessary files ---
+    workdir = resolve_workdir_path(workdir_path)
     repo_id = get_repo_id(version)
 
-    questions_path = _maybe_download(repo_id, "questions.jsonl", questions_path)
-    tables_path = _maybe_download(repo_id, "tables.jsonl", tables_path)
+    questions_path = _maybe_download(repo_id, "questions.jsonl", workdir)
+    tables_path = _maybe_download(repo_id, "tables.jsonl", workdir)
 
     questions = load_jsonl(questions_path)
     tables_list = load_jsonl(tables_path)
