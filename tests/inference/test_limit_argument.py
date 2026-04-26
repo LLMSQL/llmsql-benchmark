@@ -46,7 +46,7 @@ def _patch_common_vllm(monkeypatch, tmp_path):
     )
 
     fake_llm = MagicMock()
-    fake_llm.generate.side_effect = lambda prompts, _params: [
+    fake_llm.generate.side_effect = lambda prompts, *a, **kw: [
         MagicMock(outputs=[MagicMock(text=f"SELECT {i}")]) for i in range(len(prompts))
     ]
     monkeypatch.setattr(vllm_mod, "LLM", lambda *a, **kw: fake_llm)

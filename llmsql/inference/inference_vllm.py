@@ -21,6 +21,7 @@ Example
         max_new_tokens=256,
         temperature=0.7,
         tensor_parallel_size=1,
+        lora_path="path/to/lora"
     )
 
 Notes
@@ -44,6 +45,7 @@ from typing import Any, Literal
 from dotenv import load_dotenv
 from tqdm import tqdm
 from vllm import LLM, SamplingParams
+from vllm.lora.request import LoRARequest
 
 from llmsql.config.config import (
     DEFAULT_LLMSQL_VERSION,
@@ -56,6 +58,7 @@ from llmsql.utils.inference_utils import (
     resolve_workdir_path,
 )
 from llmsql.utils.utils import (
+    build_all_requests,
     choose_prompt_builder,
     load_jsonl,
     overwrite_jsonl,
@@ -74,6 +77,8 @@ def inference_vllm(
     hf_token: str | None = None,
     llm_kwargs: dict[str, Any] | None = None,
     use_chat_template: bool = True,
+    # === LoRA Parameters ===
+    lora_config: dict[str, Any] | None = None,  # new optional dict
     # === Generation Parameters ===
     max_new_tokens: int = 256,
     temperature: float = 1.0,
@@ -103,6 +108,16 @@ def inference_vllm(
                    'trust_remote_code' are handled separately and will
                    override values here.
 
+        lora_config: Optional dict with LoRA parameters:
+            - lora_path: Path to the pretrained LoRA adapter (required if enable_lora)
+            - lora_name: Logical name for the LoRA adapter
+            - lora_scale: Scaling factor for LoRA weights
+            - max_lora_rank: Maximum LoRA rank supported by vLLM
+             LoRA usage rules:
+                - If `lora_config` is provided, `enable_lora` must be True in `llm_kwargs`.
+                - If `enable_lora` is True, a valid `lora_config` must be provided.
+                - Otherwise, an exception is raised to prevent inconsistent configuration.
+
         # Generation:
         max_new_tokens: Maximum tokens to generate per sequence.
         temperature: Sampling temperature (0.0 = greedy).
@@ -122,6 +137,8 @@ def inference_vllm(
         limit: Limit the number of questions to evaluate. If an integer, evaluates
                the first N samples. If a float between 0.0 and 1.0, evaluates the
                first X*100% of samples. If None, evaluates all samples (default).
+
+
 
     Returns:
         List of dicts containing `question_id` and generated `completion`.
@@ -163,18 +180,40 @@ def inference_vllm(
         )
         questions = questions[:limit]
 
+    # --- Validate LoRA usage ---
+    enable_lora = llm_kwargs.get("enable_lora", False)
+    if lora_config is not None and not enable_lora:
+        raise ValueError(
+            "LoRA config provided but `enable_lora` is not True in llm_kwargs."
+        )
+    if enable_lora and lora_config is None:
+        raise ValueError("`enable_lora` is True but no `lora_config` was provided.")
+    if lora_config is not None and not enable_lora:
+        raise ValueError(
+            "`lora_config` provided but `enable_lora` is not True in llm_kwargs."
+        )
+
     # --- init model ---
     llm_init_args = {
         "model": model_name,
         "tokenizer": model_name,
         "tensor_parallel_size": tensor_parallel_size,
         "trust_remote_code": trust_remote_code,
-        **llm_kwargs,  # User kwargs come first, but explicit params above will override
+        **llm_kwargs,  # user overrides
     }
 
     log.info(f"Loading vLLM model '{model_name}' (tp={tensor_parallel_size})...")
-
     llm = LLM(**llm_init_args)
+
+    # --- LoRA request ---
+    lora_request = None
+    if enable_lora and lora_config is not None:
+        log.info(f"Loading LoRA adapter from {lora_config['lora_path']}")
+        lora_request = LoRARequest(
+            lora_name=lora_config["lora_name"],
+            lora_path=lora_config["lora_path"],
+            scaling=lora_config["lora_scale"],
+        )
 
     tokenizer = llm.get_tokenizer()
     if use_chat_template:
@@ -197,37 +236,31 @@ def inference_vllm(
 
     sampling_params = SamplingParams(**sampling_params_args)
 
+    # --- build all requests ---
+    prompts = build_all_requests(
+        questions,
+        tables,
+        prompt_builder,
+        tokenizer=tokenizer if use_chat_template else None,
+        use_chat_template=bool(use_chat_template),
+    )
+
     # --- main inference loop ---
     all_results: list[dict[str, str]] = []
     total = len(questions)
 
     for batch_start in tqdm(range(0, total, batch_size), desc="Generating"):
-        batch = questions[batch_start : batch_start + batch_size]
+        batch_prompts = prompts[batch_start : batch_start + batch_size]
+        batch_questions = questions[batch_start : batch_start + batch_size]
 
-        prompts = []
-        for q in batch:
-            tbl = tables[q["table_id"]]
-            example_row = tbl["rows"][0] if tbl["rows"] else []
-
-            raw_text = prompt_builder(
-                q["question"], tbl["header"], tbl["types"], example_row
-            )
-
-            if use_chat_template:
-                messages = [{"role": "user", "content": raw_text}]
-
-                final_prompt = tokenizer.apply_chat_template(
-                    messages, tokenize=False, add_generation_prompt=True
-                )
-            else:
-                final_prompt = raw_text
-
-            prompts.append(final_prompt)
-
-        outputs = llm.generate(prompts, sampling_params)
+        outputs = llm.generate(
+            batch_prompts,
+            sampling_params,
+            lora_request=lora_request,
+        )
 
         batch_results: list[dict[str, str]] = []
-        for q, out in zip(batch, outputs, strict=False):
+        for q, out in zip(batch_questions, outputs, strict=False):
             text = out.outputs[0].text
             batch_results.append(
                 {
