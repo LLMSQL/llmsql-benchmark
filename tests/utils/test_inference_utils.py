@@ -68,3 +68,63 @@ async def test_maybe_download_calls_hf_hub(monkeypatch, tmp_path):
     assert Path(path).exists()
     assert called["repo_id"] == get_repo_id(DEFAULT_LLMSQL_VERSION)
     assert called["filename"] == filename
+
+
+def test_resolve_workdir_path_creates_temp(monkeypatch):
+    fake_dir = "/tmp/llmsql-test-dir"
+
+    monkeypatch.setattr(mod.tempfile, "mkdtemp", lambda prefix: fake_dir)
+
+    path = mod.resolve_workdir_path(None)
+
+    assert isinstance(path, Path)
+    assert str(path) == fake_dir
+
+
+def test_resolve_workdir_logs(monkeypatch):
+    fake_dir = "/tmp/llmsql-test-dir"
+    mock_log = MagicMock()
+
+    monkeypatch.setattr(mod.tempfile, "mkdtemp", lambda prefix: fake_dir)
+    monkeypatch.setattr(mod, "log", mock_log)
+
+    mod.resolve_workdir_path(None)
+
+    mock_log.info.assert_called_once()
+
+
+def test_resolve_workdir_path_raises_if_file(tmp_path):
+    file_path = tmp_path / "file.txt"
+    file_path.write_text("data")
+
+    with pytest.raises(ValueError, match="must point to a directory"):
+        mod.resolve_workdir_path(file_path)
+
+
+def test_maybe_download_raises_if_not_file(tmp_path):
+    filename = "questions.jsonl"
+    target_path = tmp_path / filename
+
+    # create directory instead of file
+    target_path.mkdir()
+
+    with pytest.raises(ValueError, match="Expected downloaded benchmark file"):
+        mod._maybe_download(
+            repo_id="dummy/repo",
+            filename=filename,
+            workdir_path=tmp_path,
+        )
+
+
+def test_maybe_download_uses_cached_file(tmp_path):
+    filename = "questions.jsonl"
+    file_path = tmp_path / filename
+    file_path.write_text("cached")
+
+    path = mod._maybe_download(
+        repo_id="dummy/repo",
+        filename=filename,
+        workdir_path=tmp_path,
+    )
+
+    assert path == str(file_path)
