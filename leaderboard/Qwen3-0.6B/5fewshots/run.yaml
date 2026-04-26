@@ -1,0 +1,60 @@
+date: 2026-02-24
+# =====================
+# Model Information
+# =====================
+model:
+  name: Qwen/Qwen3-0.6B
+  revision: main
+  commit_hash: c1899de289a04d12100db370d81485cdf75e47ca
+  parameter_count: 0.6B
+  dtype: bfloat16
+  thinking: true
+
+type: open-source  # open-source | proprietary
+
+# =====================
+# Package Information
+# =====================
+llmsql:
+  version: 0.1.15
+  commit_hash: 79175212c90b1fc094abd2c9666c23d903060014
+
+# =====================
+# Benchmark Information
+# =====================
+version: 2.0
+
+# =====================
+# Environment Information
+# =====================
+os_name: Ubuntu 24.04.3 LTS
+python_version: 3.12.12
+pip_freeze: requirements.txt
+device: 4xH200
+
+# =====================
+# Function Inputs / Inference Backend
+# =====================
+inference:
+  backend: vllm  # vllm | transformers
+  arguments:
+    batch_size: 20000
+    tetensor_parallel_size: 4
+    do_sample: true
+    max_new_tokens: 1024
+    temperature: 0.6
+    sampling_kwargs:
+      top_p: 0.95
+      top_k: 20
+      min_p: 0
+    num_fewshots: 5
+    seed: 42
+    llm_kwargs:
+      dtype: bfloat16
+
+# =====================
+# Results
+# =====================
+results:
+  execution_accuracy: 0.4983
+  answers_path: https://huggingface.co/datasets/llmsql-bench/benchmark-evaluation-results/blob/main/Qwen3-0.6B/5fewshots/Qwen3-0.6B_outputs.jsonl

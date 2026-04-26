@@ -14,7 +14,11 @@ import uuid
 
 from rich.progress import track
 
-from llmsql.config.config import DEFAULT_WORKDIR_PATH, DEFAULT_LLMSQL_VERSION, get_repo_id
+from llmsql.config.config import (
+    DEFAULT_LLMSQL_VERSION,
+    DEFAULT_WORKDIR_PATH,
+    get_repo_id,
+)
 from llmsql.utils.evaluation_utils import (
     connect_sqlite,
     download_benchmark_file,

@@ -1,0 +1,20 @@
+{"question_id": 15, "completion": "SELECT \"Launched\" FROM \"Table\" WHERE \"Laid down\" = \"September 1, 1964\";"}
+{"question_id": 48, "completion": "SELECT \"Tone (Latvian notation: /~/ - level, /^/ - broken)\" FROM \"Table\" WHERE \"Translation\" = \"Gen.Sing. plague\";"}
+{"question_id": 4, "completion": "SELECT COUNT(\"School/Club Team\") FROM \"Table\" WHERE \"Player\" = \"Jalen Rose\";"}
+{"question_id": 21, "completion": "SELECT \"US Air Force equivalent\" FROM \"Table\" WHERE \"Commonwealth equivalent\" = \"Pilot Officer\";"}
+{"question_id": 31, "completion": "SELECT COUNT(\"Total W–L\") FROM \"Table\" WHERE \"Doubles W–L\" = \"11–11\";"}
+{"question_id": 42, "completion": "SELECT \"BTs retail price (regulated)\" FROM \"Table\" WHERE \"Tariff code\" = \"ff0 PRS\";"}
+{"question_id": 7, "completion": "SELECT \"Date\" FROM \"Table\" WHERE \"Circuit\" = \"Misano\";"}
+{"question_id": 28, "completion": "SELECT \"Rank Each wrestlers total number of days as champion are ranked highest to lowest; wrestlers with the same number mean that they are tied for that certain rank.\" FROM \"Table\" WHERE \"Wrestler\" = \"Go Shiozaki\";"}
+{"question_id": 36, "completion": "SELECT \"Frequency\" FROM \"Table\" WHERE \"Market/Rank\" = \"Burlington - Plattsburgh , Vermont - New York /143\";"}
+{"question_id": 23, "completion": "SELECT \"Rank in Spanish\" FROM \"Table\" WHERE \"Rank in English\" = \"Major\";"}
+{"question_id": 11, "completion": "SELECT COUNT(DISTINCT \"Nationality\") FROM \"Table\" WHERE \"NHL team\" = \"New Jersey Devils\";"}
+{"question_id": 47, "completion": "SELECT \"BTs retail price (regulated)\" FROM \"Table\" WHERE \"Tariff code\" = \"g10\";"}
+{"question_id": 12, "completion": "SELECT \"Pick\" FROM \"Table\" WHERE \"Player\" = \"Dorain Anneck\";"}
+{"question_id": 16, "completion": "SELECT \"#\" FROM \"Table\" WHERE \"Commissioned\" = \"December 18, 1965\";"}
+{"question_id": 27, "completion": "SELECT \"Combined days\" FROM \"Table\" WHERE \"Wrestler\" = \"Go Shiozaki\";"}
+{"question_id": 32, "completion": "SELECT COUNT(\"Singles W–L\") FROM \"Table\" WHERE \"Doubles W–L\" = \"11–14\";"}
+{"question_id": 22, "completion": "SELECT \"Commonwealth equivalent\" FROM \"Table\" WHERE \"US Air Force equivalent\" = \"Major General\";"}
+{"question_id": 43, "completion": "SELECT \"Approx premium\" FROM \"Table\" WHERE \"Tariff code\" = \"g9\";"}
+{"question_id": 49, "completion": "SELECT MIN(\"Radius (R ☉ )\") FROM \"Table\";"}
+{"question_id": 34, "completion": "SELECT MAX(\"Ties played\") FROM \"Table\" WHERE \"Player\" = \"Josip Palada Category:Articles with hCards\";"}

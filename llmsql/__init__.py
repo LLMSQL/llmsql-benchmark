@@ -2,7 +2,7 @@
 LLMSQL — A Text2SQL benchmark for evaluation of Large Language Models
 """
 
-__version__ = "0.1.14"
+__version__ = "0.1.16"
 
 
 def __getattr__(name: str):  # type: ignore
@@ -26,7 +26,12 @@ def __getattr__(name: str):  # type: ignore
         from .inference.inference_transformers import inference_transformers
 
         return inference_transformers
+    elif name == "inference_api":
+        from .inference.inference_api import inference_api
+
+        return inference_api
+
     raise AttributeError(f"module {__name__} has no attribute {name!r}")
 
 
-__all__ = ["evaluate", "inference_vllm", "inference_transformers"]
+__all__ = ["evaluate", "inference_vllm", "inference_transformers", "inference_api"]

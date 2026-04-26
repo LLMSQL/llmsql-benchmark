@@ -2,8 +2,9 @@
 
 LLMSQL provides two inference backends for **Text-to-SQL generation** with large language models:
 
-* 🧠 **Transformers** — runs inference using the standard Hugging Face `transformers` pipeline.
-* ⚡ **vLLM** — runs inference using the high-performance [vLLM](https://github.com/vllm-project/vllm) backend.
+* **Transformers** — runs inference using the standard Hugging Face `transformers` pipeline.
+* **vLLM** — runs inference using the high-performance [vLLM](https://github.com/vllm-project/vllm) backend.
+* **API** — runs inference against an OpenAI-compatible Chat Completions API with configurable base URL and rate limiting.
 
 Both backends load benchmark questions and table schemas, build prompts (with few-shot examples), and generate SQL queries in parallel batches.
 
@@ -27,7 +28,7 @@ pip install llmsql[vllm]
 
 ## Quick Start
 
-### ✅ Option 1 — Using the **Transformers** backend
+### Option 1 — Using the **Transformers** backend
 
 ```python
 from llmsql import inference_transformers
@@ -52,7 +53,7 @@ results = inference_transformers(
 
 ---
 
-### ⚡ Option 2 — Using the **vLLM** backend
+### Option 2 — Using the **vLLM** backend
 
 ```python
 from llmsql import inference_vllm
@@ -65,6 +66,36 @@ results = inference_vllm(
 )
 ```
 
+### Option 3 — Using an OpenAI-compatible API backend
+
+```python
+from llmsql import inference_api
+from dotenv import load_dotenv
+import os
+load_dotenv()
+
+results = inference_api(
+    model_name="gpt-5-mini",
+    base_url="https://api.openai.com/v1/",
+    api_key=os.environ["OPENAI_API_KEY"],
+    api_kwargs={
+          "response_format": {
+                "type": "text"
+            },
+            "verbosity": "medium",
+            "reasoning_effort": "medium",
+            "store": False
+    },
+    requests_per_minute=100,
+    output_file="test_output_api.jsonl",
+    limit=50,
+    num_fewshots = 5,
+    seed=42,
+    version="2.0"
+)
+```
+
+
 ---
 
 ## Command-Line Interface (CLI)
@@ -72,7 +103,7 @@ results = inference_vllm(
 You can also run inference directly from the command line:
 
 ```bash
-llmsql inference --method vllm \
+llmsql inference vllm \
     --model-name Qwen/Qwen2.5-1.5B-Instruct \
     --output-file outputs/preds.jsonl \
     --batch-size 8 \
@@ -83,7 +114,7 @@ llmsql inference --method vllm \
 Or use the Transformers backend:
 
 ```bash
-llmsql inference --method transformers \
+llmsql inference transformers \
     --model-or-model-name-or-path Qwen/Qwen2.5-1.5B-Instruct \
     --output-file outputs/preds.jsonl \
     --batch-size 8 \

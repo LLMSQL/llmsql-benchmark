@@ -1,0 +1,106 @@
+[
+  {
+    "model": "openai/gpt-oss-120b",
+    "type": "open-source",
+    "fewshots": 5,
+    "backend": "vllm",
+    "accuracy": 0.9049,
+    "date": "2026-02-24"
+  },
+  {
+    "model": "openai/gpt-oss-20b",
+    "type": "open-source",
+    "fewshots": 5,
+    "backend": "vllm",
+    "accuracy": 0.8871,
+    "date": "2026-02-24"
+  },
+  {
+    "model": "meta-llama/Llama-3.3-70B-Instruct",
+    "type": "open-source",
+    "fewshots": 5,
+    "backend": "vllm",
+    "accuracy": 0.8607,
+    "date": "2026-02-24"
+  },
+  {
+    "model": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B-BF16",
+    "type": "open-source",
+    "fewshots": 5,
+    "backend": "vllm",
+    "accuracy": 0.8519,
+    "date": "2026-02-24"
+  },
+  {
+    "model": "Qwen/Qwen2.5-7B-Instruct",
+    "type": "open-source",
+    "fewshots": 5,
+    "backend": "vllm",
+    "accuracy": 0.794,
+    "date": "2026-02-24"
+  },
+  {
+    "model": "mistralai/Mistral-Nemo-Instruct-2407",
+    "type": "open-source",
+    "fewshots": 5,
+    "backend": "vllm",
+    "accuracy": 0.7599,
+    "date": "2026-02-24"
+  },
+  {
+    "model": "Qwen/Qwen2.5-1.5B-Instruct",
+    "type": "open-source",
+    "fewshots": 5,
+    "backend": "vllm",
+    "accuracy": 0.6401,
+    "date": "2026-02-24"
+  },
+  {
+    "model": "meta-llama/Llama-3.2-3B-Instruct",
+    "type": "open-source",
+    "fewshots": 5,
+    "backend": "vllm",
+    "accuracy": 0.5415,
+    "date": "2026-02-24"
+  },
+  {
+    "model": "CYFRAGOVPL/PLLuM-12B-chat",
+    "type": "open-source",
+    "fewshots": 5,
+    "backend": "vllm",
+    "accuracy": 0.5224,
+    "date": "2026-02-24"
+  },
+  {
+    "model": "Qwen/Qwen3-0.6B",
+    "type": "open-source",
+    "fewshots": 5,
+    "backend": "vllm",
+    "accuracy": 0.4983,
+    "date": "2026-02-24"
+  },
+  {
+    "model": "CYFRAGOVPL/PLLuM-12B-nc-chat",
+    "type": "open-source",
+    "fewshots": 5,
+    "backend": "vllm",
+    "accuracy": 0.4044,
+    "date": "2026-02-24"
+  },
+  {
+    "model": "CYFRAGOVPL/pllum-12b-nc-chat-250715",
+    "type": "open-source",
+    "fewshots": 5,
+    "backend": "vllm",
+    "accuracy": 0.3727,
+    "date": "2026-02-24"
+  },
+  {
+    "model": "meta-llama/Llama-3.2-1B-Instruct",
+    "type": "open-source",
+    "fewshots": 5,
+    "backend": "vllm",
+    "accuracy": 0.2678,
+    "date": "2026-02-24"
+  }
+]

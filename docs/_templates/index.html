@@ -30,7 +30,7 @@
     <h4>ON THIS PAGE</h4>
     <ul>
       <li><a href="#description">Description</a></li>
-      <li><a href="#improvements">Key improvements</a></li>
+      <li><a href="#latest-news">Latest News</a></li>
       <li><a href="#documentation">Documentation</a></li>
       <li><a href="#quick-start">Quick Start</a></li>
       <li><a href="#links">Links</a></li>
@@ -68,21 +68,20 @@
       <p style="margin-top:10px;">LLMSQL is a Python package for evaluation Hugging Face models on LLMSQL benchmark with transformers and vLLM.</p>
     </div>
 
-    <h2 id="description">💡 Description</h2>
+    <h2 id="description">Description</h2>
     <p><strong>LLMSQL Benchmark</strong> is an <strong>open-source framework</strong> providing a <strong>modernized, cleaned, and extended version of the original WikiSQL dataset</strong>, specifically designed for evaluating Hugging Face style <strong>Large Language Models (LLMs)</strong> on <strong>Text-to-SQL</strong> tasks.</p>
 
-    <h2 id="improvements">Key improvements</h2>
-    <ul>
-      <li><strong>Data Cleaning:</strong> Resolved duplicates, datatype mismatches, and inconsistent casing, reducing the widespread occurrence of empty query results.</li>
-      <li><strong>LLM-Ready Format:</strong> Reformatted SQL queries stored in WikiSQL’s custom encoding into standard SQL syntax.</li>
-    </ul>
+    <h2 id="latest-news">📣 Latest News</h2>
+    <div id="latest-news-container" class="custom-highlight-box">
+      <p>Loading latest news...</p>
+    </div>
 
-    <h2 id="documentation">📚 Documentation</h2>
+    <h2 id="documentation">Documentation</h2>
     <div class="note-box">
       <p><strong>Note:</strong> Documentation pages (installation guide, API reference) are <strong>under construction</strong>. <br> See <strong>Quick Start</strong> below or the README files inside the <a href="https://github.com/LLMSQL/llmsql-benchmark/" target="_blank">repo</a>.</p>
     </div>
 
-    <h2 id="quick-start">⚡ Quick Start</h2>
+    <h2 id="quick-start">Quick Start</h2>
     <div class="custom-highlight-box">
   <p><strong>⚠️ WARNING — Reproducibility</strong></p>
 
@@ -113,7 +112,7 @@
   <h3>2️⃣ Inference from CLI</h3>
 
 <p><strong>vLLM Backend (Recommended)</strong></p>
-<pre><code>llmsql inference --method vllm \
+<pre><code>llmsql inference vllm \
 --model-name Qwen/Qwen2.5-1.5B-Instruct \
 --output-file outputs/preds.jsonl \
 --batch-size 8 \
@@ -121,7 +120,7 @@
 --temperature 0.0</code></pre>
 
 <p><strong>Transformers Backend</strong></p>
-<pre><code>llmsql inference --method transformers \
+<pre><code>llmsql inference transformers \
 --model-or-model-name-or-path Qwen/Qwen2.5-1.5B-Instruct \
 --output-file outputs/preds.jsonl \
 --batch-size 8 \
@@ -150,18 +149,13 @@ print(report)
         <tr><td>📦 <strong>PyPI Project</strong></td><td><a href="https://pypi.org/project/llmsql/">llmsql on PyPI</a></td></tr>
         <tr><td>💾 <strong>Dataset on Hugging Face</strong></td><td><a href="https://huggingface.co/datasets/llmsql-bench/llmsql-benchmark">llmsql-bench dataset</a></td></tr>
         <tr><td>💻 <strong>Source Code</strong></td><td><a href="https://github.com/LLMSQL/llmsql-benchmark">GitHub repo</a></td></tr>
+        <tr><td>💻 <strong>Playground</strong></td><td><a href="https://huggingface.co/spaces/pihull/llmsql-interactive-q-a">HF Space</a></td></tr>
       </tbody>
     </table>
 
-    <h2 id="leaderboard">📊 Leaderboard [in progress]</h2>
-    <div class="custom-highlight-box">
-      <p>
-        The official Leaderboard is currently empty and <strong>in progress</strong>.
-        <a href="https://github.com/LLMSQL/llmsql-benchmark/issues" target="_blank">
-          Submit
-        </a>
-        your model results to be the first on the ranking!
-      </p>
+    <h2 id="leaderboard">📊 Leaderboard — Execution Accuracy (EX)</h2>
+    <div id="leaderboard-container" class="custom-highlight-box">
+      <p>Loading leaderboard...</p>
     </div>
 
 
@@ -169,7 +163,7 @@ print(report)
     <pre><code>@inproceedings{llmsql_bench,
   title={LLMSQL: Upgrading WikiSQL for the LLM Era of Text-to-SQL},
   author={Pihulski, Dzmitry and Charchut, Karol and Novogrodskaia, Viktoria and Koco{'n}, Jan},
-  booktitle={2025 IEEE ICDMW},
+  booktitle={2025 IEEE International Conference on Data Mining Workshops (ICDMW)},
   year={2025},
   organization={IEEE}
 }
@@ -205,6 +199,75 @@ document.addEventListener("DOMContentLoaded", () => {
     pre.appendChild(btn);
   });
 });
+</script>
+<script>
+async function loadLatestNews() {
+  const container = document.getElementById("latest-news-container");
+
+  try {
+    const response = await fetch(
+      "https://api.github.com/repos/LLMSQL/llmsql-benchmark/readme"
+    );
+
+    const data = await response.json();
+    const content = atob(data.content);
+
+    const match = content.match(
+      /## Latest News[\s\S]*?(?=\n## |\n# |$)/
+    );
+
+    if (!match) {
+      container.innerHTML = "<p>No latest news found.</p>";
+      return;
+    }
+
+    const newsMarkdown = match[0]
+      .replace("## Latest News 📣", "")
+      .trim();
+
+    const lines = newsMarkdown
+      .split("\n")
+      .filter(l => l.startsWith("*"));
+
+    const htmlList = `
+      <ul>
+        ${lines.map(line => {
+          const text = line.replace(/^\*\s*/, "");
+
+          const withLinks = text.replace(
+            /\[([^\]]+)\]\(([^)]+)\)/g,
+            (match, label, url) => {
+              if (url.startsWith("http://") || url.startsWith("https://")) {
+                return `<a href="${url}" target="_blank" rel="noopener">${label}</a>`;
+              }
+
+              const cleanPath = url.replace(/^\.\//, "");
+
+              const [path, anchor] = cleanPath.split("#");
+
+              const githubUrl =
+                "https://github.com/LLMSQL/llmsql-benchmark/blob/main/" +
+                path +
+                (anchor ? `#${anchor}` : "");
+
+              return `<a href="${githubUrl}" target="_blank" rel="noopener">${label}</a>`;
+            }
+          );
+
+          return `<li>${withLinks}</li>`;
+        }).join("")}
+      </ul>
+    `;
+
+    container.innerHTML = htmlList;
+
+  } catch (error) {
+    container.innerHTML =
+      "<p>Unable to load latest news from GitHub. See the repo yourself: https://github.com/LLMSQL/llmsql-benchmark/blob/main/</p>";
+  }
+}
+
+document.addEventListener("DOMContentLoaded", loadLatestNews);
 </script>
 
 

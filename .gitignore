@@ -2,6 +2,7 @@
 dataset/sqlite_tables.db
 *__pycache__
 .env
+venv
 dist/
 
 *.egg-info/
@@ -13,3 +14,11 @@ llmsql_workdir
 
 evaluation_*
 coverage.xml
+
+.idea
+
+# Sphinx build
+docs/_build/
+docs/.doctrees/
+*.doctree
+*.pickle
