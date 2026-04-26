@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
 from pathlib import Path
 
@@ -77,3 +78,120 @@ def test_rejects_non_async_result(tmp_path):
             output_file=str(tmp_path / "out.jsonl"),
             workdir_path=str(tmp_path),
         )
+
+
+def test_rate_limiter_rejects_non_positive_rpm():
+    from llmsql.inference.inference_function import _AsyncRateLimiter
+
+    with pytest.raises(ValueError, match="requests_per_minute must be > 0"):
+        _AsyncRateLimiter(0)
+
+    with pytest.raises(ValueError):
+        _AsyncRateLimiter(-5)
+
+
+@pytest.mark.asyncio
+async def test_rate_limiter_waits(monkeypatch):
+    from llmsql.inference.inference_function import _AsyncRateLimiter
+
+    limiter = _AsyncRateLimiter(requests_per_minute=60)  # 1 request/sec
+
+    sleep_calls = []
+
+    async def fake_sleep(duration):
+        sleep_calls.append(duration)
+
+    monkeypatch.setattr(asyncio, "sleep", fake_sleep)
+
+    # First call should not sleep
+    await limiter.acquire()
+    # Second call should trigger wait
+    await limiter.acquire()
+
+    assert len(sleep_calls) == 1
+    assert sleep_calls[0] > 0
+
+
+def test_rejects_non_callable_inference_function(tmp_path):
+    _make_fixtures(tmp_path)
+
+    with pytest.raises(TypeError, match="must be callable"):
+        inference_function(
+            inference_function="not-a-function",  # type: ignore
+            output_file=str(tmp_path / "out.jsonl"),
+            workdir_path=str(tmp_path),
+        )
+
+
+@pytest.mark.parametrize("bad_limit", [0.0, -0.1, 1.5])
+def test_limit_float_out_of_range(tmp_path, bad_limit):
+    _make_fixtures(tmp_path)
+
+    async def fake_infer(prompt, **kwargs):
+        return "SELECT 1"
+
+    with pytest.raises(ValueError, match="must be between 0.0 and 1.0"):
+        inference_function(
+            inference_function=fake_infer,
+            output_file=str(tmp_path / "out.jsonl"),
+            workdir_path=str(tmp_path),
+            limit=bad_limit,
+        )
+
+
+@pytest.mark.parametrize("bad_limit", [0, -1, "foo", None])
+def test_limit_invalid_type_or_value(tmp_path, bad_limit):
+    _make_fixtures(tmp_path)
+
+    async def fake_infer(prompt, **kwargs):
+        return "SELECT 1"
+
+    if bad_limit is None:
+        # None is valid (means no limit), skip
+        return
+
+    with pytest.raises(ValueError, match="must be a positive integer"):
+        inference_function(
+            inference_function=fake_infer,
+            output_file=str(tmp_path / "out.jsonl"),
+            workdir_path=str(tmp_path),
+            limit=bad_limit,  # type: ignore[arg-type]
+        )
+
+
+def test_runs_inside_existing_event_loop(monkeypatch, tmp_path):
+    _make_fixtures(tmp_path)
+
+    async def fake_infer(prompt, **kwargs):
+        return "SELECT 1"
+
+    applied = {"called": False}
+
+    def fake_apply(loop):
+        applied["called"] = True
+
+    monkeypatch.setattr("nest_asyncio.apply", fake_apply)
+
+    # Create a real loop we control
+    real_loop = asyncio.new_event_loop()
+
+    class FakeLoop:
+        def is_running(self):
+            return True
+
+        def run_until_complete(self, coro):
+            return real_loop.run_until_complete(coro)
+
+    monkeypatch.setattr(asyncio, "get_running_loop", lambda: FakeLoop())
+
+    try:
+        results = inference_function(
+            inference_function=fake_infer,
+            output_file=str(tmp_path / "out.jsonl"),
+            workdir_path=str(tmp_path),
+        )
+    finally:
+        real_loop.close()
+
+    assert applied["called"] is True
+    assert len(results) > 0
