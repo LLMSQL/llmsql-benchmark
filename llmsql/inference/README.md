@@ -5,6 +5,7 @@ LLMSQL provides two inference backends for **Text-to-SQL generation** with large
 * **Transformers** — runs inference using the standard Hugging Face `transformers` pipeline.
 * **vLLM** — runs inference using the high-performance [vLLM](https://github.com/vllm-project/vllm) backend.
 * **API** — runs inference against an OpenAI-compatible Chat Completions API with configurable base URL and rate limiting.
+* **Custom Function** — runs inference with your own async callable while preserving LLMSQL prompt building and output format.
 
 Both backends load benchmark questions and table schemas, build prompts (with few-shot examples), and generate SQL queries in parallel batches.
 
@@ -94,7 +95,25 @@ results = inference_api(
 )
 ```
 
+---
 
+
+### Option 4 — Using your own async inference function
+
+```python
+from llmsql import inference_function
+
+async def get_answer(input_prompt, **kwargs):
+    # call your engine/API/router and return a SQL string
+    return "SELECT 1"
+
+results = inference_function(
+    inference_function=get_answer,
+    requests_per_minute=60,
+    function_kwargs={"temperature": 0.0},
+    output_file="test_output_function.jsonl",
+)
+```
 ---
 
 ## Command-Line Interface (CLI)

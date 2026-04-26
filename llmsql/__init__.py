@@ -30,8 +30,18 @@ def __getattr__(name: str):  # type: ignore
         from .inference.inference_api import inference_api
 
         return inference_api
+    elif name == "inference_function":
+        from .inference.inference_function import inference_function
+
+        return inference_function
 
     raise AttributeError(f"module {__name__} has no attribute {name!r}")
 
 
-__all__ = ["evaluate", "inference_vllm", "inference_transformers", "inference_api"]
+__all__ = [
+    "evaluate",
+    "inference_vllm",
+    "inference_transformers",
+    "inference_api",
+    "inference_function",
+]

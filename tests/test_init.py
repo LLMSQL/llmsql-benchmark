@@ -26,6 +26,12 @@ class TestLazyImport:
 
         assert inference_transformers is not None
 
+    def test_lazy_import_inference_function(self) -> None:
+        """Test that inference_function can be imported via lazy loading."""
+        from llmsql import inference_function
+
+        assert inference_function is not None
+
     def test_invalid_attribute_raises_error(self) -> None:
         """Test that accessing invalid attribute raises AttributeError."""
         import llmsql
