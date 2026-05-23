@@ -114,7 +114,7 @@ class TestFixTableName:
         sql = "SELECT * FROM 'Table' JOIN 'Table' ON Table.id = Table.parent_id"
         result = fix_table_name(sql, "my_table")
         # Placeholder in FROM should be swapped out for the real table name
-        assert 'FROM Table' not in result
+        assert "FROM Table" not in result
         assert "FROM 'Table'" not in result
         assert 'FROM "Table"' not in result
         assert 'FROM "my_table"' in result
@@ -137,7 +137,7 @@ class TestFixTableName:
         sql = "SELECT * FROM Table WHERE table_name = 'other_table'"
         result = fix_table_name(sql, "my_table")
         # Should only replace the FROM Table, not 'other_table'
-        assert result == 'SELECT * FROM "my_table" WHERE table_name = \'other_table\''
+        assert result == "SELECT * FROM \"my_table\" WHERE table_name = 'other_table'"
 
     def test_complex_query(self) -> None:
         """Test complex query with joins and subqueries."""
@@ -203,6 +203,7 @@ class TestEvaluateSample:
         assert metrics["pred_none"] == 0
         assert metrics["gold_none"] == 0
         assert metrics["sql_error"] == 0
+        assert metrics["exact_string_match"] == 0
 
     def test_non_matching_prediction(self, eval_db, questions_dict) -> None:
         """Test when prediction does not match gold SQL."""
@@ -299,9 +300,11 @@ class TestEvaluateSample:
         assert "pred_none" in metrics
         assert "gold_none" in metrics
         assert "sql_error" in metrics
+        assert "exact_string_match" in metrics
         assert isinstance(metrics["pred_none"], int)
         assert isinstance(metrics["gold_none"], int)
         assert isinstance(metrics["sql_error"], int)
+        assert isinstance(metrics["exact_string_match"], int)
 
     def test_mismatch_info_structure(self, eval_db, questions_dict) -> None:
         """Test structure of mismatch_info when prediction fails."""
@@ -343,3 +346,4 @@ class TestEvaluateSample:
         assert metrics["gold_none"] == 1
         assert metrics["pred_none"] == 1
         assert metrics["sql_error"] == 0
+        assert metrics["exact_string_match"] == 1

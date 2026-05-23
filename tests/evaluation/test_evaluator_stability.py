@@ -31,7 +31,11 @@ async def test_evaluate_with_mock(monkeypatch, temp_dir, dummy_db_file):
     # Monkeypatch dependencies
     monkeypatch.setattr(
         "llmsql.utils.evaluation_utils.evaluate_sample",
-        lambda *a, **k: (1, None, {"pred_none": 0, "gold_none": 0, "sql_error": 0}),
+        lambda *a, **k: (
+            1,
+            None,
+            {"pred_none": 0, "gold_none": 0, "sql_error": 0, "exact_string_match": 1},
+        ),
     )
     monkeypatch.setattr("llmsql.utils.rich_utils.log_mismatch", lambda **k: None)
     monkeypatch.setattr("llmsql.utils.rich_utils.print_summary", lambda *a, **k: None)
@@ -68,7 +72,11 @@ async def test_evaluate_saves_report(monkeypatch, temp_dir, dummy_db_file):
     # Mock dependencies
     monkeypatch.setattr(
         "llmsql.utils.evaluation_utils.evaluate_sample",
-        lambda *a, **k: (1, None, {"pred_none": 0, "gold_none": 0, "sql_error": 0}),
+        lambda *a, **k: (
+            1,
+            None,
+            {"pred_none": 0, "gold_none": 0, "sql_error": 0, "exact_string_match": 1},
+        ),
     )
     monkeypatch.setattr("llmsql.utils.rich_utils.log_mismatch", lambda **k: None)
     monkeypatch.setattr("llmsql.utils.rich_utils.print_summary", lambda *a, **k: None)
@@ -106,7 +114,11 @@ async def test_evaluate_with_jsonl_file(monkeypatch, temp_dir, dummy_db_file):
     # Mock dependencies
     monkeypatch.setattr(
         "llmsql.utils.evaluation_utils.evaluate_sample",
-        lambda *a, **k: (1, None, {"pred_none": 0, "gold_none": 0, "sql_error": 0}),
+        lambda *a, **k: (
+            1,
+            None,
+            {"pred_none": 0, "gold_none": 0, "sql_error": 0, "exact_string_match": 1},
+        ),
     )
     monkeypatch.setattr("llmsql.utils.rich_utils.log_mismatch", lambda **k: None)
     monkeypatch.setattr("llmsql.utils.rich_utils.print_summary", lambda *a, **k: None)
@@ -146,7 +158,11 @@ async def test_evaluate_with_dict_list(monkeypatch, temp_dir, dummy_db_file):
     # Mock dependencies
     monkeypatch.setattr(
         "llmsql.utils.evaluation_utils.evaluate_sample",
-        lambda *a, **k: (1, None, {"pred_none": 0, "gold_none": 0, "sql_error": 0}),
+        lambda *a, **k: (
+            1,
+            None,
+            {"pred_none": 0, "gold_none": 0, "sql_error": 0, "exact_string_match": 1},
+        ),
     )
     monkeypatch.setattr("llmsql.utils.rich_utils.log_mismatch", lambda **k: None)
     monkeypatch.setattr("llmsql.utils.rich_utils.print_summary", lambda *a, **k: None)
@@ -245,7 +261,7 @@ def test_mismatch_handling(mock_utils, mocker):
         return_value=(
             0,
             {"info": "bad"},
-            {"pred_none": 0, "gold_none": 0, "sql_error": 0},
+            {"pred_none": 0, "gold_none": 0, "sql_error": 0, "exact_string_match": 1},
         ),
     )
 

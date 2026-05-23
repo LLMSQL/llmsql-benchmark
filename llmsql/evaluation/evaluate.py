@@ -80,6 +80,7 @@ def evaluate(
     metrics = {
         "total": 0,
         "matches": 0,
+        "exact_string_matches": 0,
         "pred_none": 0,
         "gold_none": 0,
         "sql_errors": 0,
@@ -95,6 +96,7 @@ def evaluate(
         metrics["pred_none"] += m["pred_none"]
         metrics["gold_none"] += m["gold_none"]
         metrics["sql_errors"] += m["sql_error"]
+        metrics["exact_string_matches"] += m["exact_string_match"]
 
         if mismatch_info:
             mismatches.append(mismatch_info)
@@ -107,12 +109,18 @@ def evaluate(
         metrics["pred_none"],
         metrics["gold_none"],
         metrics["sql_errors"],
+        metrics["exact_string_matches"],
     )
 
     # --- Build report structure ---
     report = {
         **metrics,
         "accuracy": metrics["matches"] / metrics["total"] if metrics["total"] else 0,
+        "exact_string_match_accuracy": (
+            metrics["exact_string_matches"] / metrics["total"]
+            if metrics["total"]
+            else 0
+        ),
         "mismatches": mismatches,
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "input_mode": input_mode,

@@ -40,7 +40,7 @@ async def test_evaluate_runs_with_valid_versions(
         lambda *a, **k: (
             1,
             None,
-            {"pred_none": 0, "gold_none": 0, "sql_error": 0},
+            {"pred_none": 0, "gold_none": 0, "sql_error": 0, "exact_string_match": 1},
         ),
     )
     monkeypatch.setattr("llmsql.utils.rich_utils.log_mismatch", lambda **k: None)
@@ -83,7 +83,7 @@ async def test_evaluate_raises_with_invalid_version(
         lambda *a, **k: (
             1,
             None,
-            {"pred_none": 0, "gold_none": 0, "sql_error": 0},
+            {"pred_none": 0, "gold_none": 0, "sql_error": 0, "exact_string_match": 1},
         ),
     )
     monkeypatch.setattr("llmsql.utils.rich_utils.log_mismatch", lambda **k: None)

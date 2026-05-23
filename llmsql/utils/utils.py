@@ -2,6 +2,8 @@ from collections.abc import Callable, Iterable
 import json
 from pathlib import Path
 
+from transformers import AutoTokenizer
+
 from llmsql.loggers.logging_config import log
 from llmsql.prompts.prompts import (
     build_prompt_0shot,
@@ -65,7 +67,7 @@ def build_all_requests(
     questions: list[dict],
     tables: dict,
     prompt_builder: Callable[[str, list[str], list[str], list[str | float | int]], str],
-    tokenizer=None,
+    tokenizer: AutoTokenizer = None,
     use_chat_template: bool = True,
 ) -> list[str]:
     """
