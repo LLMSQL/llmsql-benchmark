@@ -5,24 +5,22 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Usage Overview &#8212; LLMSQL 0.1.15 documentation</title>
+    <title>Usage Overview &#8212; LLMSQL 0.1.16 documentation</title>
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=5349f25f" />
     <link rel="stylesheet" type="text/css" href="../_static/basic.css?v=29da98fa" />
-    <link rel="stylesheet" type="text/css" href="../_static/basic.css?v=29da98fa" />
     <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
-    <link rel="stylesheet" type="text/css" href="../_static/styles/front_page.css?v=1dd3502e" />
-    <script src="../_static/documentation_options.js?v=e2f3408e"></script>
+    <link rel="stylesheet" type="text/css" href="../_static/styles/front_page.css?v=f50f991d" />
+    <script src="../_static/documentation_options.js?v=d50bcae4"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
     <script src="../_static/copybutton.js?v=ccdb6887"></script>
-    <script src="../_static/scripts/front_page.js?v=a8779fe5"></script>
+    <script src="../_static/scripts/front_page.js?v=6e6d9347"></script>
     <link rel="icon" href="../_static/favicon.png"/>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="Inference API Reference" href="inference.html" />
-    <link rel="prev" title="LLMSQL package Documentation" href="index.html" />
-    <link rel="prev" title="LLMSQL package Documentation" href="index.html" />
+    <link rel="prev" title="LLMSQL package Documentation" href="index.html" /> 
   </head><body>
     <div class="related" role="navigation" aria-label="Related">
       <h3>Navigation</h3>
@@ -31,25 +29,25 @@
           <a href="../genindex.html" title="General Index"
              accesskey="I">index</a></li>
         <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
           <a href="inference.html" title="Inference API Reference"
              accesskey="N">next</a> |</li>
         <li class="right" >
           <a href="index.html" title="LLMSQL package Documentation"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">LLMSQL 0.1.15 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">LLMSQL 0.1.16 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">LLMSQL package Documentation</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">Usage Overview</a></li>
-        <li class="nav-item nav-item-this"><a href="">Usage Overview</a></li>
+        <li class="nav-item nav-item-this"><a href="">Usage Overview</a></li> 
       </ul>
-    </div>
-    </div>
+    </div>  
 
     <div class="document">
       <div class="documentwrapper">
         <div class="bodywrapper">
           <div class="body" role="main">
-
-
+            
   <section id="usage-overview">
 <h1>Usage Overview<a class="headerlink" href="#usage-overview" title="Link to this heading">¶</a></h1>
 <p>LLMSQL package provides two primary components:</p>
@@ -75,18 +73,15 @@
 <span class="n">results</span> <span class="o">=</span> <span class="n">inference_transformers</span><span class="p">(</span>
     <span class="n">model_or_model_name_or_path</span><span class="o">=</span><span class="s2">&quot;Qwen/Qwen2.5-1.5B-Instruct&quot;</span><span class="p">,</span>
     <span class="n">output_file</span><span class="o">=</span><span class="s2">&quot;outputs/preds_transformers.jsonl&quot;</span><span class="p">,</span>
-    <span class="n">questions_path</span><span class="o">=</span><span class="s2">&quot;data/questions.jsonl&quot;</span><span class="p">,</span>
-    <span class="n">tables_path</span><span class="o">=</span><span class="s2">&quot;data/tables.jsonl&quot;</span><span class="p">,</span>
+    <span class="n">workdir_path</span><span class="o">=</span><span class="s2">&quot;./benchmark-cache&quot;</span><span class="p">,</span>
     <span class="n">num_fewshots</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
     <span class="n">batch_size</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
     <span class="n">max_new_tokens</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span>
     <span class="n">temperature</span><span class="o">=</span><span class="mf">0.7</span><span class="p">,</span>
     <span class="n">model_kwargs</span><span class="o">=</span><span class="p">{</span>
-    <span class="n">model_kwargs</span><span class="o">=</span><span class="p">{</span>
         <span class="s2">&quot;attn_implementation&quot;</span><span class="p">:</span> <span class="s2">&quot;flash_attention_2&quot;</span><span class="p">,</span>
         <span class="s2">&quot;torch_dtype&quot;</span><span class="p">:</span> <span class="s2">&quot;bfloat16&quot;</span><span class="p">,</span>
     <span class="p">},</span>
-    <span class="n">generation_kwargs</span><span class="o">=</span><span class="p">{</span>
     <span class="n">generation_kwargs</span><span class="o">=</span><span class="p">{</span>
         <span class="s2">&quot;do_sample&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
     <span class="p">},</span>
@@ -106,8 +101,7 @@
 <span class="n">results</span> <span class="o">=</span> <span class="n">inference_vllm</span><span class="p">(</span>
     <span class="n">model_name</span><span class="o">=</span><span class="s2">&quot;Qwen/Qwen2.5-1.5B-Instruct&quot;</span><span class="p">,</span>
     <span class="n">output_file</span><span class="o">=</span><span class="s2">&quot;outputs/preds_vllm.jsonl&quot;</span><span class="p">,</span>
-    <span class="n">questions_path</span><span class="o">=</span><span class="s2">&quot;data/questions.jsonl&quot;</span><span class="p">,</span>
-    <span class="n">tables_path</span><span class="o">=</span><span class="s2">&quot;data/tables.jsonl&quot;</span><span class="p">,</span>
+    <span class="n">workdir_path</span><span class="o">=</span><span class="s2">&quot;./benchmark-cache&quot;</span><span class="p">,</span>
     <span class="n">num_fewshots</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
     <span class="n">batch_size</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
     <span class="n">max_new_tokens</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span>
@@ -117,6 +111,39 @@
         <span class="s2">&quot;gpu_memory_utilization&quot;</span><span class="p">:</span> <span class="mf">0.9</span><span class="p">,</span>
         <span class="s2">&quot;max_model_len&quot;</span><span class="p">:</span> <span class="mi">4096</span><span class="p">,</span>
     <span class="p">},</span>
+<span class="p">)</span>
+
+<span class="c1"># Evaluate the results</span>
+<span class="n">evaluator</span> <span class="o">=</span> <span class="n">LLMSQLEvaluator</span><span class="p">()</span>
+<span class="n">report</span> <span class="o">=</span> <span class="n">evaluator</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">outputs_path</span><span class="o">=</span><span class="s2">&quot;outputs/preds_transformers.jsonl&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">report</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Using OpenAI-compateble API.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">llmsql</span><span class="w"> </span><span class="kn">import</span> <span class="n">inference_api</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dotenv</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_dotenv</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="n">load_dotenv</span><span class="p">()</span>
+
+<span class="c1"># Run inference (will take some time)</span>
+<span class="n">results</span> <span class="o">=</span> <span class="n">inference_api</span><span class="p">(</span>
+    <span class="n">model_name</span><span class="o">=</span><span class="s2">&quot;gpt-5-mini&quot;</span><span class="p">,</span>
+    <span class="n">base_url</span><span class="o">=</span><span class="s2">&quot;https://api.openai.com/v1/&quot;</span><span class="p">,</span>
+    <span class="n">api_key</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;OPENAI_API_KEY&quot;</span><span class="p">],</span>
+    <span class="n">api_kwargs</span><span class="o">=</span><span class="p">{</span>
+        <span class="s2">&quot;response_format&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;text&quot;</span>
+            <span class="p">},</span>
+            <span class="s2">&quot;verbosity&quot;</span><span class="p">:</span> <span class="s2">&quot;medium&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;reasoning_effort&quot;</span><span class="p">:</span> <span class="s2">&quot;medium&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;store&quot;</span><span class="p">:</span> <span class="kc">False</span>
+    <span class="p">},</span>
+    <span class="n">requests_per_minute</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
+    <span class="n">output_file</span><span class="o">=</span><span class="s2">&quot;test_output_api.jsonl&quot;</span><span class="p">,</span>
+    <span class="n">limit</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span>
+    <span class="n">num_fewshots</span> <span class="o">=</span> <span class="mi">5</span><span class="p">,</span>
+    <span class="n">seed</span><span class="o">=</span><span class="mi">42</span><span class="p">,</span>
+    <span class="n">version</span><span class="o">=</span><span class="s2">&quot;2.0&quot;</span>
 <span class="p">)</span>
 
 <span class="c1"># Evaluate the results</span>
@@ -187,15 +214,17 @@
           <a href="../genindex.html" title="General Index"
              >index</a></li>
         <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
           <a href="inference.html" title="Inference API Reference"
              >next</a> |</li>
         <li class="right" >
           <a href="index.html" title="LLMSQL package Documentation"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">LLMSQL 0.1.15 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">LLMSQL 0.1.16 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="index.html" >LLMSQL package Documentation</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">Usage Overview</a></li>
-        <li class="nav-item nav-item-this"><a href="">Usage Overview</a></li>
+        <li class="nav-item nav-item-this"><a href="">Usage Overview</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">

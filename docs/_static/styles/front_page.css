@@ -1,26 +1,29 @@
 /* === LLMSQL Front Page CSS === */
 
+/* Three-column page layout: nav | content | TOC */
+.page-layout {
+  display: grid;
+  grid-template-columns: 180px minmax(0, 1fr) 200px;
+  gap: 32px;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 28px 24px;
+  align-items: start;
+}
+
 .sidebar {
-  position: fixed;
-  top: 16px;
-  left: 16px;
-  height: auto;
-  width: 160px;
-  background-color: #f4f4f4;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  padding: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 110;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+  position: sticky;
+  top: 24px;
+  background-color: #f8f9fa;
+  border: 1px solid #e8e8e8;
+  border-radius: 10px;
+  padding: 14px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
 }
 
 .sidebar-content {
   display: flex;
   flex-direction: column;
-  align-items: center;
   gap: 10px;
   width: 100%;
 }
@@ -30,10 +33,11 @@
   text-align: center;
   background-color: #eef6ff;
   color: #0056b3;
-  padding: 10px;
+  padding: 10px 12px;
   border-radius: 6px;
   text-decoration: none;
   font-weight: 600;
+  font-size: 0.9rem;
   transition: background-color 0.2s, color 0.2s;
 }
 .sidebar-button:hover {
@@ -41,12 +45,19 @@
   color: white;
 }
 
+/* Standalone back-link on docs pages (no .page-layout wrapper) */
+body > .sidebar-button,
+.document .sidebar-button {
+  display: inline-block;
+  margin-bottom: 1.5rem;
+}
+
 .sidebar-search {
   width: 100%;
   padding: 8px 10px;
   border-radius: 6px;
   border: 1px solid #ccc;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   box-sizing: border-box;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
@@ -64,41 +75,60 @@
 }
 
 .on-this-page {
-  position: fixed;
-  top: 16px;
-  right: 16px;
-  width: 220px;
-  background: #fafafa;
-  border: 1px solid #eee;
-  border-radius: 8px;
-  padding: 12px;
-  font-size: 0.95rem;
-  z-index: 105;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+  position: sticky;
+  top: 24px;
+  background: #f8f9fa;
+  border: 1px solid #e8e8e8;
+  border-radius: 10px;
+  padding: 14px 16px;
+  font-size: 0.88rem;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
 }
 .on-this-page h4 {
-  margin: 0 0 8px 0;
-  padding-bottom: 6px;
-  border-bottom: 1px solid #e9e9e9;
-  font-size: 0.95rem;
+  margin: 0 0 10px 0;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e0e0e0;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #555;
 }
 .on-this-page ul {
   list-style: none;
   padding: 0;
-  margin: 8px 0 0 0;
+  margin: 0;
 }
 .on-this-page ul li {
   margin-bottom: 6px;
+}
+.on-this-page ul li a {
+  color: #444;
+  text-decoration: none;
+  line-height: 1.4;
+}
+.on-this-page ul li a:hover {
+  color: #007bff;
 }
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   line-height: 1.6;
-  margin: 0 auto;
-  padding: 28px 36px;
+  margin: 0;
+  padding: 0;
   color: #333;
   background-color: #fff;
-  max-width: 1100px;
+}
+
+.page-layout > main {
+  min-width: 0;
+}
+
+/* Sphinx docs pages (no .page-layout wrapper) */
+body > .document {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 28px 24px;
 }
 
 .center-content {
@@ -227,12 +257,24 @@ div.highlight span {
 }
 
 /* Responsive */
-@media (max-width: 1000px) {
-  .on-this-page { position: static; width: auto; margin: 12px 0 18px; }
+@media (max-width: 1100px) {
+  .page-layout {
+    grid-template-columns: 160px minmax(0, 1fr);
+  }
+  .on-this-page {
+    display: none;
+  }
 }
 
-@media (max-width: 720px) {
-  .sidebar, .on-this-page { display: none; }
+@media (max-width: 768px) {
+  .page-layout {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    padding: 16px;
+  }
+  .sidebar {
+    position: static;
+  }
   h1 { font-size: 1.5rem; }
   .badges img { height: 18px; }
 }

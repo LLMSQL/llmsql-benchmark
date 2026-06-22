@@ -4,20 +4,20 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>llmsql.inference.inference_transformers &#8212; LLMSQL 0.1.13 documentation</title>
+    <title>llmsql.inference.inference_transformers &#8212; LLMSQL 0.1.16 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=5349f25f" />
-    <link rel="stylesheet" type="text/css" href="../../../_static/basic.css?v=5c69cfe2" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/basic.css?v=29da98fa" />
     <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
-    <link rel="stylesheet" type="text/css" href="../../../_static/styles/front_page.css?v=9e26f69c" />
-    <script src="../../../_static/documentation_options.js?v=8d02545a"></script>
+    <link rel="stylesheet" type="text/css" href="../../../_static/styles/front_page.css?v=f50f991d" />
+    <script src="../../../_static/documentation_options.js?v=d50bcae4"></script>
     <script src="../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
     <script src="../../../_static/copybutton.js?v=ccdb6887"></script>
-    <script src="../../../_static/scripts/front_page.js?v=a59558f4"></script>
+    <script src="../../../_static/scripts/front_page.js?v=6e6d9347"></script>
     <link rel="icon" href="../../../_static/favicon.png"/>
     <link rel="index" title="Index" href="../../../genindex.html" />
-    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
   </head><body>
     <div class="related" role="navigation" aria-label="Related">
       <h3>Navigation</h3>
@@ -28,17 +28,17 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">LLMSQL 0.1.13 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">LLMSQL 0.1.16 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">llmsql.inference.inference_transformers</a></li>
+        <li class="nav-item nav-item-this"><a href="">llmsql.inference.inference_transformers</a></li> 
       </ul>
-    </div>
+    </div>  
 
     <div class="document">
       <div class="documentwrapper">
         <div class="bodywrapper">
           <div class="body" role="main">
-
+            
   <h1>Source code for llmsql.inference.inference_transformers</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">LLMSQL Transformers Inference Function</span>
@@ -56,17 +56,16 @@
 
 <span class="sd">    results = inference_transformers(</span>
 <span class="sd">        model_or_model_name_or_path=&quot;Qwen/Qwen2.5-1.5B-Instruct&quot;,</span>
+<span class="sd">        repo_id=&quot;llmsql-bench/llmsql-2.0&quot;,</span>
 <span class="sd">        output_file=&quot;outputs/preds_transformers.jsonl&quot;,</span>
-<span class="sd">        questions_path=&quot;data/questions.jsonl&quot;,</span>
-<span class="sd">        tables_path=&quot;data/tables.jsonl&quot;,</span>
 <span class="sd">        num_fewshots=5,</span>
 <span class="sd">        batch_size=8,</span>
 <span class="sd">        max_new_tokens=256,</span>
 <span class="sd">        temperature=0.7,</span>
-<span class="sd">        model_args={</span>
+<span class="sd">        model_kwargs={</span>
 <span class="sd">            &quot;torch_dtype&quot;: &quot;bfloat16&quot;,</span>
 <span class="sd">        },</span>
-<span class="sd">        generate_kwargs={</span>
+<span class="sd">        generation_kwargs={</span>
 <span class="sd">            &quot;do_sample&quot;: False,</span>
 <span class="sd">        },</span>
 <span class="sd">    )</span>
@@ -80,17 +79,23 @@
 
 <span class="sd">&quot;&quot;&quot;</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Literal</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">dotenv</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_dotenv</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">tqdm</span><span class="w"> </span><span class="kn">import</span> <span class="n">tqdm</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">transformers</span><span class="w"> </span><span class="kn">import</span> <span class="n">AutoModelForCausalLM</span><span class="p">,</span> <span class="n">AutoTokenizer</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">llmsql.config.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">DEFAULT_WORKDIR_PATH</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">llmsql.config.config</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">DEFAULT_LLMSQL_VERSION</span><span class="p">,</span>
+    <span class="n">get_repo_id</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">llmsql.loggers.logging_config</span><span class="w"> </span><span class="kn">import</span> <span class="n">log</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">llmsql.utils.inference_utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">_maybe_download</span><span class="p">,</span> <span class="n">_setup_seed</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">llmsql.utils.inference_utils</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">_maybe_download</span><span class="p">,</span>
+    <span class="n">_setup_seed</span><span class="p">,</span>
+    <span class="n">resolve_workdir_path</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">llmsql.utils.utils</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">choose_prompt_builder</span><span class="p">,</span>
     <span class="n">load_jsonl</span><span class="p">,</span>
@@ -129,12 +134,12 @@
     <span class="n">top_k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">50</span><span class="p">,</span>
     <span class="n">generation_kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="c1"># --- Benchmark Parameters ---</span>
+    <span class="n">version</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;1.0&quot;</span><span class="p">,</span> <span class="s2">&quot;2.0&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">DEFAULT_LLMSQL_VERSION</span><span class="p">,</span>
     <span class="n">output_file</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;llm_sql_predictions.jsonl&quot;</span><span class="p">,</span>
-    <span class="n">questions_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">tables_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">workdir_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">DEFAULT_WORKDIR_PATH</span><span class="p">,</span>
+    <span class="n">workdir_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">num_fewshots</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span><span class="p">,</span>
     <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">8</span><span class="p">,</span>
+    <span class="n">limit</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">42</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
@@ -172,22 +177,22 @@
 <span class="sd">                          &#39;top_p&#39;, &#39;top_k&#39; are handled separately.</span>
 
 <span class="sd">        # Benchmark:</span>
+<span class="sd">        version: LLMSQL version</span>
 <span class="sd">        output_file: Output JSONL file path for completions.</span>
-<span class="sd">        questions_path: Path to benchmark questions JSONL.</span>
-<span class="sd">        tables_path: Path to benchmark tables JSONL.</span>
-<span class="sd">        workdir_path: Working directory path.</span>
+<span class="sd">        workdir_path: Directory to store downloaded benchmark files. If omitted, a</span>
+<span class="sd">            temporary directory is created automatically.</span>
 <span class="sd">        num_fewshots: Number of few-shot examples (0, 1, or 5).</span>
 <span class="sd">        batch_size: Batch size for inference.</span>
 <span class="sd">        seed: Random seed for reproducibility.</span>
+<span class="sd">        limit: Limit the number of questions to evaluate. If an integer, evaluates</span>
+<span class="sd">               the first N samples. If a float between 0.0 and 1.0, evaluates the</span>
+<span class="sd">               first X*100% of samples. If None, evaluates all samples (default).</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        List of generated SQL results with metadata.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="c1"># --- Setup ---</span>
     <span class="n">_setup_seed</span><span class="p">(</span><span class="n">seed</span><span class="o">=</span><span class="n">seed</span><span class="p">)</span>
-
-    <span class="n">workdir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">workdir_path</span><span class="p">)</span>
-    <span class="n">workdir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
     <span class="n">model_kwargs</span> <span class="o">=</span> <span class="n">model_kwargs</span> <span class="ow">or</span> <span class="p">{}</span>
     <span class="n">tokenizer_kwargs</span> <span class="o">=</span> <span class="n">tokenizer_kwargs</span> <span class="ow">or</span> <span class="p">{}</span>
@@ -252,12 +257,32 @@
     <span class="n">model</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
 
     <span class="c1"># --- Load necessary files ---</span>
-    <span class="n">questions_path</span> <span class="o">=</span> <span class="n">_maybe_download</span><span class="p">(</span><span class="s2">&quot;questions.jsonl&quot;</span><span class="p">,</span> <span class="n">questions_path</span><span class="p">)</span>
-    <span class="n">tables_path</span> <span class="o">=</span> <span class="n">_maybe_download</span><span class="p">(</span><span class="s2">&quot;tables.jsonl&quot;</span><span class="p">,</span> <span class="n">tables_path</span><span class="p">)</span>
+    <span class="n">workdir</span> <span class="o">=</span> <span class="n">resolve_workdir_path</span><span class="p">(</span><span class="n">workdir_path</span><span class="p">)</span>
+    <span class="n">repo_id</span> <span class="o">=</span> <span class="n">get_repo_id</span><span class="p">(</span><span class="n">version</span><span class="p">)</span>
+
+    <span class="n">questions_path</span> <span class="o">=</span> <span class="n">_maybe_download</span><span class="p">(</span><span class="n">repo_id</span><span class="p">,</span> <span class="s2">&quot;questions.jsonl&quot;</span><span class="p">,</span> <span class="n">workdir</span><span class="p">)</span>
+    <span class="n">tables_path</span> <span class="o">=</span> <span class="n">_maybe_download</span><span class="p">(</span><span class="n">repo_id</span><span class="p">,</span> <span class="s2">&quot;tables.jsonl&quot;</span><span class="p">,</span> <span class="n">workdir</span><span class="p">)</span>
 
     <span class="n">questions</span> <span class="o">=</span> <span class="n">load_jsonl</span><span class="p">(</span><span class="n">questions_path</span><span class="p">)</span>
     <span class="n">tables_list</span> <span class="o">=</span> <span class="n">load_jsonl</span><span class="p">(</span><span class="n">tables_path</span><span class="p">)</span>
     <span class="n">tables</span> <span class="o">=</span> <span class="p">{</span><span class="n">t</span><span class="p">[</span><span class="s2">&quot;table_id&quot;</span><span class="p">]:</span> <span class="n">t</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">tables_list</span><span class="p">}</span>
+
+    <span class="c1"># --- Apply limit ---</span>
+    <span class="k">if</span> <span class="n">limit</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">limit</span><span class="p">,</span> <span class="nb">float</span><span class="p">):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="mf">0.0</span> <span class="o">&lt;</span> <span class="n">limit</span> <span class="o">&lt;=</span> <span class="mf">1.0</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;When a float, `limit` must be between 0.0 and 1.0, got </span><span class="si">{</span><span class="n">limit</span><span class="si">}</span><span class="s2">.&quot;</span>
+                <span class="p">)</span>
+            <span class="n">limit</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">questions</span><span class="p">)</span> <span class="o">*</span> <span class="n">limit</span><span class="p">))</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">limit</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span> <span class="ow">or</span> <span class="n">limit</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;`limit` must be a positive integer or a float in (0.0, 1.0], got </span><span class="si">{</span><span class="n">limit</span><span class="si">!r}</span><span class="s2">.&quot;</span>
+            <span class="p">)</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Limiting evaluation to first </span><span class="si">{</span><span class="n">limit</span><span class="si">}</span><span class="s2"> questions out of </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">questions</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
+        <span class="n">questions</span> <span class="o">=</span> <span class="n">questions</span><span class="p">[:</span><span class="n">limit</span><span class="p">]</span>
 
     <span class="c1"># --- Chat template setup ---</span>
     <span class="n">use_chat_template</span> <span class="o">=</span> <span class="n">chat_template</span> <span class="ow">or</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">tokenizer</span><span class="p">,</span> <span class="s2">&quot;chat_template&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
@@ -362,9 +387,9 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">LLMSQL 0.1.13 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">LLMSQL 0.1.16 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">llmsql.inference.inference_transformers</a></li>
+        <li class="nav-item nav-item-this"><a href="">llmsql.inference.inference_transformers</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">

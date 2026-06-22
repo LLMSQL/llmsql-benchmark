@@ -17,31 +17,15 @@
 </head>
 <body>
 
-  <!-- Sidebar -->
-  <div class="sidebar">
-    <div class="sidebar-content">
-      <a class="sidebar-button" href="./docs" rel="noopener">📚 Documentation</a>
-      <input type="text" placeholder="Search..." class="sidebar-search"/>
-    </div>
-  </div>
+  <div class="page-layout">
+    <nav class="sidebar" aria-label="Site navigation">
+      <div class="sidebar-content">
+        <a class="sidebar-button" href="./docs" rel="noopener">📚 Documentation</a>
+        <input type="text" placeholder="Search..." class="sidebar-search"/>
+      </div>
+    </nav>
 
-  <!-- Right panel -->
-  <aside class="on-this-page" aria-label="On this page">
-    <h4>ON THIS PAGE</h4>
-    <ul>
-      <li><a href="#description">Description</a></li>
-      <li><a href="#latest-news">Latest News</a></li>
-      <li><a href="#documentation">Documentation</a></li>
-      <li><a href="#quick-start">Quick Start</a></li>
-      <li><a href="#links">Links</a></li>
-      <li><a href="#contributing">Contributing</a></li>
-      <li><a href="#leaderboard">Leaderboard</a></li>
-      <li><a href="#citation">Citation</a></li>
-    </ul>
-  </aside>
-
-  <!-- Main content -->
-  <main>
+    <main>
     <div class="center-content">
       <h1>Welcome to LLMSQL Project</h1>
 
@@ -153,6 +137,22 @@ print(report)
       </tbody>
     </table>
 
+    <h2 id="contributing">🤝 Contributing</h2>
+    <p>We welcome contributions — bug reports, documentation improvements, new features, and benchmark submissions. Check the <a href="https://github.com/LLMSQL/llmsql-benchmark/blob/main/CONTRIBUTING.md" target="_blank" rel="noopener">contributing guide</a> for full details.</p>
+    <div class="note-box">
+      <p><strong>Quick start for developers:</strong></p>
+      <pre><code>git clone https://github.com/&lt;YOUR_USERNAME&gt;/llmsql-benchmark.git
+cd llmsql-benchmark
+pip install pdm
+pdm install --without default --with dev
+pre-commit install</code></pre>
+    </div>
+    <ul>
+      <li><a href="https://github.com/LLMSQL/llmsql-benchmark/issues" target="_blank" rel="noopener">Open issues</a> — report bugs or request features</li>
+      <li><a href="https://github.com/LLMSQL/llmsql-benchmark/issues?q=is%3Aopen+label%3A%22good+first+issue%22+label%3A%22help+wanted%22" target="_blank" rel="noopener">Good first issues</a> — recommended starting points for new contributors</li>
+      <li><a href="https://discord.gg/n9ygeKu6Ba" target="_blank" rel="noopener">Discord community</a> — ask questions and discuss ideas</li>
+    </ul>
+
     <h2 id="leaderboard">📊 Leaderboard — Execution Accuracy (EX)</h2>
     <div id="leaderboard-container" class="custom-highlight-box">
       <p>Loading leaderboard...</p>
@@ -172,7 +172,22 @@ print(report)
     <div class="center-content small">
       💬 Made with ❤️ by the LLMSQL Team<br>
     </div>
-  </main>
+    </main>
+
+    <aside class="on-this-page" aria-label="On this page">
+      <h4>On this page</h4>
+      <ul>
+        <li><a href="#description">Description</a></li>
+        <li><a href="#latest-news">Latest News</a></li>
+        <li><a href="#documentation">Documentation</a></li>
+        <li><a href="#quick-start">Quick Start</a></li>
+        <li><a href="#links">Links</a></li>
+        <li><a href="#contributing">Contributing</a></li>
+        <li><a href="#leaderboard">Leaderboard</a></li>
+        <li><a href="#citation">Citation</a></li>
+      </ul>
+    </aside>
+  </div>
 
   <script src="{{ pathto('_static/scripts/front_page.js', 1) }}"></script>
 
