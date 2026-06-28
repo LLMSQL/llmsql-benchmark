@@ -4,20 +4,20 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>llmsql.evaluation.evaluate &#8212; LLMSQL 0.1.13 documentation</title>
+    <title>llmsql.evaluation.evaluate &#8212; LLMSQL 0.1.16 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=5349f25f" />
-    <link rel="stylesheet" type="text/css" href="../../../_static/basic.css?v=5c69cfe2" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/basic.css?v=29da98fa" />
     <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
-    <link rel="stylesheet" type="text/css" href="../../../_static/styles/front_page.css?v=9e26f69c" />
-    <script src="../../../_static/documentation_options.js?v=8d02545a"></script>
+    <link rel="stylesheet" type="text/css" href="../../../_static/styles/front_page.css?v=f50f991d" />
+    <script src="../../../_static/documentation_options.js?v=d50bcae4"></script>
     <script src="../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
     <script src="../../../_static/copybutton.js?v=ccdb6887"></script>
-    <script src="../../../_static/scripts/front_page.js?v=a59558f4"></script>
+    <script src="../../../_static/scripts/front_page.js?v=6e6d9347"></script>
     <link rel="icon" href="../../../_static/favicon.png"/>
     <link rel="index" title="Index" href="../../../genindex.html" />
-    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
   </head><body>
     <div class="related" role="navigation" aria-label="Related">
       <h3>Navigation</h3>
@@ -28,17 +28,17 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">LLMSQL 0.1.13 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">LLMSQL 0.1.16 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">llmsql.evaluation.evaluate</a></li>
+        <li class="nav-item nav-item-this"><a href="">llmsql.evaluation.evaluate</a></li> 
       </ul>
-    </div>
+    </div>  
 
     <div class="document">
       <div class="documentwrapper">
         <div class="bodywrapper">
           <div class="body" role="main">
-
+            
   <h1>Source code for llmsql.evaluation.evaluate</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">LLMSQL Evaluation Module</span>
@@ -51,17 +51,19 @@
 <span class="sd">&quot;&quot;&quot;</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">timezone</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">uuid</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">rich.progress</span><span class="w"> </span><span class="kn">import</span> <span class="n">track</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">llmsql.config.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">DEFAULT_WORKDIR_PATH</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">llmsql.config.config</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">DEFAULT_LLMSQL_VERSION</span><span class="p">,</span>
+    <span class="n">get_repo_id</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">llmsql.utils.evaluation_utils</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">connect_sqlite</span><span class="p">,</span>
-    <span class="n">download_benchmark_file</span><span class="p">,</span>
     <span class="n">evaluate_sample</span><span class="p">,</span>
 <span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">llmsql.utils.inference_utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">_maybe_download</span><span class="p">,</span> <span class="n">resolve_workdir_path</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">llmsql.utils.rich_utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">log_mismatch</span><span class="p">,</span> <span class="n">print_summary</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">llmsql.utils.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_jsonl</span><span class="p">,</span> <span class="n">load_jsonl_dict_by_key</span><span class="p">,</span> <span class="n">save_json_report</span>
 
@@ -69,11 +71,10 @@
 <div class="viewcode-block" id="evaluate">
 <a class="viewcode-back" href="../../../docs/evaluation.html#llmsql.evaluation.evaluate.evaluate">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">evaluate</span><span class="p">(</span>
-    <span class="n">outputs</span><span class="p">,</span>
+    <span class="n">outputs</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span> <span class="o">|</span> <span class="nb">int</span><span class="p">]],</span>
     <span class="o">*</span><span class="p">,</span>
-    <span class="n">workdir_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">DEFAULT_WORKDIR_PATH</span><span class="p">,</span>
-    <span class="n">questions_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">db_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">version</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">DEFAULT_LLMSQL_VERSION</span><span class="p">,</span>
+    <span class="n">workdir_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">save_report</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">show_mismatches</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="n">max_mismatches</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span><span class="p">,</span>
@@ -82,10 +83,10 @@
 <span class="sd">    Evaluate predicted SQL queries against the LLMSQL benchmark.</span>
 
 <span class="sd">    Args:</span>
+<span class="sd">        version: LLMSQL version</span>
 <span class="sd">        outputs: Either a JSONL file path or a list of dicts.</span>
-<span class="sd">        workdir_path: Directory for auto-downloads (ignored if all paths provided).</span>
-<span class="sd">        questions_path: Manual path to benchmark questions JSONL.</span>
-<span class="sd">        db_path: Manual path to SQLite benchmark DB.</span>
+<span class="sd">        workdir_path: Directory to store downloaded benchmark files. If omitted, a</span>
+<span class="sd">            temporary directory is created automatically.</span>
 <span class="sd">        save_report: Optional manual save path. If None → auto-generated.</span>
 <span class="sd">        show_mismatches: Print mismatches while evaluating.</span>
 <span class="sd">        max_mismatches: Max mismatches to print.</span>
@@ -96,37 +97,12 @@
 
     <span class="c1"># Determine input type</span>
     <span class="n">input_mode</span> <span class="o">=</span> <span class="s2">&quot;jsonl_path&quot;</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">outputs</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">else</span> <span class="s2">&quot;dict_list&quot;</span>
+    <span class="n">workdir</span> <span class="o">=</span> <span class="n">resolve_workdir_path</span><span class="p">(</span><span class="n">workdir_path</span><span class="p">)</span>
 
-    <span class="c1"># --- Resolve inputs if needed ---</span>
-    <span class="n">workdir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">workdir_path</span><span class="p">)</span> <span class="k">if</span> <span class="n">workdir_path</span> <span class="k">else</span> <span class="kc">None</span>
-    <span class="k">if</span> <span class="n">workdir_path</span> <span class="ow">and</span> <span class="p">(</span><span class="n">questions_path</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">db_path</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">):</span>
-        <span class="n">workdir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">repo_id</span> <span class="o">=</span> <span class="n">get_repo_id</span><span class="p">(</span><span class="n">version</span><span class="p">)</span>
 
-    <span class="k">if</span> <span class="n">questions_path</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">workdir</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="s2">&quot;questions_path not provided, and workdir_path disabled. &quot;</span>
-                <span class="s2">&quot;Enable workdir or provide questions_path explicitly.&quot;</span>
-            <span class="p">)</span>
-        <span class="n">local_q</span> <span class="o">=</span> <span class="n">workdir</span> <span class="o">/</span> <span class="s2">&quot;questions.jsonl&quot;</span>
-        <span class="n">questions_path</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="nb">str</span><span class="p">(</span><span class="n">local_q</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">local_q</span><span class="o">.</span><span class="n">is_file</span><span class="p">()</span>
-            <span class="k">else</span> <span class="n">download_benchmark_file</span><span class="p">(</span><span class="s2">&quot;questions.jsonl&quot;</span><span class="p">,</span> <span class="n">workdir</span><span class="p">)</span>
-        <span class="p">)</span>
-
-    <span class="k">if</span> <span class="n">db_path</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">workdir</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="s2">&quot;db_path not provided, and workdir_path disabled. &quot;</span>
-                <span class="s2">&quot;Enable workdir or provide db_path explicitly.&quot;</span>
-            <span class="p">)</span>
-        <span class="n">local_db</span> <span class="o">=</span> <span class="n">workdir</span> <span class="o">/</span> <span class="s2">&quot;sqlite_tables.db&quot;</span>
-        <span class="n">db_path</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="nb">str</span><span class="p">(</span><span class="n">local_db</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">local_db</span><span class="o">.</span><span class="n">is_file</span><span class="p">()</span>
-            <span class="k">else</span> <span class="n">download_benchmark_file</span><span class="p">(</span><span class="s2">&quot;sqlite_tables.db&quot;</span><span class="p">,</span> <span class="n">workdir</span><span class="p">)</span>
-        <span class="p">)</span>
+    <span class="n">questions_path</span> <span class="o">=</span> <span class="n">_maybe_download</span><span class="p">(</span><span class="n">repo_id</span><span class="p">,</span> <span class="s2">&quot;questions.jsonl&quot;</span><span class="p">,</span> <span class="n">workdir</span><span class="p">)</span>
+    <span class="n">db_path</span> <span class="o">=</span> <span class="n">_maybe_download</span><span class="p">(</span><span class="n">repo_id</span><span class="p">,</span> <span class="s2">&quot;sqlite_tables.db&quot;</span><span class="p">,</span> <span class="n">workdir</span><span class="p">)</span>
 
     <span class="c1"># --- Load benchmark questions ---</span>
     <span class="n">questions</span> <span class="o">=</span> <span class="n">load_jsonl_dict_by_key</span><span class="p">(</span><span class="n">questions_path</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="s2">&quot;question_id&quot;</span><span class="p">)</span>
@@ -226,9 +202,9 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">LLMSQL 0.1.13 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">LLMSQL 0.1.16 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">llmsql.evaluation.evaluate</a></li>
+        <li class="nav-item nav-item-this"><a href="">llmsql.evaluation.evaluate</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
