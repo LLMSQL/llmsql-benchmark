@@ -38,7 +38,7 @@
               <img src="https://img.shields.io/github/stars/LLMSQL/llmsql-benchmark?style=social" alt="GitHub stars">
           </a>
 
-          <a href="/docs">
+          <a href="./docs">
               <img src="https://img.shields.io/badge/docs-online-blue" alt="Documentation">
           </a>
 
@@ -49,7 +49,7 @@
 
 
 
-      <p style="margin-top:10px;">LLMSQL is a Python package for evaluation Hugging Face models on LLMSQL benchmark with transformers and vLLM.</p>
+      <p style="margin-top:10px;">LLMSQL is a Python package for evaluating Hugging Face models on LLMSQL benchmark with transformers and vLLM.</p>
     </div>
 
     <h2 id="description">Description</h2>
@@ -62,7 +62,7 @@
 
     <h2 id="documentation">Documentation</h2>
     <div class="note-box">
-      <p><strong>Note:</strong> Documentation pages (installation guide, API reference) are <strong>under construction</strong>. <br> See <strong>Quick Start</strong> below or the README files inside the <a href="https://github.com/LLMSQL/llmsql-benchmark/" target="_blank">repo</a>.</p>
+      <p>Read the <a href="./docs">documentation</a> for the installation guide and API reference. <br> See <strong>Quick Start</strong> below or visit the <a href="https://github.com/LLMSQL/llmsql-benchmark/" target="_blank">repo</a> for more.</p>
     </div>
 
     <h2 id="quick-start">Quick Start</h2>
@@ -100,7 +100,7 @@
 --model-name Qwen/Qwen2.5-1.5B-Instruct \
 --output-file outputs/preds.jsonl \
 --batch-size 8 \
---num_fewshots 5 \
+--num-fewshots 5 \
 --temperature 0.0</code></pre>
 
 <p><strong>Transformers Backend</strong></p>
@@ -114,15 +114,15 @@
   <h3>3️⃣ Evaluation API (Python)</h3>
 <pre><code>from llmsql import evaluate
 
-report =evaluate(outputs="path_to_your_outputs.jsonl")
+report = evaluate(outputs="path_to_your_outputs.jsonl")
 print(report)
 </code></pre>
-<p>Or with ther results from the infernece:</p>
+<p>Or with the results from the inference:</p>
 <pre><code>from llmsql import evaluate
 
-# results = inference_transformers(...) or infernce_vllm(...)
+# results = inference_transformers(...) or inference_vllm(...)
 
-report =evaluate(outputs=results)
+report = evaluate(outputs=results)
 print(report)
 </code></pre>
 

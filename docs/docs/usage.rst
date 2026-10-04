@@ -10,7 +10,7 @@ Typical workflow
 ----------------
 
 1. Run inference on dataset examples (Transformers or vLLM)
-2. Pass predictions to `Evaluator`
+2. Pass predictions to `evaluate()`
 3. Inspect evaluation metrics
 
 Basic Example
@@ -21,7 +21,7 @@ Using transformers backend.
 .. code-block:: python
 
     from llmsql import inference_transformers
-    from llmsql import LLMSQLEvaluator
+    from llmsql import evaluate
 
     # Run inference (will take some time)
     results = inference_transformers(
@@ -42,8 +42,7 @@ Using transformers backend.
     )
 
     # Evaluate the results
-    evaluator = LLMSQLEvaluator()
-    report = evaluator.evaluate(outputs_path="outputs/preds_transformers.jsonl")
+    report = evaluate(outputs="outputs/preds_transformers.jsonl")
     print(report)
 
 Using vllm backend.
@@ -51,7 +50,7 @@ Using vllm backend.
 .. code-block:: python
 
     from llmsql import inference_vllm
-    from llmsql import LLMSQLEvaluator
+    from llmsql import evaluate
 
     # Run inference (will take some time)
     results = inference_vllm(
@@ -70,8 +69,7 @@ Using vllm backend.
     )
 
     # Evaluate the results
-    evaluator = LLMSQLEvaluator()
-    report = evaluator.evaluate(outputs_path="outputs/preds_transformers.jsonl")
+    report = evaluate(outputs="outputs/preds_vllm.jsonl")
     print(report)
 
 
@@ -79,7 +77,7 @@ Using OpenAI-compateble API.
 
 .. code-block:: python
 
-    from llmsql import inference_api
+    from llmsql import inference_api, evaluate
     from dotenv import load_dotenv
     import os
     load_dotenv()
@@ -106,8 +104,7 @@ Using OpenAI-compateble API.
     )
 
     # Evaluate the results
-    evaluator = LLMSQLEvaluator()
-    report = evaluator.evaluate(outputs_path="outputs/preds_transformers.jsonl")
+    report = evaluate(outputs="test_output_api.jsonl")
     print(report)
 
 ---

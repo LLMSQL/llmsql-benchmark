@@ -20,7 +20,7 @@ Getting Started
 Installation
 ------------
 
-Install LLMSQL from source:
+Install LLMSQL:
 
 .. code-block:: bash
 
@@ -40,7 +40,7 @@ Example: Running your first evaluation (with transformers backend)
         batch_size=8,
         max_new_tokens=256,
         temperature=0.7,
-        model_args={
+        model_kwargs={
             "torch_dtype": "bfloat16",
         },
         generate_kwargs={
