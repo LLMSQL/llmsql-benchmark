@@ -53,6 +53,7 @@ async def test_vllm_backend_called(monkeypatch):
     """
     Ensure vLLM backend is correctly invoked.
     """
+    pytest.importorskip("vllm")
     mock_inference = AsyncMock(return_value=[])
 
     monkeypatch.setattr(

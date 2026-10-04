@@ -5,7 +5,6 @@ from unittest.mock import MagicMock
 import pytest
 
 import llmsql.inference.inference_transformers as transformers_mod
-import llmsql.inference.inference_vllm as vllm_mod
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -23,7 +22,14 @@ def _write_jsonl(path, records):
 
 
 def _patch_common_vllm(monkeypatch, tmp_path):
-    """Patch all vLLM module-level dependencies."""
+    """Patch all vLLM module-level dependencies.
+
+    Importing the vLLM backend is the only reason these tests need the optional
+    `vllm` extra, so skip them when it is not installed instead of failing.
+    """
+    pytest.importorskip("vllm")
+    import llmsql.inference.inference_vllm as vllm_mod
+
     monkeypatch.setattr(
         vllm_mod,
         "load_jsonl",
@@ -50,6 +56,8 @@ def _patch_common_vllm(monkeypatch, tmp_path):
         MagicMock(outputs=[MagicMock(text=f"SELECT {i}")]) for i in range(len(prompts))
     ]
     monkeypatch.setattr(vllm_mod, "LLM", lambda *a, **kw: fake_llm)
+
+    return vllm_mod
 
 
 def _patch_common_transformers(monkeypatch, tmp_path):
@@ -105,6 +113,7 @@ def _patch_common_transformers(monkeypatch, tmp_path):
 # ---------------------------------------------------------------------------
 
 
+@pytest.mark.gpu
 class TestInferenceVllmLimit:
     @pytest.mark.asyncio
     async def test_limit_integer_restricts_results(self, monkeypatch, tmp_path):
@@ -112,7 +121,7 @@ class TestInferenceVllmLimit:
         qpath, tpath = tmp_path / "questions.jsonl", tmp_path / "tables.jsonl"
         _write_jsonl(qpath, QUESTIONS)
         _write_jsonl(tpath, TABLES)
-        _patch_common_vllm(monkeypatch, tmp_path)
+        vllm_mod = _patch_common_vllm(monkeypatch, tmp_path)
 
         results = vllm_mod.inference_vllm(
             model_name="dummy",
@@ -130,7 +139,7 @@ class TestInferenceVllmLimit:
         qpath, tpath = tmp_path / "questions.jsonl", tmp_path / "tables.jsonl"
         _write_jsonl(qpath, QUESTIONS)
         _write_jsonl(tpath, TABLES)
-        _patch_common_vllm(monkeypatch, tmp_path)
+        vllm_mod = _patch_common_vllm(monkeypatch, tmp_path)
 
         results = vllm_mod.inference_vllm(
             model_name="dummy",
@@ -148,7 +157,7 @@ class TestInferenceVllmLimit:
         qpath, tpath = tmp_path / "questions.jsonl", tmp_path / "tables.jsonl"
         _write_jsonl(qpath, QUESTIONS)
         _write_jsonl(tpath, TABLES)
-        _patch_common_vllm(monkeypatch, tmp_path)
+        vllm_mod = _patch_common_vllm(monkeypatch, tmp_path)
 
         results = vllm_mod.inference_vllm(
             model_name="dummy",
@@ -165,7 +174,7 @@ class TestInferenceVllmLimit:
         qpath, tpath = tmp_path / "questions.jsonl", tmp_path / "tables.jsonl"
         _write_jsonl(qpath, QUESTIONS)
         _write_jsonl(tpath, TABLES)
-        _patch_common_vllm(monkeypatch, tmp_path)
+        vllm_mod = _patch_common_vllm(monkeypatch, tmp_path)
 
         results = vllm_mod.inference_vllm(
             model_name="dummy",
@@ -182,7 +191,7 @@ class TestInferenceVllmLimit:
         qpath, tpath = tmp_path / "questions.jsonl", tmp_path / "tables.jsonl"
         _write_jsonl(qpath, QUESTIONS)
         _write_jsonl(tpath, TABLES)
-        _patch_common_vllm(monkeypatch, tmp_path)
+        vllm_mod = _patch_common_vllm(monkeypatch, tmp_path)
 
         with pytest.raises(ValueError, match="0.0 and 1.0"):
             vllm_mod.inference_vllm(
@@ -198,7 +207,7 @@ class TestInferenceVllmLimit:
         qpath, tpath = tmp_path / "questions.jsonl", tmp_path / "tables.jsonl"
         _write_jsonl(qpath, QUESTIONS)
         _write_jsonl(tpath, TABLES)
-        _patch_common_vllm(monkeypatch, tmp_path)
+        vllm_mod = _patch_common_vllm(monkeypatch, tmp_path)
 
         with pytest.raises(ValueError):
             vllm_mod.inference_vllm(
@@ -214,7 +223,7 @@ class TestInferenceVllmLimit:
         qpath, tpath = tmp_path / "questions.jsonl", tmp_path / "tables.jsonl"
         _write_jsonl(qpath, QUESTIONS)
         _write_jsonl(tpath, TABLES)
-        _patch_common_vllm(monkeypatch, tmp_path)
+        vllm_mod = _patch_common_vllm(monkeypatch, tmp_path)
 
         results = vllm_mod.inference_vllm(
             model_name="dummy",

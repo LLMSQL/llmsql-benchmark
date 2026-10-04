@@ -101,6 +101,13 @@ ignore = [
 known-first-party = ["llmsql"]
 force-sort-within-sections = true
 
+[tool.pytest.ini_options]
+markers = [
+    "integration: end-to-end tests that download a real model from Hugging Face",
+    "gpu: tests that require a GPU / the vLLM backend",
+    "slow: tests that take a long time to run",
+]
+
 # Type checking
 [tool.mypy]
 python_version = "3.10"

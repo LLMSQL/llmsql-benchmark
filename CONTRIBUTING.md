@@ -72,6 +72,15 @@ We use [pytest](https://docs.pytest.org/en/latest/) for running unit tests. All 
 PYTHONPATH=. pdm run pytest --cov=llmsql --cov-report=xml --maxfail=1 --disable-warnings -v
 ```
 
+The vLLM backend is an optional extra (`pdm install --with vllm`) because it
+pulls in multi-GB wheels and needs a GPU. Tests that exercise it are marked
+`gpu` and skip themselves automatically when `vllm` is not importable, so the
+CPU-only suite runs anywhere. To skip them explicitly:
+
+```bash
+PYTHONPATH=. pdm run pytest -m "not gpu"
+```
+
 Please run this command before any changes, just to make sure all code you forked works well by the time the development starts.
 
 Also to enable `pre-commit hooks` with `pre-commit install` command. Pre commit hooks contain pytest and will be run before each commit.

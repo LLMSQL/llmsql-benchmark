@@ -5,8 +5,12 @@ from unittest.mock import MagicMock
 
 import pytest
 
+pytest.importorskip("vllm")
+
 from llmsql.config.config import REPO_IDs, get_available_versions
 import llmsql.inference.inference_vllm as mod
+
+pytestmark = pytest.mark.gpu
 
 questions = [
     {"question_id": "q1", "table_id": "t1", "question": "Select name from students;"},

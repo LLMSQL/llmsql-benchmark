@@ -7,8 +7,6 @@ from unittest.mock import MagicMock
 
 import pytest
 
-import llmsql.inference.inference_vllm as inference_vllm
-
 
 @pytest.fixture(scope="session", autouse=True)
 def cleanup_evaluation_results():
@@ -38,22 +36,6 @@ def dummy_db_file(tmp_path):
     # cleanup
     if os.path.exists(db_path):
         os.remove(db_path)
-
-
-@pytest.fixture
-def mock_llm(monkeypatch):
-    """Mock vLLM LLM to avoid GPU/model loading."""
-
-    class DummyOutput:
-        def __init__(self, text="SELECT 1"):
-            self.outputs = [type("Obj", (), {"text": text})()]
-
-    class DummyLLM:
-        def generate(self, prompts, sampling_params):
-            return [DummyOutput(f"-- SQL for: {p}") for p in prompts]
-
-    monkeypatch.setattr(inference_vllm, "LLM", lambda **_: DummyLLM())
-    return DummyLLM()
 
 
 @pytest.fixture

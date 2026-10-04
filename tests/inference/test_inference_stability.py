@@ -4,7 +4,11 @@ from unittest.mock import MagicMock
 
 import pytest
 
+pytest.importorskip("vllm")
+
 import llmsql.inference.inference_vllm as mod  # patch in the correct module
+
+pytestmark = pytest.mark.gpu
 
 
 @pytest.mark.asyncio
