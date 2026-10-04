@@ -8,6 +8,7 @@ from llmsql.utils.evaluation_utils import (
     evaluate_sample,
     execute_sql,
     fix_table_name,
+    normalize_sql,
 )
 
 
@@ -88,6 +89,16 @@ class TestExecuteSQL:
         assert result == [(1, "Alice"), (2, "Bob"), (3, "Charlie")]
 
 
+class TestNormalizeSql:
+    def test_strips_semicolon_and_collapses_whitespace(self) -> None:
+        assert normalize_sql("  SELECT a\n  FROM t ;  ") == "SELECT a FROM t"
+
+    def test_preserves_case_and_literals(self) -> None:
+        assert normalize_sql("SELECT a FROM t WHERE b = 'X  y'") == (
+            "SELECT a FROM t WHERE b = 'X y'"
+        )
+
+
 class TestFixTableName:
     """Test cases for fix_table_name function."""
 
@@ -114,7 +125,7 @@ class TestFixTableName:
         sql = "SELECT * FROM 'Table' JOIN 'Table' ON Table.id = Table.parent_id"
         result = fix_table_name(sql, "my_table")
         # Placeholder in FROM should be swapped out for the real table name
-        assert 'FROM Table' not in result
+        assert "FROM Table" not in result
         assert "FROM 'Table'" not in result
         assert 'FROM "Table"' not in result
         assert 'FROM "my_table"' in result
@@ -137,7 +148,7 @@ class TestFixTableName:
         sql = "SELECT * FROM Table WHERE table_name = 'other_table'"
         result = fix_table_name(sql, "my_table")
         # Should only replace the FROM Table, not 'other_table'
-        assert result == 'SELECT * FROM "my_table" WHERE table_name = \'other_table\''
+        assert result == "SELECT * FROM \"my_table\" WHERE table_name = 'other_table'"
 
     def test_complex_query(self) -> None:
         """Test complex query with joins and subqueries."""
@@ -203,6 +214,7 @@ class TestEvaluateSample:
         assert metrics["pred_none"] == 0
         assert metrics["gold_none"] == 0
         assert metrics["sql_error"] == 0
+        assert metrics["exact_string_match"] == 0
 
     def test_non_matching_prediction(self, eval_db, questions_dict) -> None:
         """Test when prediction does not match gold SQL."""
@@ -299,9 +311,11 @@ class TestEvaluateSample:
         assert "pred_none" in metrics
         assert "gold_none" in metrics
         assert "sql_error" in metrics
+        assert "exact_string_match" in metrics
         assert isinstance(metrics["pred_none"], int)
         assert isinstance(metrics["gold_none"], int)
         assert isinstance(metrics["sql_error"], int)
+        assert isinstance(metrics["exact_string_match"], int)
 
     def test_mismatch_info_structure(self, eval_db, questions_dict) -> None:
         """Test structure of mismatch_info when prediction fails."""
@@ -321,6 +335,46 @@ class TestEvaluateSample:
         assert "model_output" in mismatch_info
         assert "gold_results" in mismatch_info
         assert "prediction_results" in mismatch_info
+
+    def test_exact_string_match_ignores_semicolon_and_whitespace(
+        self, eval_db
+    ) -> None:
+        """Gold SQL ends with ';' but extracted predictions never do."""
+        questions = {
+            1: {
+                "table_id": "users",
+                "sql": 'SELECT "name" FROM "users" WHERE "id" = 1;',
+                "question": "What is the name of user 1?",
+            }
+        }
+        item = {
+            "question_id": 1,
+            "completion": 'SELECT  "name"\nFROM "Table" WHERE "id" = 1;',
+        }
+
+        is_match, _, metrics = evaluate_sample(item, questions, eval_db)
+
+        assert is_match == 1
+        assert metrics["exact_string_match"] == 1
+
+    def test_exact_string_match_zero_when_sql_differs(self, eval_db) -> None:
+        """Execution match does not imply exact string match."""
+        questions = {
+            1: {
+                "table_id": "users",
+                "sql": 'SELECT "name" FROM "users" WHERE "id" = 1;',
+                "question": "What is the name of user 1?",
+            }
+        }
+        item = {
+            "question_id": 1,
+            "completion": "SELECT name FROM Table WHERE age = 30",
+        }
+
+        is_match, _, metrics = evaluate_sample(item, questions, eval_db)
+
+        assert is_match == 1
+        assert metrics["exact_string_match"] == 0
 
     def test_null_results_metrics(self, eval_db) -> None:
         """Test metrics when both gold and prediction return NULL results."""
@@ -343,3 +397,4 @@ class TestEvaluateSample:
         assert metrics["gold_none"] == 1
         assert metrics["pred_none"] == 1
         assert metrics["sql_error"] == 0
+        assert metrics["exact_string_match"] == 1

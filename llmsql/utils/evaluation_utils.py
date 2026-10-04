@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+import re
 import sqlite3
 from typing import Any
 
@@ -62,6 +63,22 @@ def fix_table_name(sql: str, table_id: str) -> str:
     )
 
 
+def normalize_sql(sql: str) -> str:
+    """
+    Normalize a SQL string for exact string match comparison.
+
+    Strips surrounding whitespace and trailing semicolons and collapses runs of
+    whitespace into a single space. Identifier and literal casing is preserved.
+
+    Args:
+        sql (str): SQL query string.
+
+    Returns:
+        str: Normalized SQL string.
+    """
+    return re.sub(r"\s+", " ", sql.strip().rstrip(";").strip())
+
+
 def evaluate_sample(
     item: dict[str, int | str],
     questions: dict[int, dict[str, str]],
@@ -114,7 +131,7 @@ def evaluate_sample(
     gold_results = execute_sql(conn, gold_sql)
 
     # Initialize counters for this sample
-    pred_none = gold_none = sql_error = 0
+    pred_none = gold_none = sql_error = exact_string_match = 0
 
     # Track if gold query returned a NULL-equivalent result
     if gold_results == [(None,)]:
@@ -135,6 +152,11 @@ def evaluate_sample(
         # Execute predicted SQL
         pred_res = execute_sql(conn, pred_sql_fixed)
         last_pred_res = pred_res
+
+        # Exact string match after whitespace / trailing semicolon normalization.
+        # The extractor drops the trailing ";" while gold SQL keeps it.
+        if normalize_sql(pred_sql_fixed) == normalize_sql(gold_sql):
+            exact_string_match = 1
 
         # Update metrics
         if pred_res is None:  # execution failed
@@ -165,15 +187,16 @@ def evaluate_sample(
     return (
         is_match,
         mismatch_info,
-        {"pred_none": pred_none, "gold_none": gold_none, "sql_error": sql_error},
+        {
+            "pred_none": pred_none,
+            "gold_none": gold_none,
+            "sql_error": sql_error,
+            "exact_string_match": exact_string_match,
+        },
     )
 
 
-def download_benchmark_file(
-    repo_id: str,
-    filename: str,
-    local_dir: Path
-) -> str:
+def download_benchmark_file(repo_id: str, filename: str, local_dir: Path) -> str:
     """Download a benchmark file from HuggingFace Hub."""
     file_path = hf_hub_download(
         repo_id=repo_id,

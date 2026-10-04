@@ -103,7 +103,11 @@ def mock_utils(mocker, tmp_path):
     # evaluate_sample → always correct prediction
     mocker.patch(
         "llmsql.evaluation.evaluate.evaluate_sample",
-        return_value=(1, None, {"pred_none": 0, "gold_none": 0, "sql_error": 0}),
+        return_value=(
+            1,
+            None,
+            {"pred_none": 0, "gold_none": 0, "sql_error": 0, "exact_string_match": 0},
+        ),
     )
 
     # rich logging
