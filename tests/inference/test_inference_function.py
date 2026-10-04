@@ -195,3 +195,141 @@ def test_runs_inside_existing_event_loop(monkeypatch, tmp_path):
 
     assert applied["called"] is True
     assert len(results) > 0
+
+
+def test_max_concurrency_caps_in_flight_calls(tmp_path):
+    questions = [
+        {"question_id": f"q{i}", "question": "Q?", "table_id": "t1"} for i in range(20)
+    ]
+    tables = [{"table_id": "t1", "header": ["col"], "types": ["text"], "rows": [["x"]]}]
+    _write_jsonl(tmp_path / "questions.jsonl", questions)
+    _write_jsonl(tmp_path / "tables.jsonl", tables)
+
+    state = {"in_flight": 0, "peak": 0}
+
+    async def fake_infer(prompt, **kwargs):
+        state["in_flight"] += 1
+        state["peak"] = max(state["peak"], state["in_flight"])
+        await asyncio.sleep(0.01)
+        state["in_flight"] -= 1
+        return "SELECT 1"
+
+    results = inference_function(
+        inference_function=fake_infer,
+        max_concurrency=3,
+        output_file=str(tmp_path / "out.jsonl"),
+        workdir_path=str(tmp_path),
+    )
+
+    assert len(results) == 20
+    assert state["peak"] == 3
+
+
+def test_max_concurrency_none_runs_all_at_once(tmp_path):
+    questions = [
+        {"question_id": f"q{i}", "question": "Q?", "table_id": "t1"} for i in range(10)
+    ]
+    tables = [{"table_id": "t1", "header": ["col"], "types": ["text"], "rows": [["x"]]}]
+    _write_jsonl(tmp_path / "questions.jsonl", questions)
+    _write_jsonl(tmp_path / "tables.jsonl", tables)
+
+    state = {"in_flight": 0, "peak": 0}
+
+    async def fake_infer(prompt, **kwargs):
+        state["in_flight"] += 1
+        state["peak"] = max(state["peak"], state["in_flight"])
+        await asyncio.sleep(0.01)
+        state["in_flight"] -= 1
+        return "SELECT 1"
+
+    inference_function(
+        inference_function=fake_infer,
+        max_concurrency=None,
+        output_file=str(tmp_path / "out.jsonl"),
+        workdir_path=str(tmp_path),
+    )
+
+    assert state["peak"] == 10
+
+
+@pytest.mark.parametrize("bad_value", [0, -1, 1.5, True, "4"])
+def test_rejects_invalid_max_concurrency(tmp_path, bad_value):
+    _make_fixtures(tmp_path)
+
+    async def fake_infer(prompt, **kwargs):
+        return "SELECT 1"
+
+    with pytest.raises(ValueError, match="max_concurrency"):
+        inference_function(
+            inference_function=fake_infer,
+            max_concurrency=bad_value,  # type: ignore[arg-type]
+            output_file=str(tmp_path / "out.jsonl"),
+            workdir_path=str(tmp_path),
+        )
+
+
+def test_rejects_non_positive_requests_per_minute(tmp_path):
+    _make_fixtures(tmp_path)
+
+    async def fake_infer(prompt, **kwargs):
+        return "SELECT 1"
+
+    with pytest.raises(ValueError, match="requests_per_minute must be > 0"):
+        inference_function(
+            inference_function=fake_infer,
+            requests_per_minute=0,
+            output_file=str(tmp_path / "out.jsonl"),
+            workdir_path=str(tmp_path),
+        )
+
+
+def test_callable_errors_are_logged_and_recorded_as_empty(tmp_path):
+    _make_fixtures(tmp_path)
+    outpath = tmp_path / "out.jsonl"
+
+    async def flaky_infer(prompt, *, question, **kwargs):
+        if question["question_id"] == "q1":
+            raise RuntimeError("boom")
+        return "SELECT 1"
+
+    results = inference_function(
+        inference_function=flaky_infer,
+        output_file=str(outpath),
+        workdir_path=str(tmp_path),
+    )
+
+    by_id = {r["question_id"]: r["completion"] for r in results}
+    assert by_id == {"q1": "", "q2": "SELECT 1"}
+
+    written = [json.loads(line) for line in outpath.read_text().splitlines()]
+    assert {r["question_id"]: r["completion"] for r in written} == by_id
+
+
+def test_callable_errors_reraised_when_requested(tmp_path):
+    _make_fixtures(tmp_path)
+
+    async def failing_infer(prompt, **kwargs):
+        raise RuntimeError("boom")
+
+    with pytest.raises(RuntimeError, match="boom"):
+        inference_function(
+            inference_function=failing_infer,
+            raise_on_error=True,
+            output_file=str(tmp_path / "out.jsonl"),
+            workdir_path=str(tmp_path),
+        )
+
+
+def test_non_async_result_raises_even_without_raise_on_error(tmp_path):
+    _make_fixtures(tmp_path)
+
+    def bad_infer(prompt, **kwargs):
+        return "not-awaitable"
+
+    with pytest.raises(TypeError, match="must return an awaitable"):
+        inference_function(
+            inference_function=bad_infer,  # type: ignore[arg-type]
+            raise_on_error=False,
+            output_file=str(tmp_path / "out.jsonl"),
+            workdir_path=str(tmp_path),
+        )
