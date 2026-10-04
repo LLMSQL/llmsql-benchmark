@@ -42,6 +42,8 @@ The package doesn't have the dataset, it is stored on our [HuggingFace page](htt
 
 ## Latest News 📣
 
+* [2026/10] Bring your own model: run the benchmark with any custom async callable via [`inference_function()`](./llmsql/inference/inference_function.py#inference_function), with built-in rate limiting and concurrency control.
+
 * [2026/03] Fully functional CLI commands for inference and evaluation. See this [guide](./llmsql/_cli/README.md).
 
 * [2026/03] Added support for API inference, for now only for OpenAI-compatable APIs, see [`inference_api()` function](./llmsql/inference/inference_api.py#inference_api)
@@ -58,7 +60,11 @@ Modern LLMs are already strong at producing SQL queries without finetuning.
 We therefore recommend that most users:
 
 1. **Run inference** directly on the full benchmark:
-   - Use [`llmsql.inference_transformers`](./llmsql/inference/inference_transformers.py) (the function for transformers inference) for generation of SQL predictions with your model. If you want to do vllm based inference, use [`llmsql.inference_vllm`](./llmsql/inference/inference_vllm.py). Works both with HF model id, e.g. `Qwen/Qwen2.5-1.5B-Instruct` and model instance passed directly, e.g. `inference_transformers(model_or_model_name_or_path=model, ...)`. The api inference is also supported, see [`inference_api()`](./llmsql/inference/inference_api.py#inference_api)
+   - Use one of the supported inference frameworks:
+      * [`llmsql.inference_transformers`](./llmsql/inference/inference_transformers.py) - the function for transformers inference, for generation of SQL predictions with your model. Works both with HF model id, e.g. `Qwen/Qwen2.5-1.5B-Instruct` and model instance passed directly, e.g. `inference_transformers(model_or_model_name_or_path=model, ...)`.
+      * [`llmsql.inference_vllm`](./llmsql/inference/inference_vllm.py) - if you want to do vllm based inference.
+      * [`llmsql.inference_api`](./llmsql/inference/inference_api.py#inference_api) - for OpenAI-compatible API inference.
+      * [`llmsql.inference_function`](./llmsql/inference/inference_function.py#inference_function) - for passing your own async function (any engine, API client or agent) for inference, with `requests_per_minute` and `max_concurrency` control.
    - Evaluate results against the benchmark with the [`llmsql.evaluate`](./llmsql/evaluation/evaluator.py) function.
 
 2. **Optional finetuning**:

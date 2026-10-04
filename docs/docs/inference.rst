@@ -20,6 +20,14 @@ Inference API Reference
 
 ---
 
+
+.. automodule:: llmsql.inference.inference_function
+   :members:
+   :undoc-members:
+
+---
+
+
 .. raw:: html
 
    <div style="text-align:center; margin-top:2rem; color:#666;">
