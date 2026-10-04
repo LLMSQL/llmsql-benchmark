@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+import re
 import sqlite3
 from typing import Any
 
@@ -60,6 +61,22 @@ def fix_table_name(sql: str, table_id: str) -> str:
         .replace("FROM Table", f'FROM "{table_id}"')
         .strip()
     )
+
+
+def normalize_sql(sql: str) -> str:
+    """
+    Normalize a SQL string for exact string match comparison.
+
+    Strips surrounding whitespace and trailing semicolons and collapses runs of
+    whitespace into a single space. Identifier and literal casing is preserved.
+
+    Args:
+        sql (str): SQL query string.
+
+    Returns:
+        str: Normalized SQL string.
+    """
+    return re.sub(r"\s+", " ", sql.strip().rstrip(";").strip())
 
 
 def evaluate_sample(
@@ -136,7 +153,9 @@ def evaluate_sample(
         pred_res = execute_sql(conn, pred_sql_fixed)
         last_pred_res = pred_res
 
-        if pred_sql_fixed.strip() == gold_sql.strip():
+        # Exact string match after whitespace / trailing semicolon normalization.
+        # The extractor drops the trailing ";" while gold SQL keeps it.
+        if normalize_sql(pred_sql_fixed) == normalize_sql(gold_sql):
             exact_string_match = 1
 
         # Update metrics

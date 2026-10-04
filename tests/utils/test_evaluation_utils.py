@@ -8,6 +8,7 @@ from llmsql.utils.evaluation_utils import (
     evaluate_sample,
     execute_sql,
     fix_table_name,
+    normalize_sql,
 )
 
 
@@ -86,6 +87,16 @@ class TestExecuteSQL:
         assert result is not None
         # Should be sorted regardless of insertion order
         assert result == [(1, "Alice"), (2, "Bob"), (3, "Charlie")]
+
+
+class TestNormalizeSql:
+    def test_strips_semicolon_and_collapses_whitespace(self) -> None:
+        assert normalize_sql("  SELECT a\n  FROM t ;  ") == "SELECT a FROM t"
+
+    def test_preserves_case_and_literals(self) -> None:
+        assert normalize_sql("SELECT a FROM t WHERE b = 'X  y'") == (
+            "SELECT a FROM t WHERE b = 'X y'"
+        )
 
 
 class TestFixTableName:
@@ -324,6 +335,46 @@ class TestEvaluateSample:
         assert "model_output" in mismatch_info
         assert "gold_results" in mismatch_info
         assert "prediction_results" in mismatch_info
+
+    def test_exact_string_match_ignores_semicolon_and_whitespace(
+        self, eval_db
+    ) -> None:
+        """Gold SQL ends with ';' but extracted predictions never do."""
+        questions = {
+            1: {
+                "table_id": "users",
+                "sql": 'SELECT "name" FROM "users" WHERE "id" = 1;',
+                "question": "What is the name of user 1?",
+            }
+        }
+        item = {
+            "question_id": 1,
+            "completion": 'SELECT  "name"\nFROM "Table" WHERE "id" = 1;',
+        }
+
+        is_match, _, metrics = evaluate_sample(item, questions, eval_db)
+
+        assert is_match == 1
+        assert metrics["exact_string_match"] == 1
+
+    def test_exact_string_match_zero_when_sql_differs(self, eval_db) -> None:
+        """Execution match does not imply exact string match."""
+        questions = {
+            1: {
+                "table_id": "users",
+                "sql": 'SELECT "name" FROM "users" WHERE "id" = 1;',
+                "question": "What is the name of user 1?",
+            }
+        }
+        item = {
+            "question_id": 1,
+            "completion": "SELECT name FROM Table WHERE age = 30",
+        }
+
+        is_match, _, metrics = evaluate_sample(item, questions, eval_db)
+
+        assert is_match == 1
+        assert metrics["exact_string_match"] == 0
 
     def test_null_results_metrics(self, eval_db) -> None:
         """Test metrics when both gold and prediction return NULL results."""
