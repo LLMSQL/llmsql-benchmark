@@ -67,6 +67,29 @@ Question = dict[str, Any]
 Table = dict[str, Any]
 
 
+def _resolve_dtype(dtype: torch.dtype | str) -> torch.dtype | str:
+    """Convert a dtype given as a string (e.g. ``"bfloat16"``, ``"torch.float16"``)
+    into a ``torch.dtype``. ``"auto"`` and ``torch.dtype`` objects pass through.
+
+    Raises:
+        ValueError: if the string does not name a torch dtype.
+    """
+    if isinstance(dtype, torch.dtype):
+        return dtype
+    if isinstance(dtype, str):
+        name = dtype.strip()
+        if name == "auto":
+            return name
+        name = name.removeprefix("torch.")
+        resolved = getattr(torch, name, None)
+        if isinstance(resolved, torch.dtype):
+            return resolved
+    raise ValueError(
+        f"Invalid dtype {dtype!r}: expected a torch.dtype, 'auto' or the name of a "
+        "torch dtype such as 'float16', 'bfloat16' or 'float32'."
+    )
+
+
 @torch.inference_mode()  # type: ignore
 def inference_transformers(
     model_or_model_name_or_path: str | AutoModelForCausalLM,
@@ -74,7 +97,7 @@ def inference_transformers(
     *,
     # --- Model Loading Parameters ---
     trust_remote_code: bool = True,
-    dtype: torch.dtype = torch.float16,
+    dtype: torch.dtype | str = torch.float16,
     device_map: str | dict[str, int] | None = "auto",
     hf_token: str | None = None,
     model_kwargs: dict[str, Any] | None = None,
@@ -107,12 +130,15 @@ def inference_transformers(
 
         # Model Loading:
         trust_remote_code: Whether to trust remote code (default: True).
-        dtype: Torch dtype for model (default: float16).
+        dtype: Torch dtype for model (default: float16). Strings such as
+               "bfloat16" or "auto" are accepted as well.
         device_map: Device placement strategy (default: "auto").
         hf_token: Hugging Face authentication token.
         model_kwargs: Additional arguments for AutoModelForCausalLM.from_pretrained().
-                     Note: 'dtype', 'device_map', 'trust_remote_code', 'token'
-                     are handled separately and will override values here.
+                     Values here take precedence over 'dtype', 'device_map',
+                     'trust_remote_code' and 'token'. A 'dtype' (or legacy
+                     'torch_dtype') entry replaces the `dtype` argument and may be
+                     given as a string.
 
         # Tokenizer Loading:
         tokenizer_kwargs: Additional arguments for AutoTokenizer.from_pretrained(). 'padding_side' defaults to "left".
@@ -150,14 +176,29 @@ def inference_transformers(
     # --- Setup ---
     _setup_seed(seed=seed)
 
-    model_kwargs = model_kwargs or {}
+    model_kwargs = dict(model_kwargs or {})
     tokenizer_kwargs = tokenizer_kwargs or {}
     generation_kwargs = generation_kwargs or {}
 
     # --- Load Model ---
     if isinstance(model_or_model_name_or_path, str):
+        # A dtype passed through model_kwargs (e.g. via the CLI `--model-args`)
+        # overrides the `dtype` argument; normalize it to a single key.
+        kw_dtype = model_kwargs.pop("dtype", None)
+        kw_torch_dtype = model_kwargs.pop("torch_dtype", None)
+        if kw_dtype is not None and kw_torch_dtype is not None:
+            if _resolve_dtype(kw_dtype) != _resolve_dtype(kw_torch_dtype):
+                raise ValueError(
+                    "Conflicting 'dtype' and 'torch_dtype' in model_kwargs: "
+                    f"{kw_dtype!r} vs {kw_torch_dtype!r}."
+                )
+        if kw_dtype is not None:
+            dtype = kw_dtype
+        elif kw_torch_dtype is not None:
+            dtype = kw_torch_dtype
+
         load_args = {
-            "torch_dtype": dtype,
+            "torch_dtype": _resolve_dtype(dtype),
             "device_map": device_map,
             "trust_remote_code": trust_remote_code,
             "token": hf_token,
