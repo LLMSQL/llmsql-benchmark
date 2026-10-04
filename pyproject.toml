@@ -22,6 +22,8 @@ dependencies = [
     "python-dotenv",
     "pyyaml",
     "rich",
+    "aiohttp>=3.9",
+    "nest-asyncio>=1.5",
 ]
 scripts = { llmsql = "llmsql.__main__:main" }
 classifiers = [
@@ -123,3 +125,7 @@ warn_unused_ignores = true
 warn_no_return = true
 warn_unreachable = true
 strict_equality = true
+
+[[tool.mypy.overrides]]
+module = ["nest_asyncio"]
+ignore_missing_imports = true

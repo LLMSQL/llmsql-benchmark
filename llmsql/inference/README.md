@@ -1,12 +1,13 @@
 # LLMSQL Inference
 
-LLMSQL provides two inference backends for **Text-to-SQL generation** with large language models:
+LLMSQL provides several inference backends for **Text-to-SQL generation** with large language models:
 
 * **Transformers** — runs inference using the standard Hugging Face `transformers` pipeline.
 * **vLLM** — runs inference using the high-performance [vLLM](https://github.com/vllm-project/vllm) backend.
 * **API** — runs inference against an OpenAI-compatible Chat Completions API with configurable base URL and rate limiting.
+* **Custom Function** — runs inference with your own async callable while preserving LLMSQL prompt building and output format.
 
-Both backends load benchmark questions and table schemas, build prompts (with few-shot examples), and generate SQL queries in parallel batches.
+All backends load benchmark questions and table schemas, build prompts (with few-shot examples), and generate SQL queries in parallel batches.
 
 ---
 
@@ -94,6 +95,44 @@ results = inference_api(
 )
 ```
 
+---
+
+
+### Option 4 — Using your own async inference function
+
+Pass any `async` callable; LLMSQL builds the prompts, awaits your function for
+each question and writes the predictions in the standard format.
+
+```python
+from llmsql import inference_function
+
+async def get_answer(prompt, *, question, table, **kwargs):
+    # `prompt` is the full LLMSQL prompt, `question`/`table` are the raw
+    # benchmark rows, `kwargs` are your `function_kwargs`.
+    # Call your engine/API/router/agent here and return the SQL string.
+    return "SELECT 1"
+
+results = inference_function(
+    inference_function=get_answer,
+    requests_per_minute=60,     # optional rate limit (None = unlimited)
+    max_concurrency=8,          # max calls in flight at once (default 32)
+    raise_on_error=False,       # default: log failures, record empty completion
+    function_kwargs={"temperature": 0.0},
+    output_file="test_output_function.jsonl",
+)
+```
+
+Notes:
+
+* `max_concurrency` (default `32`) caps how many calls run at the same time;
+  `requests_per_minute` additionally spaces out call start times. Set
+  `max_concurrency=None` only if your backend can handle all questions at once.
+* By default an exception raised by your function is logged (with the
+  `question_id`) and an empty completion is recorded for that question, so a
+  single failure does not abort a long run. Use `raise_on_error=True` to stop
+  at the first error instead.
+* Results are written as each call finishes, so the output order follows
+  completion order. Works from scripts and from Jupyter notebooks.
 
 ---
 
@@ -120,6 +159,11 @@ llmsql inference transformers \
     --temperature 0.0 \
 ```
 
+Extra model constructor arguments can be passed lm-evaluation-harness style with
+`--model-args` (alias `--model_args`), e.g. `--model-args dtype=bfloat16,revision=main`.
+They are forwarded as `model_kwargs` (transformers) or `llm_kwargs` (vLLM); see the
+[CLI manual](../_cli/README.md#passing-model-constructor-arguments---model-args) for parsing rules.
+
 👉 Run `llmsql inference --help` for more detailed examples and parameter options.
 
 ---
@@ -139,7 +183,7 @@ Runs inference using the Hugging Face `transformers` backend.
 | `model_or_model_name_or_path`   | `str \| AutoModelForCausalLM` | *required* | Model object, HuggingFace model name, or local path. |
 | `tokenizer_or_name`             | `str \| Any \| None`  | `None`        | Tokenizer object, name, or None (infers from model).           |
 | `trust_remote_code`             | `bool`                | `True`        | Whether to trust remote code when loading models.              |
-| `dtype`                         | `torch.dtype`         | `torch.float16` | Model precision (e.g., `torch.float16`, `torch.bfloat16`).   |
+| `dtype`                         | `torch.dtype \| str`  | `torch.float16` | Model precision (e.g., `torch.float16`, `"bfloat16"`, `"auto"`). |
 | `device_map`                    | `str \| dict \| None` | `"auto"`      | Device placement strategy for multi-GPU.                       |
 | `hf_token`                      | `str \| None`         | `None`        | Hugging Face authentication token.                             |
 | `model_kwargs`                  | `dict \| None`        | `None`        | Additional kwargs for `AutoModelForCausalLM.from_pretrained()`. |
@@ -172,7 +216,7 @@ Runs inference using the Hugging Face `transformers` backend.
 | `batch_size`                    | `int`   | `8`                       | Batch size for inference.                        |
 | `seed`                          | `int`   | `42`                      | Random seed for reproducibility.                 |
 
-**Note:** Explicit parameters (e.g., `dtype`, `trust_remote_code`) override any values specified in `model_kwargs` or `tokenizer_kwargs`.
+**Note:** Values in `model_kwargs` / `tokenizer_kwargs` take precedence over the explicit parameters (e.g., `dtype`, `trust_remote_code`). A `dtype` or `torch_dtype` entry in `model_kwargs` replaces `dtype` and may be given as a string.
 
 ---
 

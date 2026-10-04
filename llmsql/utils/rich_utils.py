@@ -36,6 +36,7 @@ def print_summary(
     pred_none: int,
     gold_none: int,
     sql_errors: int,
+    exact_string_matches: int,
 ) -> None:
     """Pretty-print summary with Rich."""
     table = Table(title="[green]Evaluation Summary[/green]", show_lines=True)
@@ -44,6 +45,10 @@ def print_summary(
 
     table.add_row("Total Samples", str(total))
     table.add_row("Correct Results", f"{matches} ({matches / total:.2%})")
+    table.add_row(
+        "Exact String Match",
+        f"{exact_string_matches} ({exact_string_matches / total:.2%})",
+    )
     table.add_row("Prediction None", f"{pred_none}/{total}")
     table.add_row("Ground Truth None", f"{gold_none}/{total}")
     table.add_row("SQL Errors", str(sql_errors))
