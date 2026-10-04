@@ -87,8 +87,10 @@ function renderLeaderboard(rows) {
   rows.forEach((row, i) => {
     const tr = document.createElement('tr');
 
+    // Берём только вторую часть после слеша
     const modelName = row.model.includes('/') ? row.model.split('/')[1] : row.model;
 
+    // Модель с ссылкой
     const modelCell = document.createElement('td');
     if (row.url) {
       const a = document.createElement('a');
@@ -114,7 +116,7 @@ function renderLeaderboard(rows) {
     barContainer.appendChild(text);
     accuracyCell.appendChild(barContainer);
 
-
+    // Вставка остальных ячеек
     tr.innerHTML += `<td>${i+1}</td>`;
     tr.appendChild(modelCell);
     tr.innerHTML += `
