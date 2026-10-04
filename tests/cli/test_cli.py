@@ -217,3 +217,61 @@ async def test_evaluate_command_called(monkeypatch):
     assert call_kwargs["outputs"] == "dummy_file.jsonl"
     assert call_kwargs["show_mismatches"] is True 
     assert call_kwargs["max_mismatches"] == 10
+
+def parse_cli(monkeypatch, args):
+    monkeypatch.setattr(sys, "argv", ["llmsql", *args])
+    cli = ParserCLI()
+    return cli.parse_args()
+
+
+def test_boolean_flags_can_be_disabled(monkeypatch):
+    transformers = parse_cli(
+        monkeypatch,
+        [
+            "inference", "transformers",
+            "--model-or-model-name-or-path", "test-model",
+            "--no-trust-remote-code", "--no-do-sample",
+        ],
+    )
+    assert transformers.trust_remote_code is False
+    assert transformers.do_sample is False
+
+    vllm = parse_cli(
+        monkeypatch,
+        [
+            "inference", "vllm", "--model-name", "test-model",
+            "--no-trust-remote-code", "--no-use-chat-template", "--no-do-sample",
+        ],
+    )
+    assert vllm.trust_remote_code is False
+    assert vllm.use_chat_template is False
+    assert vllm.do_sample is False
+
+    evaluate = parse_cli(
+        monkeypatch,
+        ["evaluate", "--outputs", "dummy_file.jsonl", "--no-show-mismatches"],
+    )
+    assert evaluate.show_mismatches is False
+
+
+def test_boolean_flags_preserve_defaults(monkeypatch):
+    transformers = parse_cli(
+        monkeypatch,
+        ["inference", "transformers", "--model-or-model-name-or-path", "test-model"],
+    )
+    assert transformers.trust_remote_code is True
+    assert transformers.do_sample is False
+
+    vllm = parse_cli(
+        monkeypatch,
+        ["inference", "vllm", "--model-name", "test-model"],
+    )
+    assert vllm.trust_remote_code is True
+    assert vllm.use_chat_template is True
+    assert vllm.do_sample is True
+
+    evaluate = parse_cli(
+        monkeypatch,
+        ["evaluate", "--outputs", "dummy_file.jsonl"],
+    )
+    assert evaluate.show_mismatches is True

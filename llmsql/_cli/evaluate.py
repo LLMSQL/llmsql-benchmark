@@ -47,7 +47,7 @@ class Evaluate(SubCommand):
 
         self._parser.add_argument(
             "--show-mismatches",
-            action="store_true",
+            action=argparse.BooleanOptionalAction,
             default=True,
             help="Print SQL mismatches during evaluation",
         )
