@@ -1,0 +1,35 @@
+name: Feature request
+description: Suggest an idea for this project
+title: "[Feature] "
+labels: ["enhancement", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for suggesting a feature!
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Feature description
+      description: Describe the feature you'd like to see
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Is your feature request related to a problem?
+      description: A clear description of what the problem is.
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Suggested solution
+      description: A clear description of what you want to happen.
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Any alternative solutions or features you've considered.
