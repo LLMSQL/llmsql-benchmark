@@ -8,6 +8,9 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ${{ fromJSON(github.event_name == 'push' && '["3.10", "3.11", "3.12"]' || '["3.11"]') }}
 
     steps:
       - name: Checkout code
@@ -16,7 +19,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: ${{ matrix.python-version }}
 
       - name: Install PDM
         run: pip install pdm
@@ -25,15 +28,17 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.cache/pdm
-          key: ${{ runner.os }}-pdm-${{ hashFiles('pdm.lock') }}
+          key: ${{ runner.os }}-pdm-${{ matrix.python-version }}-${{ github.event_name }}-${{ hashFiles('pdm.lock') }}
           restore-keys: |
-            ${{ runner.os }}-pdm-
+            ${{ runner.os }}-pdm-${{ matrix.python-version }}-${{ github.event_name }}-
 
       - name: Install dependencies (with dev)
-        run: pdm install --with dev,vllm
+        run: pdm install --with ${{ github.event_name == 'push' && 'dev,vllm' || 'dev' }}
 
       - name: Run tests with coverage
-        run: PYTHONPATH=. pdm run pytest --cov=llmsql --cov-report=xml --maxfail=1 --disable-warnings -v
+        run: pdm run python -m pytest -m "${{ github.event_name == 'pull_request' && 'not gpu and not slow and not integration' || '' }}" --cov=llmsql --cov-report=xml --maxfail=1 --disable-warnings -v
+        env:
+          CUDA_VISIBLE_DEVICES: ""
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4

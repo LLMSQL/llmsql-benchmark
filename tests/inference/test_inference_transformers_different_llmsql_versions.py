@@ -7,6 +7,8 @@ import pytest
 from llmsql.config.config import get_available_versions
 from llmsql.inference.inference_transformers import inference_transformers
 
+pytestmark = [pytest.mark.slow, pytest.mark.integration]
+
 questions = [
     {"question_id": "q1", "table_id": "t1", "question": "Select name from students;"},
     {

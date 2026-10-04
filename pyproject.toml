@@ -74,6 +74,13 @@ vllm = [
 [tool.pdm]
 distribution = true
 
+[tool.pytest.ini_options]
+markers = [
+    "gpu: requires a real GPU",
+    "slow: long-running tests",
+    "integration: downloads and runs a real model",
+]
+
 
 [tool.ruff]
 target-version = "py310"

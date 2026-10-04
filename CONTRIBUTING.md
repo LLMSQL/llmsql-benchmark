@@ -72,6 +72,24 @@ We use [pytest](https://docs.pytest.org/en/latest/) for running unit tests. All 
 PYTHONPATH=. pdm run pytest --cov=llmsql --cov-report=xml --maxfail=1 --disable-warnings -v
 ```
 
+The unit tests mock vLLM when the optional extra is absent, so a GPU and vLLM
+installation are not required. To exclude tests requiring a real GPU, run:
+
+```bash
+pdm run python -m pytest -m "not gpu"
+```
+
+For the fast CPU suite used on pull requests, exclude model downloads as well:
+
+```bash
+pdm run python -m pytest -m "not gpu and not slow and not integration"
+```
+
+CI runs the full suite on Python 3.10–3.12 on pushes to `main`, installing
+`dev,vllm`. Install those extras locally with `pdm install --with dev,vllm` to
+test against the real vLLM package on a supported platform. Integration tests
+download and run real models; mocked vLLM unit tests do not verify GPU inference.
+
 Please run this command before any changes, just to make sure all code you forked works well by the time the development starts.
 
 Also to enable `pre-commit hooks` with `pre-commit install` command. Pre commit hooks contain pytest and will be run before each commit.

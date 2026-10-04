@@ -6,6 +6,8 @@ import pytest
 
 from llmsql.inference.inference_transformers import inference_transformers
 
+pytestmark = [pytest.mark.slow, pytest.mark.integration]
+
 # --- Minimal fake benchmark data for testing ---
 questions = [
     {"question_id": "q1", "table_id": "t1", "question": "Select name from students;"},

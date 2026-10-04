@@ -1,13 +1,20 @@
 import glob
+import importlib.util
 import json
 import os
 from pathlib import Path
 import sqlite3
+import sys
 from unittest.mock import MagicMock
 
 import pytest
 
-import llmsql.inference.inference_vllm as inference_vllm
+# Unit tests mock model generation; the optional backend need not be installed.
+if importlib.util.find_spec("vllm") is None:
+    for name in ("vllm", "vllm.lora", "vllm.lora.request"):
+        sys.modules[name] = MagicMock()
+
+inference_vllm = importlib.import_module("llmsql.inference.inference_vllm")
 
 
 @pytest.fixture(scope="session", autouse=True)

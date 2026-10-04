@@ -1,5 +1,4 @@
 import json
-from pathlib import Path
 import shutil
 
 import pytest
@@ -211,10 +210,10 @@ def test_evaluate_with_jsonl_path(mock_utils, mocker):
     assert report["input_mode"] == "jsonl_path"
 
 
-def test_auto_temp_workdir_is_used_when_not_provided(mocker):
+def test_auto_temp_workdir_is_used_when_not_provided(mock_utils, mocker):
     resolve = mocker.patch(
         "llmsql.evaluation.evaluate.resolve_workdir_path",
-        return_value=Path("/tmp/llmsql-test"),
+        return_value=mock_utils,
     )
 
     evaluate([{"question_id": 1, "completion": "x"}], workdir_path=None)

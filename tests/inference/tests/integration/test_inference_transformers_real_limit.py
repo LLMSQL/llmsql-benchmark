@@ -14,6 +14,7 @@ def _write_jsonl(data, path: Path):
 
 
 @pytest.mark.integration
+@pytest.mark.slow
 def test_real_inference_limit():
     """
     Real integration test:
