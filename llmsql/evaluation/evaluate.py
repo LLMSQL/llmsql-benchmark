@@ -9,6 +9,7 @@ See the documentation for full usage details.
 """
 
 from datetime import datetime, timezone
+from typing import Any
 import uuid
 
 from rich.progress import track
@@ -22,6 +23,10 @@ from llmsql.utils.evaluation_utils import (
     evaluate_sample,
 )
 from llmsql.utils.inference_utils import _maybe_download, resolve_workdir_path
+from llmsql.utils.leaderboard_utils import (
+    build_leaderboard_record,
+    write_leaderboard_yaml,
+)
 from llmsql.utils.rich_utils import log_mismatch, print_summary
 from llmsql.utils.utils import load_jsonl, load_jsonl_dict_by_key, save_json_report
 
@@ -34,6 +39,9 @@ def evaluate(
     save_report: str | None = None,
     show_mismatches: bool = True,
     max_mismatches: int = 5,
+    model_name: str | None = None,
+    save_leaderboard_yaml: str | None = None,
+    run_metadata: dict[str, Any] | None = None,
 ) -> dict:
     """
     Evaluate predicted SQL queries against the LLMSQL benchmark.
@@ -46,6 +54,15 @@ def evaluate(
         save_report: Optional manual save path. If None → auto-generated.
         show_mismatches: Print mismatches while evaluating.
         max_mismatches: Max mismatches to print.
+        model_name: Name of the evaluated model (e.g. ``Qwen/Qwen3-0.6B``).
+            Stored in the JSON report and in the leaderboard YAML.
+        save_leaderboard_yaml: Optional path to additionally save the
+            results in the leaderboard ``run.yaml`` format (see the
+            ``leaderboard/`` folder). If None, no YAML is written.
+        run_metadata: Optional dict deep-merged into the leaderboard YAML to
+            fill fields that cannot be detected automatically, e.g.
+            ``{"type": "open-source", "inference": {"backend": "vllm",
+            "arguments": {"num_fewshots": 5}}}``.
 
     Returns:
         dict: Metrics and mismatches.
@@ -113,13 +130,16 @@ def evaluate(
     )
 
     # --- Build report structure ---
+    accuracy = metrics["matches"] / metrics["total"] if metrics["total"] else 0.0
     report = {
+        "model_name": model_name,
+        "version": version,
         **metrics,
-        "accuracy": metrics["matches"] / metrics["total"] if metrics["total"] else 0,
+        "accuracy": accuracy,
         "exact_string_match_accuracy": (
             metrics["exact_string_matches"] / metrics["total"]
             if metrics["total"]
-            else 0
+            else 0.0
         ),
         "mismatches": mismatches,
         "timestamp": datetime.now(timezone.utc).isoformat(),
@@ -131,6 +151,17 @@ def evaluate(
         save_report = f"evaluation_results_{uuid.uuid4()}.json"
 
     save_json_report(save_report, report)
+
+    if save_leaderboard_yaml is not None:
+        record = build_leaderboard_record(
+            accuracy=accuracy,
+            total=metrics["total"],
+            version=version,
+            model_name=model_name,
+            answers_path=outputs if isinstance(outputs, str) else None,
+            run_metadata=run_metadata,
+        )
+        write_leaderboard_yaml(save_leaderboard_yaml, record)
 
     conn.close()
     return report
