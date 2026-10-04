@@ -159,6 +159,11 @@ llmsql inference transformers \
     --temperature 0.0 \
 ```
 
+Extra model constructor arguments can be passed lm-evaluation-harness style with
+`--model-args` (alias `--model_args`), e.g. `--model-args dtype=bfloat16,revision=main`.
+They are forwarded as `model_kwargs` (transformers) or `llm_kwargs` (vLLM); see the
+[CLI manual](../_cli/README.md#passing-model-constructor-arguments---model-args) for parsing rules.
+
 👉 Run `llmsql inference --help` for more detailed examples and parameter options.
 
 ---
@@ -178,7 +183,7 @@ Runs inference using the Hugging Face `transformers` backend.
 | `model_or_model_name_or_path`   | `str \| AutoModelForCausalLM` | *required* | Model object, HuggingFace model name, or local path. |
 | `tokenizer_or_name`             | `str \| Any \| None`  | `None`        | Tokenizer object, name, or None (infers from model).           |
 | `trust_remote_code`             | `bool`                | `True`        | Whether to trust remote code when loading models.              |
-| `dtype`                         | `torch.dtype`         | `torch.float16` | Model precision (e.g., `torch.float16`, `torch.bfloat16`).   |
+| `dtype`                         | `torch.dtype \| str`  | `torch.float16` | Model precision (e.g., `torch.float16`, `"bfloat16"`, `"auto"`). |
 | `device_map`                    | `str \| dict \| None` | `"auto"`      | Device placement strategy for multi-GPU.                       |
 | `hf_token`                      | `str \| None`         | `None`        | Hugging Face authentication token.                             |
 | `model_kwargs`                  | `dict \| None`        | `None`        | Additional kwargs for `AutoModelForCausalLM.from_pretrained()`. |
@@ -211,7 +216,7 @@ Runs inference using the Hugging Face `transformers` backend.
 | `batch_size`                    | `int`   | `8`                       | Batch size for inference.                        |
 | `seed`                          | `int`   | `42`                      | Random seed for reproducibility.                 |
 
-**Note:** Explicit parameters (e.g., `dtype`, `trust_remote_code`) override any values specified in `model_kwargs` or `tokenizer_kwargs`.
+**Note:** Values in `model_kwargs` / `tokenizer_kwargs` take precedence over the explicit parameters (e.g., `dtype`, `trust_remote_code`). A `dtype` or `torch_dtype` entry in `model_kwargs` replaces `dtype` and may be given as a string.
 
 ---
 
