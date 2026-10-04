@@ -14,6 +14,127 @@ def parse_limit(value: str) -> float | int:
         raise argparse.ArgumentTypeError("limit must be int or float") from err
 
 
+_RESERVED_MODEL_ARGS = frozenset({"pretrained"})
+
+
+def _coerce_model_arg_value(value: str) -> Any:
+    """Convert a raw ``--model-args`` value to a Python object.
+
+    Coercion rules (applied in order):
+
+    * a value wrapped in matching single or double quotes is returned as a
+      string with the quotes stripped and no further coercion
+      (e.g. ``revision="123"`` stays the string ``"123"``);
+    * ``true`` / ``false`` (case-insensitive) -> ``bool``;
+    * ``none`` / ``null`` (case-insensitive) -> ``None``;
+    * integers -> ``int``;
+    * numeric literals containing a digit (``0.9``, ``1e-5``) -> ``float``;
+    * anything else is kept as ``str``.
+    """
+    if len(value) >= 2 and value[0] == value[-1] and value[0] in ("'", '"'):
+        return value[1:-1]
+
+    lowered = value.lower()
+    if lowered == "true":
+        return True
+    if lowered == "false":
+        return False
+    if lowered in ("none", "null"):
+        return None
+
+    try:
+        return int(value)
+    except ValueError:
+        pass
+
+    # Require a digit so that strings like "inf" or "nan" stay strings.
+    if any(ch.isdigit() for ch in value):
+        try:
+            return float(value)
+        except ValueError:
+            pass
+
+    return value
+
+
+def parse_model_args(value: str) -> dict[str, Any]:
+    """Parse an lm-evaluation-harness style ``"k1=v1,k2=v2"`` string into a dict.
+
+    * Tokens are separated by commas; surrounding whitespace is ignored and
+      empty tokens (e.g. from a trailing comma) are skipped.
+    * Each token is split on the **first** ``=``, so values may contain ``=``.
+    * Values are type-coerced with :func:`_coerce_model_arg_value`.
+    * Values cannot contain commas; use the JSON flags
+      (``--model-kwargs`` / ``--llm-kwargs``) for such values or nested objects.
+
+    Raises:
+        argparse.ArgumentTypeError: on tokens without ``=``, empty keys or
+            duplicated keys.
+    """
+    result: dict[str, Any] = {}
+    for raw_token in value.split(","):
+        token = raw_token.strip()
+        if not token:
+            continue
+        if "=" not in token:
+            raise argparse.ArgumentTypeError(
+                f"invalid model argument {token!r}: expected 'key=value'"
+            )
+        key, raw_value = token.split("=", 1)
+        key = key.strip()
+        if not key:
+            raise argparse.ArgumentTypeError(
+                f"invalid model argument {token!r}: empty key"
+            )
+        if key in result:
+            raise argparse.ArgumentTypeError(f"duplicate model argument {key!r}")
+        result[key] = _coerce_model_arg_value(raw_value.strip())
+    return result
+
+
+def _parse_backend_model_args(value: str) -> dict[str, Any]:
+    """``parse_model_args`` plus rejection of keys the CLI handles elsewhere."""
+    parsed = parse_model_args(value)
+    reserved = sorted(_RESERVED_MODEL_ARGS.intersection(parsed))
+    if reserved:
+        raise argparse.ArgumentTypeError(
+            f"{', '.join(reserved)} is not supported in --model-args; "
+            "pass the model via the backend's model flag "
+            "(--model-or-model-name-or-path / --model-name)"
+        )
+    return parsed
+
+
+def merge_model_args(
+    model_args: dict[str, Any] | None, json_kwargs: dict[str, Any] | None
+) -> dict[str, Any] | None:
+    """Merge ``--model-args`` with the JSON kwargs flag.
+
+    On key conflicts the JSON flag (``--model-kwargs`` / ``--llm-kwargs``) wins,
+    since it is the more explicit, typed form. Returns ``None`` if both are empty.
+    """
+    if not model_args and not json_kwargs:
+        return json_kwargs
+    return {**(model_args or {}), **(json_kwargs or {})}
+
+
+def _add_model_args_flag(parser: argparse.ArgumentParser, target: str) -> None:
+    parser.add_argument(
+        "--model-args",
+        "--model_args",
+        dest="model_args",
+        type=_parse_backend_model_args,
+        default=None,
+        metavar="KEY=VALUE[,KEY=VALUE...]",
+        help=(
+            "Comma-separated keyword arguments for the model constructor, "
+            "e.g. 'dtype=bfloat16,revision=main'. Values are coerced to "
+            "int/float/bool/None where possible (quote a value to keep it a string). "
+            f"Merged into {target}; on conflicting keys the JSON flag wins."
+        ),
+    )
+
+
 class Inference(SubCommand):
     """Command for running language model evaluation."""
 
@@ -102,6 +223,7 @@ class Inference(SubCommand):
             type=json.loads,
             help="JSON string for AutoModel kwargs",
         )
+        _add_model_args_flag(self._parser_transformers, "--model-kwargs")
         self._parser_transformers.add_argument(
             "--tokenizer-kwargs",
             type=json.loads,
@@ -145,6 +267,7 @@ class Inference(SubCommand):
             type=json.loads,
             help="JSON string for vllm.LLM kwargs",
         )
+        _add_model_args_flag(self._parser_vllm, "--llm-kwargs")
         self._parser_vllm.add_argument(
             "--use-chat-template",
             action="store_true",
@@ -208,7 +331,7 @@ class Inference(SubCommand):
             dtype=args.dtype,
             device_map=args.device_map,
             hf_token=args.hf_token,
-            model_kwargs=args.model_kwargs,
+            model_kwargs=merge_model_args(args.model_args, args.model_kwargs),
             tokenizer_kwargs=args.tokenizer_kwargs,
             chat_template=args.chat_template,
             max_new_tokens=args.max_new_tokens,
@@ -235,7 +358,7 @@ class Inference(SubCommand):
             trust_remote_code=args.trust_remote_code,
             tensor_parallel_size=args.tensor_parallel_size,
             hf_token=args.hf_token,
-            llm_kwargs=args.llm_kwargs,
+            llm_kwargs=merge_model_args(args.model_args, args.llm_kwargs),
             use_chat_template=args.use_chat_template,
             max_new_tokens=args.max_new_tokens,
             temperature=args.temperature,
