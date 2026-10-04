@@ -45,8 +45,7 @@
   color: white;
 }
 
-/* Standalone back-link on docs pages (no .page-layout wrapper) */
-body > .sidebar-button,
+/* Standalone "Back to main page" link on Sphinx docs pages */
 .document .sidebar-button {
   display: inline-block;
   margin-bottom: 1.5rem;
@@ -289,6 +288,12 @@ pre, code {
 pre span {
     background: none !important;
     color: inherit !important;
+}
+
+/* Leaderboard table is injected into this container by front_page.js;
+   let it scroll horizontally instead of overflowing on narrow screens */
+#leaderboard-container {
+  overflow-x: auto;
 }
 
 .leaderboard-box {
