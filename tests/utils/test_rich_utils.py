@@ -34,7 +34,14 @@ def test_print_summary_includes_metrics(monkeypatch) -> None:
     recording_console = Console(record=True)
     monkeypatch.setattr(rich_utils, "console", recording_console)
 
-    rich_utils.print_summary(total=5, matches=3, pred_none=1, gold_none=0, sql_errors=2)
+    rich_utils.print_summary(
+        total=5,
+        matches=3,
+        pred_none=1,
+        gold_none=0,
+        sql_errors=2,
+        exact_string_matches=1,
+    )
 
     output = recording_console.export_text()
     assert "Evaluation Summary" in output
