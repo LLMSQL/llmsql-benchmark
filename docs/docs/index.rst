@@ -36,7 +36,7 @@ Example: Running your first evaluation (with transformers backend)
     results = inference_transformers(
         model_or_model_name_or_path="Qwen/Qwen2.5-1.5B-Instruct",
         output_file="outputs/preds_transformers.jsonl",
-        num_fewshots=5,
+        num-fewshots=5,
         batch_size=8,
         max_new_tokens=256,
         temperature=0.7,

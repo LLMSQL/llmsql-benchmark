@@ -1,4 +1,5 @@
 import argparse
+import sys
 from typing import Any
 
 import yaml
@@ -116,4 +117,5 @@ class Evaluate(SubCommand):
                 run_metadata=run_metadata,
             )
         except Exception as e:
-            print(f"Error during evaluation: {e}")
+            print(f"Error during evaluation: {e}", file=sys.stderr)
+            sys.exit(1)

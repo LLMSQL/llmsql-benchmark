@@ -28,7 +28,7 @@ Using transformers backend.
         model_or_model_name_or_path="Qwen/Qwen2.5-1.5B-Instruct",
         output_file="outputs/preds_transformers.jsonl",
         workdir_path="./benchmark-cache",
-        num_fewshots=5,
+        num-fewshots=5,
         batch_size=8,
         max_new_tokens=256,
         temperature=0.7,
@@ -58,7 +58,7 @@ Using vllm backend.
         model_name="Qwen/Qwen2.5-1.5B-Instruct",
         output_file="outputs/preds_vllm.jsonl",
         workdir_path="./benchmark-cache",
-        num_fewshots=5,
+        num-fewshots=5,
         batch_size=8,
         max_new_tokens=256,
         do_sample=False,
@@ -75,7 +75,7 @@ Using vllm backend.
     print(report)
 
 
-Using OpenAI-compateble API.
+Using OpenAI-compatible API.
 
 .. code-block:: python
 
@@ -100,7 +100,7 @@ Using OpenAI-compateble API.
         requests_per_minute=100,
         output_file="test_output_api.jsonl",
         limit=50,
-        num_fewshots = 5,
+        num-fewshots = 5,
         seed=42,
         version="2.0"
     )
