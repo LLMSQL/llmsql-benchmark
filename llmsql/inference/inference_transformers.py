@@ -142,7 +142,8 @@ def inference_transformers(
 
         # Tokenizer Loading:
         tokenizer_kwargs: Additional arguments for AutoTokenizer.from_pretrained(). 'padding_side' defaults to "left".
-                    Note: 'trust_remote_code', 'token' are handled separately and will override values here.
+                    Note: 'trust_remote_code', 'token' are handled separately;
+                    values in tokenizer_kwargs take precedence if explicitly passed.
 
 
         # Prompt & Chat:
@@ -231,11 +232,11 @@ def inference_transformers(
 
     if tok_name:
         load_tok_args = {
-            "trust_remote_code": True,
+            "trust_remote_code": trust_remote_code,
             "token": hf_token,
             "padding_side": tokenizer_kwargs.get("padding_side", "left"),
-            **tokenizer_kwargs,
         }
+        load_tok_args.update(tokenizer_kwargs)
         tokenizer = AutoTokenizer.from_pretrained(tok_name, **load_tok_args)
 
     if tokenizer.pad_token is None:
