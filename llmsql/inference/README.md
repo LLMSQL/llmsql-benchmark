@@ -1,13 +1,13 @@
 # LLMSQL Inference
 
-LLMSQL provides two inference backends for **Text-to-SQL generation** with large language models:
+LLMSQL provides several inference backends for **Text-to-SQL generation** with large language models:
 
 * **Transformers** — runs inference using the standard Hugging Face `transformers` pipeline.
 * **vLLM** — runs inference using the high-performance [vLLM](https://github.com/vllm-project/vllm) backend.
 * **API** — runs inference against an OpenAI-compatible Chat Completions API with configurable base URL and rate limiting.
 * **Custom Function** — runs inference with your own async callable while preserving LLMSQL prompt building and output format.
 
-Both backends load benchmark questions and table schemas, build prompts (with few-shot examples), and generate SQL queries in parallel batches.
+All backends load benchmark questions and table schemas, build prompts (with few-shot examples), and generate SQL queries in parallel batches.
 
 ---
 
@@ -100,20 +100,40 @@ results = inference_api(
 
 ### Option 4 — Using your own async inference function
 
+Pass any `async` callable; LLMSQL builds the prompts, awaits your function for
+each question and writes the predictions in the standard format.
+
 ```python
 from llmsql import inference_function
 
-async def get_answer(input_prompt, **kwargs):
-    # call your engine/API/router and return a SQL string
+async def get_answer(prompt, *, question, table, **kwargs):
+    # `prompt` is the full LLMSQL prompt, `question`/`table` are the raw
+    # benchmark rows, `kwargs` are your `function_kwargs`.
+    # Call your engine/API/router/agent here and return the SQL string.
     return "SELECT 1"
 
 results = inference_function(
     inference_function=get_answer,
-    requests_per_minute=60,
+    requests_per_minute=60,     # optional rate limit (None = unlimited)
+    max_concurrency=8,          # max calls in flight at once (default 32)
+    raise_on_error=False,       # default: log failures, record empty completion
     function_kwargs={"temperature": 0.0},
     output_file="test_output_function.jsonl",
 )
 ```
+
+Notes:
+
+* `max_concurrency` (default `32`) caps how many calls run at the same time;
+  `requests_per_minute` additionally spaces out call start times. Set
+  `max_concurrency=None` only if your backend can handle all questions at once.
+* By default an exception raised by your function is logged (with the
+  `question_id`) and an empty completion is recorded for that question, so a
+  single failure does not abort a long run. Use `raise_on_error=True` to stop
+  at the first error instead.
+* Results are written as each call finishes, so the output order follows
+  completion order. Works from scripts and from Jupyter notebooks.
+
 ---
 
 ## Command-Line Interface (CLI)
