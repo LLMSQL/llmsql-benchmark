@@ -11,6 +11,7 @@ Features
 - Automatically download benchmark questions and SQLite DB if missing.
 - Prints mismatch summaries and supports configurable reporting.
 - Saves detailed JSON report with metrics, mismatches, timestamp, and input mode.
+- Optionally saves the results in the leaderboard ``run.yaml`` format.
 
 Usage Examples
 --------------
@@ -64,6 +65,12 @@ Function Arguments
      - Print mismatches while evaluating. Default True.
    * - max_mismatches
      - Maximum number of mismatches to display. Default 5.
+   * - model_name
+     - Name of the evaluated model (e.g. ``Qwen/Qwen3-0.6B``). Stored in the JSON report and the leaderboard YAML. Default None.
+   * - save_leaderboard_yaml
+     - Optional path to also save the results in the leaderboard ``run.yaml`` format. Default None (not saved).
+   * - run_metadata
+     - Optional dict deep-merged into the leaderboard YAML (model details, ``type``, ``inference`` backend/arguments, ``device``, ...).
 
 Input Format
 ------------
@@ -87,6 +94,8 @@ The function returns a dictionary with the following keys:
 - gold_none – Queries where the reference result was NULL or no result
 - sql_errors – Invalid SQL or execution errors
 - accuracy – Overall exact match accuracy
+- model_name – Name of the evaluated model (if provided)
+- version – LLMSQL benchmark version used for evaluation
 - mismatches – List of mismatched queries with details
 - timestamp – Evaluation timestamp
 - input_mode – How results were provided ("jsonl_path" or "dict_list")
@@ -96,6 +105,40 @@ Report Saving
 
 By default, a report is saved automatically as `evaluation_results_{uuid}.json` in the current directory.
 It contains metrics, mismatches, timestamp, and input mode. You can override this path using `save_report`.
+
+Leaderboard Format
+------------------
+
+Pass ``save_leaderboard_yaml`` to additionally save the results in the same format as the
+``run.yaml`` files in the ``leaderboard/`` folder of the repository. The evaluation date,
+``llmsql`` package version, benchmark version, OS name, Python version, execution accuracy,
+number of samples and outputs path are filled automatically; all other fields are ``null``
+unless provided via ``run_metadata``:
+
+.. code-block:: python
+
+    report = evaluate(
+        "outputs.jsonl",
+        model_name="Qwen/Qwen3-0.6B",
+        save_leaderboard_yaml="run.yaml",
+        run_metadata={
+            "type": "open-source",
+            "model": {"dtype": "bfloat16", "parameter_count": "0.6B"},
+            "inference": {
+                "backend": "vllm",
+                "arguments": {"num_fewshots": 5, "temperature": 0.0},
+            },
+        },
+    )
+
+From the CLI (``--run-metadata`` accepts a YAML/JSON file with the same structure):
+
+.. code-block:: bash
+
+    llmsql evaluate --outputs outputs.jsonl \
+        --model-name Qwen/Qwen3-0.6B \
+        --save-leaderboard-yaml run.yaml \
+        --run-metadata metadata.yaml
 
 ---
 

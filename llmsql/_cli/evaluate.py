@@ -1,6 +1,8 @@
 import argparse
 from typing import Any
 
+import yaml
+
 from llmsql._cli.subparsers import SubCommand
 from llmsql.config.config import DEFAULT_LLMSQL_VERSION
 from llmsql.evaluation.evaluate import evaluate
@@ -64,10 +66,44 @@ class Evaluate(SubCommand):
             help="Path to save evaluation report JSON.",
         )
 
+        self._parser.add_argument(
+            "--model-name",
+            type=str,
+            default=None,
+            help="Name of the evaluated model (stored in the report and YAML).",
+        )
+
+        self._parser.add_argument(
+            "--save-leaderboard-yaml",
+            type=str,
+            default=None,
+            help=(
+                "Path to additionally save results in the leaderboard run.yaml "
+                "format (see the leaderboard/ folder)."
+            ),
+        )
+
+        self._parser.add_argument(
+            "--run-metadata",
+            type=str,
+            default=None,
+            help=(
+                "Path to a YAML/JSON file with extra run metadata (model, type, "
+                "inference backend/arguments, ...) merged into the leaderboard YAML."
+            ),
+        )
+
     @staticmethod
     def _execute(args: argparse.Namespace) -> None:
         """Execute the evaluate function with parsed arguments."""
         try:
+            run_metadata = None
+            if args.run_metadata:
+                with open(args.run_metadata, encoding="utf-8") as f:
+                    run_metadata = yaml.safe_load(f) or {}
+                if not isinstance(run_metadata, dict):
+                    raise ValueError("--run-metadata file must contain a mapping")
+
             evaluate(
                 outputs=args.outputs,
                 version=args.version,
@@ -75,6 +111,9 @@ class Evaluate(SubCommand):
                 save_report=args.save_report,
                 show_mismatches=args.show_mismatches,
                 max_mismatches=args.max_mismatches,
+                model_name=args.model_name,
+                save_leaderboard_yaml=args.save_leaderboard_yaml,
+                run_metadata=run_metadata,
             )
         except Exception as e:
             print(f"Error during evaluation: {e}")
