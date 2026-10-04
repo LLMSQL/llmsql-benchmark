@@ -217,3 +217,30 @@ async def test_evaluate_command_called(monkeypatch):
     assert call_kwargs["outputs"] == "dummy_file.jsonl"
     assert call_kwargs["show_mismatches"] is True 
     assert call_kwargs["max_mismatches"] == 10
+
+def test_evaluate_command_exits_on_error(monkeypatch):
+    """
+    Ensure the evaluate command exits with non-zero status on error.
+    """
+    def mock_evaluate_raise(*args, **kwargs):
+        raise FileNotFoundError("Outputs file not found")
+
+    monkeypatch.setattr(
+        "llmsql._cli.evaluate.evaluate",
+        mock_evaluate_raise,
+    )
+    
+    test_args = [
+        "llmsql",
+        "evaluate",
+        "--outputs",
+        "nonexistent_file.jsonl"
+    ]
+    monkeypatch.setattr(sys, "argv", test_args)
+
+    cli = ParserCLI()
+    args = cli.parse_args()
+    
+    with pytest.raises(SystemExit) as exc_info:
+        cli.execute(args)
+    assert exc_info.value.code == 1

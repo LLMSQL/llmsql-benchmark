@@ -1,10 +1,11 @@
 import argparse
+import sys
 from typing import Any
 
 import yaml
 
 from llmsql._cli.subparsers import SubCommand
-from llmsql.config.config import DEFAULT_LLMSQL_VERSION
+from llmsql.config.config import DEFAULT_LLMSQL_VERSION, get_available_versions
 from llmsql.evaluation.evaluate import evaluate
 
 
@@ -36,7 +37,7 @@ class Evaluate(SubCommand):
             "--version",
             type=str,
             default=DEFAULT_LLMSQL_VERSION,
-            choices=["1.0", "2.0"],
+            choices=get_available_versions(),
             help=f"LLMSQL benchmark version (default:{DEFAULT_LLMSQL_VERSION})",
         )
 
@@ -117,3 +118,4 @@ class Evaluate(SubCommand):
             )
         except Exception as e:
             print(f"Error during evaluation: {e}")
+            sys.exit(1)
