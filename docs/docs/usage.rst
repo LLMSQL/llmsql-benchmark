@@ -73,7 +73,7 @@ Using vllm backend.
     print(report)
 
 
-Using OpenAI-compateble API.
+Using OpenAI-compatible API.
 
 .. code-block:: python
 
