@@ -145,7 +145,7 @@ llmsql inference vllm \
     --model-name Qwen/Qwen2.5-1.5B-Instruct \
     --output-file outputs/preds.jsonl \
     --batch-size 8 \
-    --num_fewshots 5 \
+    --num-fewshots 5 \
     --temperature 0.0
 ```
 
