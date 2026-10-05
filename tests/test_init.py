@@ -16,6 +16,7 @@ class TestLazyImport:
 
     def test_lazy_import_inference_vllm(self) -> None:
         """Test that inference_vllm can be imported via lazy loading."""
+        pytest.importorskip("vllm")
         from llmsql import inference_vllm
 
         assert inference_vllm is not None
