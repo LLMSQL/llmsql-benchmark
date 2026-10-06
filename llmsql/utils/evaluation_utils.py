@@ -56,9 +56,11 @@ def fix_table_name(sql: str, table_id: str) -> str:
         str: SQL query with the correct table name substituted.
     """
     return (
-        sql.replace("FROM 'Table'", f'FROM "{table_id}"')
-        .replace('FROM "Table"', f'FROM "{table_id}"')
-        .replace("FROM Table", f'FROM "{table_id}"')
+        re.sub(
+            r"""(?i)\bFROM\s+("table"|'table'|`table`|table)(?=\s|$|,|\))""",
+            f'FROM "{table_id}"',
+            sql,
+        )
         .strip()
     )
 
