@@ -197,7 +197,7 @@ def inference_vllm(
         "trust_remote_code": trust_remote_code,
     }
     if hf_token:
-        llm_init_args["token"] = hf_token
+        llm_init_args["hf_token"] = hf_token
     llm_init_args.update(llm_kwargs)
 
     log.info(f"Loading vLLM model '{model_name}' (tp={tensor_parallel_size})...")
