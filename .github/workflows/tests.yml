@@ -42,3 +42,34 @@ jobs:
           files: ./coverage.xml
           flags: unittests
           fail_ci_if_error: false
+
+  test-cpu-only:
+    # Guards against the test suite requiring the optional `vllm` extra to be
+    # importable: `dev` alone must be enough to collect and run every CPU test.
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install PDM
+        run: pip install pdm
+
+      - name: Cache PDM packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pdm
+          key: ${{ runner.os }}-pdm-${{ hashFiles('pdm.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-pdm-
+
+      - name: Install dependencies (dev only, no vllm)
+        run: pdm install --with dev
+
+      - name: Run CPU-only tests
+        run: PYTHONPATH=. pdm run pytest -m "not gpu" --maxfail=1 --disable-warnings -v

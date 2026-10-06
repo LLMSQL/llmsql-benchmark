@@ -1,11 +1,15 @@
 import argparse
+import logging
+import sys
 from typing import Any
 
 import yaml
 
 from llmsql._cli.subparsers import SubCommand
-from llmsql.config.config import DEFAULT_LLMSQL_VERSION
+from llmsql.config.config import DEFAULT_LLMSQL_VERSION, get_available_versions
 from llmsql.evaluation.evaluate import evaluate
+
+log = logging.getLogger(__name__)
 
 
 class Evaluate(SubCommand):
@@ -36,7 +40,7 @@ class Evaluate(SubCommand):
             "--version",
             type=str,
             default=DEFAULT_LLMSQL_VERSION,
-            choices=["1.0", "2.0"],
+            choices=get_available_versions(),
             help=f"LLMSQL benchmark version (default:{DEFAULT_LLMSQL_VERSION})",
         )
 
@@ -116,4 +120,5 @@ class Evaluate(SubCommand):
                 run_metadata=run_metadata,
             )
         except Exception as e:
-            print(f"Error during evaluation: {e}")
+            log.error("Error during evaluation: %s", e)
+            sys.exit(1)
