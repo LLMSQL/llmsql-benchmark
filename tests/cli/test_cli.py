@@ -1,6 +1,6 @@
 import json
 import sys
-from unittest.mock import AsyncMock
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -13,7 +13,7 @@ async def test_transformers_backend_called(monkeypatch):
     Ensure transformers backend is correctly invoked.
     """
     # Mock backend function
-    mock_inference = AsyncMock(return_value=[])
+    mock_inference = MagicMock(return_value=[])
 
     monkeypatch.setattr(
         "llmsql.inference_transformers",
@@ -53,7 +53,7 @@ async def test_vllm_backend_called(monkeypatch):
     """
     Ensure vLLM backend is correctly invoked.
     """
-    mock_inference = AsyncMock(return_value=[])
+    mock_inference = MagicMock(return_value=[])
 
     monkeypatch.setattr(
         "llmsql.inference_vllm",
@@ -84,12 +84,58 @@ async def test_vllm_backend_called(monkeypatch):
     assert call_kwargs["tensor_parallel_size"] == 2
 
 
+def test_boolean_options():
+    parser = ParserCLI()._parser
+    cases = [
+        (
+            ["inference", "transformers", "--model-or-model-name-or-path", "m"],
+            "trust_remote_code",
+            True,
+            "--trust-remote-code",
+        ),
+        (
+            ["inference", "transformers", "--model-or-model-name-or-path", "m"],
+            "do_sample",
+            False,
+            "--do-sample",
+        ),
+        (
+            ["inference", "vllm", "--model-name", "m"],
+            "trust_remote_code",
+            True,
+            "--trust-remote-code",
+        ),
+        (
+            ["inference", "vllm", "--model-name", "m"],
+            "use_chat_template",
+            True,
+            "--use-chat-template",
+        ),
+        (
+            ["inference", "vllm", "--model-name", "m"],
+            "do_sample",
+            True,
+            "--do-sample",
+        ),
+        (
+            ["evaluate", "--outputs", "out.jsonl"],
+            "show_mismatches",
+            True,
+            "--show-mismatches",
+        ),
+    ]
+    for args, attribute, default, flag in cases:
+        assert getattr(parser.parse_args(args), attribute) is default
+        assert getattr(parser.parse_args([*args, flag]), attribute) is True
+        assert getattr(parser.parse_args([*args, f"--no-{flag[2:]}"]), attribute) is False
+
+
 @pytest.mark.asyncio
 async def test_api_backend_called(monkeypatch):
     """
     Ensure API backend is correctly invoked.
     """
-    mock_inference = AsyncMock(return_value=[])
+    mock_inference = MagicMock(return_value=[])
 
     monkeypatch.setattr(
         "llmsql.inference_api",
@@ -185,10 +231,8 @@ async def test_evaluate_command_called(monkeypatch):
     """
     Ensure the evaluate command is correctly invoked with arguments.
     """
-    
-    mock_evaluate = AsyncMock(return_value={})
+    mock_evaluate = MagicMock(return_value={})
 
-    
     monkeypatch.setattr(
         "llmsql._cli.evaluate.evaluate",
         mock_evaluate,
