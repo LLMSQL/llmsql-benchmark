@@ -191,12 +191,14 @@ class Inference(SubCommand):
         # COMMON GENERATION ARGS
         # =========================
         def add_common_generation_args(
-            parser: argparse.ArgumentParser, default_temp: float, default_sample: int
+            parser: argparse.ArgumentParser, default_temp: float, default_sample: bool
         ) -> None:
             parser.add_argument("--max-new-tokens", type=int, default=256)
             parser.add_argument("--temperature", type=float, default=default_temp)
             parser.add_argument(
-                "--do-sample", action="store_true", default=default_sample
+                "--do-sample",
+                action=argparse.BooleanOptionalAction,
+                default=default_sample,
             )
 
         # =========================
@@ -212,7 +214,7 @@ class Inference(SubCommand):
 
         self._parser_transformers.add_argument(
             "--trust-remote-code",
-            action="store_true",
+            action=argparse.BooleanOptionalAction,
             default=False,
         )
         self._parser_transformers.add_argument("--dtype", default="auto")
@@ -253,7 +255,7 @@ class Inference(SubCommand):
 
         self._parser_vllm.add_argument(
             "--trust-remote-code",
-            action="store_true",
+            action=argparse.BooleanOptionalAction,
             default=False,
         )
         self._parser_vllm.add_argument(
@@ -270,7 +272,7 @@ class Inference(SubCommand):
         _add_model_args_flag(self._parser_vllm, "--llm-kwargs")
         self._parser_vllm.add_argument(
             "--use-chat-template",
-            action="store_true",
+            action=argparse.BooleanOptionalAction,
             default=True,
         )
 
