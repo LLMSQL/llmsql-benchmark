@@ -174,7 +174,11 @@ def test_transformers_without_model_args_keeps_none(monkeypatch):
 @pytest.mark.parametrize("flag", ["--model-args", "--model_args"])
 def test_vllm_model_args_reach_llm_kwargs(monkeypatch, flag):
     mock_inference = MagicMock(return_value=[])
-    monkeypatch.setattr("llmsql.inference_vllm", mock_inference)
+    # Set the name in the package namespace directly: `monkeypatch.setattr` would
+    # first read the old value, which triggers the lazy vLLM import.
+    import llmsql
+
+    monkeypatch.setitem(llmsql.__dict__, "inference_vllm", mock_inference)
 
     _run_cli(
         monkeypatch,

@@ -145,18 +145,18 @@ for fast inference.
 ```python
 from llmsql import evaluate
 
-report =evaluate(outputs="path_to_your_outputs.jsonl")
+report = evaluate(outputs="path_to_your_outputs.jsonl")
 print(report)
 ```
 
-Or with ther results from the infernece:
+Or with the results from the inference:
 
 ```python
 from llmsql import evaluate
 
-# results = inference_transformers(...) or infernce_vllm(...)
+# results = inference_transformers(...) or inference_vllm(...)
 
-report =evaluate(outputs=results)
+report = evaluate(outputs=results)
 print(report)
 ```
 
