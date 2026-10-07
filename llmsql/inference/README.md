@@ -182,8 +182,8 @@ Runs inference using the Hugging Face `transformers` backend.
 | ------------------------------- | --------------------- | ------------- | -------------------------------------------------------------- |
 | `model_or_model_name_or_path`   | `str \| AutoModelForCausalLM` | *required* | Model object, HuggingFace model name, or local path. |
 | `tokenizer_or_name`             | `str \| Any \| None`  | `None`        | Tokenizer object, name, or None (infers from model).           |
-| `trust_remote_code`             | `bool`                | `True`        | Whether to trust remote code when loading models.              |
-| `dtype`                         | `torch.dtype \| str`  | `torch.float16` | Model precision (e.g., `torch.float16`, `"bfloat16"`, `"auto"`). |
+| `trust_remote_code`             | `bool`                | `False`       | Whether to trust remote code when loading models.              |
+| `dtype`                         | `torch.dtype \| str`  | `"auto"`      | Model precision (uses the model config; e.g., `torch.float16`, `"bfloat16"`). |
 | `device_map`                    | `str \| dict \| None` | `"auto"`      | Device placement strategy for multi-GPU.                       |
 | `hf_token`                      | `str \| None`         | `None`        | Hugging Face authentication token.                             |
 | `model_kwargs`                  | `dict \| None`        | `None`        | Additional kwargs for `AutoModelForCausalLM.from_pretrained()`. |
@@ -218,6 +218,8 @@ Runs inference using the Hugging Face `transformers` backend.
 
 **Note:** Values in `model_kwargs` / `tokenizer_kwargs` take precedence over the explicit parameters (e.g., `dtype`, `trust_remote_code`). A `dtype` or `torch_dtype` entry in `model_kwargs` replaces `dtype` and may be given as a string.
 
+Models that require custom repository code must be loaded with `trust_remote_code=True` in Python or `--trust-remote-code` on the CLI. Remote code execution is disabled by default for both model and tokenizer loading.
+
 ---
 
 ### `inference_vllm(...)`
@@ -231,7 +233,7 @@ Runs inference using the [vLLM](https://github.com/vllm-project/vllm) backend fo
 | Argument                        | Type           | Default | Description                                      |
 | ------------------------------- | -------------- | ------- | ------------------------------------------------ |
 | `model_name`                    | `str`          | *required* | Hugging Face model name or local path.        |
-| `trust_remote_code`             | `bool`         | `True`  | Whether to trust remote code when loading.       |
+| `trust_remote_code`             | `bool`         | `False` | Whether to trust remote code when loading.       |
 | `tensor_parallel_size`          | `int`          | `1`     | Number of GPUs for tensor parallelism.           |
 | `hf_token`                      | `str \| None`  | `None`  | Hugging Face authentication token.               |
 | `llm_kwargs`                    | `dict \| None` | `None`  | Additional kwargs for `vllm.LLM()`.              |

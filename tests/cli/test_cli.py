@@ -4,6 +4,7 @@ from unittest.mock import AsyncMock
 
 import pytest
 
+import llmsql
 from llmsql._cli.llmsql_cli import ParserCLI
 
 
@@ -45,6 +46,8 @@ async def test_transformers_backend_called(monkeypatch):
     call_kwargs = mock_inference.call_args.kwargs
     assert call_kwargs["model_or_model_name_or_path"] == "Qwen/Qwen2.5-1.5B-Instruct"
     assert call_kwargs["temperature"] == 0.9
+    assert call_kwargs["dtype"] == "auto"
+    assert call_kwargs["trust_remote_code"] is False
     assert call_kwargs["generation_kwargs"]["top_p"] == 0.9
 
 
@@ -55,10 +58,7 @@ async def test_vllm_backend_called(monkeypatch):
     """
     mock_inference = AsyncMock(return_value=[])
 
-    monkeypatch.setattr(
-        "llmsql.inference_vllm",
-        mock_inference,
-    )
+    monkeypatch.setitem(llmsql.__dict__, "inference_vllm", mock_inference)
 
     test_args = [
         "llmsql",
@@ -82,6 +82,7 @@ async def test_vllm_backend_called(monkeypatch):
     call_kwargs = mock_inference.call_args.kwargs
     assert call_kwargs["model_name"] == "mistralai/Mixtral-8x7B-Instruct-v0.1"
     assert call_kwargs["tensor_parallel_size"] == 2
+    assert call_kwargs["trust_remote_code"] is False
 
 
 @pytest.mark.asyncio

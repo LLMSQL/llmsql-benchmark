@@ -29,6 +29,8 @@ llmsql inference transformers \
 ```
 
 This command calls [`inference_transformers()`](../inference/inference_transformers.py).
+The model dtype defaults to `auto` (from the model config). Remote code is disabled
+by default; add `--trust-remote-code` only for models that require custom code.
 
 ### 2) vLLM backend
 
@@ -39,6 +41,8 @@ llmsql inference vllm \
 ```
 
 This command calls [`inference_vllm()`](../inference/inference_vllm.py).
+Remote code is disabled by default; add `--trust-remote-code` only for models that
+require custom code.
 
 ### 3) OpenAI-compatible API backend
 

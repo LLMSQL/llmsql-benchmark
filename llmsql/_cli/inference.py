@@ -213,9 +213,9 @@ class Inference(SubCommand):
         self._parser_transformers.add_argument(
             "--trust-remote-code",
             action="store_true",
-            default=True,
+            default=False,
         )
-        self._parser_transformers.add_argument("--dtype", default="float16")
+        self._parser_transformers.add_argument("--dtype", default="auto")
         self._parser_transformers.add_argument("--device-map", default="auto")
         self._parser_transformers.add_argument("--hf-token")
         self._parser_transformers.add_argument(
@@ -254,7 +254,7 @@ class Inference(SubCommand):
         self._parser_vllm.add_argument(
             "--trust-remote-code",
             action="store_true",
-            default=True,
+            default=False,
         )
         self._parser_vllm.add_argument(
             "--tensor-parallel-size",

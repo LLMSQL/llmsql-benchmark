@@ -55,6 +55,50 @@ def test_string_dtype_argument_is_converted(monkeypatch):
     assert "dtype" not in captured
 
 
+def test_default_dtype_is_auto(monkeypatch):
+    captured = _captured_load_kwargs(monkeypatch)
+    assert captured["torch_dtype"] == "auto"
+    assert captured["trust_remote_code"] is False
+
+
+def test_tokenizer_remote_code_is_disabled_by_default(monkeypatch, tmp_path):
+    captured = {}
+
+    class FakeModel:
+        def eval(self):
+            pass
+
+    class FakeTokenizer:
+        pad_token = "pad"
+        eos_token = "eos"
+        pad_token_id = 0
+
+    monkeypatch.setattr(
+        it.AutoModelForCausalLM,
+        "from_pretrained",
+        lambda name, **kwargs: FakeModel(),
+    )
+
+    def fake_tokenizer_from_pretrained(name, **kwargs):
+        captured.update(kwargs)
+        return FakeTokenizer()
+
+    monkeypatch.setattr(
+        it.AutoTokenizer, "from_pretrained", fake_tokenizer_from_pretrained
+    )
+    monkeypatch.setattr(it, "_setup_seed", lambda **kwargs: None)
+    monkeypatch.setattr(it, "_maybe_download", lambda *args: "unused")
+    monkeypatch.setattr(it, "load_jsonl", lambda path: [])
+
+    it.inference_transformers(
+        "some/model",
+        output_file=str(tmp_path / "predictions.jsonl"),
+        workdir_path=str(tmp_path),
+    )
+
+    assert captured["trust_remote_code"] is False
+
+
 @pytest.mark.parametrize("key", ["dtype", "torch_dtype"])
 def test_model_kwargs_dtype_overrides_argument(monkeypatch, key):
     model_kwargs = {key: "float32", "revision": "main"}
