@@ -79,6 +79,94 @@ def normalize_sql(sql: str) -> str:
     return re.sub(r"\s+", " ", sql.strip().rstrip(";").strip())
 
 
+def normalize_question_id(value: Any) -> int:
+    """
+    Coerce a ``question_id`` coming from a predictions file into an ``int``.
+
+    Other tools commonly serialise ids as strings (``"123"``), so an int-like
+    string is accepted and converted. Anything else fails with a message that
+    names the offending value.
+
+    Args:
+        value: raw ``question_id`` value from a prediction entry.
+
+    Returns:
+        The id as ``int``.
+
+    Raises:
+        TypeError: if the value is neither an int nor a string.
+        ValueError: if the value is a string that does not parse as an int.
+    """
+    if isinstance(value, int):
+        return value
+
+    if isinstance(value, str):
+        text = value.strip()
+        try:
+            return int(text)
+        except ValueError:
+            raise ValueError(
+                f"question_id must be an int or an int-like string, got {value!r}."
+            ) from None
+
+    raise TypeError(
+        f"question_id must be an int or an int-like string, got {type(value).__name__}."
+    )
+
+
+def resolve_prediction_coverage(
+    outputs_list: list[dict[str, Any]],
+    questions: dict[int, dict[str, str]],
+) -> tuple[list[dict[str, Any]], dict[str, int]]:
+    """
+    Deduplicate predictions and measure how much of the benchmark they cover.
+
+    ``evaluate()`` used to score whatever rows happened to be in the predictions
+    file, so a crashed run (or ``--limit``) produced a full-looking accuracy
+    with no hint that most questions were never answered. Duplicate ids were
+    also counted twice.
+
+    Args:
+        outputs_list: predictions as loaded from a JSONL file or passed by the caller.
+        questions: benchmark questions keyed by ``question_id``.
+
+    Returns:
+        A tuple ``(unique_outputs, coverage)`` where ``coverage`` holds
+        ``expected`` (benchmark size), ``answered`` (unique matching ids),
+        ``missing`` (benchmark questions with no prediction) and ``duplicates``.
+
+    Raises:
+        ValueError: if a prediction references an id that is not in the benchmark.
+    """
+    expected = len(questions)
+    seen: set[int] = set()
+    unique: list[dict[str, Any]] = []
+    duplicates = 0
+
+    for item in outputs_list:
+        qid = normalize_question_id(item["question_id"])
+
+        if qid not in questions:
+            raise ValueError(
+                f"question_id {qid} from the predictions file is not part of the "
+                f"benchmark ({expected} questions loaded)."
+            )
+
+        if qid in seen:
+            duplicates += 1
+            continue
+
+        seen.add(qid)
+        unique.append(item)
+
+    return unique, {
+        "expected": expected,
+        "answered": len(seen),
+        "missing": expected - len(seen),
+        "duplicates": duplicates,
+    }
+
+
 def evaluate_sample(
     item: dict[str, int | str],
     questions: dict[int, dict[str, str]],
@@ -115,11 +203,17 @@ def evaluate_sample(
                                      "sql_error": int
                                    }
     """
-    # Extract question metadata
-    qid = item["question_id"]
-    assert isinstance(
-        qid, int
-    ), "question_id in the outputs file needs to be of type int."
+    # Extract question metadata.
+    # These used to be plain asserts: ``python -O`` strips asserts entirely, so
+    # malformed input silently slipped through instead of being reported.
+    qid = normalize_question_id(item["question_id"])
+
+    if qid not in questions:
+        raise ValueError(
+            f"question_id {qid} from the predictions file is not part of the "
+            f"benchmark ({len(questions)} questions loaded)."
+        )
+
     q_info = questions[qid]
     table_id, gold_sql, question_text = (
         q_info["table_id"],
@@ -142,10 +236,13 @@ def evaluate_sample(
     last_pred_res = None  # store last prediction results for mismatch logging
 
     # Loop over all SQL queries extracted from the model output
-    assert isinstance(
-        item["completion"], str
-    ), f"Completion filed in outputs file must be of type string: {item['completion']}. Type: {type(item['completion'])}"
-    for pred_sql in find_sql(item["completion"]):
+    completion = item["completion"]
+    if not isinstance(completion, str):
+        raise TypeError(
+            f"completion must be of type str, got {type(completion).__name__}: "
+            f"{completion!r}"
+        )
+    for pred_sql in find_sql(completion):
         # Replace placeholder table names with the actual one
         pred_sql_fixed = fix_table_name(pred_sql, table_id)
 
@@ -179,7 +276,7 @@ def evaluate_sample(
             "question_id": qid,
             "question": question_text,
             "gold_sql": gold_sql,
-            "model_output": item["completion"],
+            "model_output": completion,
             "gold_results": gold_results,
             "prediction_results": last_pred_res,
         }
