@@ -182,7 +182,15 @@ class Inference(SubCommand):
                 default=None,
                 help="Directory for benchmark downloads. If omitted, a temporary directory is used.",
             )
-            parser.add_argument("--num-fewshots", type=int, default=5)
+            parser.add_argument(
+                "--num-fewshots",
+                type=int,
+                default=None,
+                help=(
+                    "Number of few-shot examples (0, 1 or 5). Default: 5 for "
+                    "--version 1.0, 0 for --version 2.0 (zero-shot only)."
+                ),
+            )
             parser.add_argument("--batch-size", type=int, default=8)
             parser.add_argument("--seed", type=int, default=42)
             parser.add_argument("--limit", type=parse_limit)
@@ -193,7 +201,16 @@ class Inference(SubCommand):
         def add_common_generation_args(
             parser: argparse.ArgumentParser, default_temp: float, default_sample: bool
         ) -> None:
-            parser.add_argument("--max-new-tokens", type=int, default=256)
+            parser.add_argument(
+                "--max-new-tokens",
+                type=int,
+                default=None,
+                help=(
+                    "Maximum number of generated tokens. Default: 256 for "
+                    "--version 1.0, 4096 for --version 2.0 (reasoning models "
+                    "may need up to 16k)."
+                ),
+            )
             parser.add_argument("--temperature", type=float, default=default_temp)
             parser.add_argument(
                 "--do-sample",

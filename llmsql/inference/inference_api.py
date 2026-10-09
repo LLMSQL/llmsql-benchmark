@@ -21,6 +21,7 @@ from tqdm.asyncio import tqdm
 from llmsql.config.config import (
     DEFAULT_LLMSQL_VERSION,
     get_repo_id,
+    resolve_num_fewshots,
 )
 from llmsql.loggers.logging_config import log
 from llmsql.utils.inference_utils import (
@@ -116,7 +117,6 @@ async def _inference_api_async(
     write_lock = asyncio.Lock()
 
     async with aiohttp.ClientSession(headers=headers) as session:
-
         # Pre-build all prompts using the shared function
         prompts = build_all_requests(questions, tables, prompt_builder)
 
@@ -178,7 +178,7 @@ def inference_api(
     output_file: str = "llm_sql_predictions.jsonl",
     workdir_path: str | None = None,
     limit: int | float | None = None,
-    num_fewshots: int = 5,
+    num_fewshots: int | None = None,
     seed: int = 42,
 ) -> list[dict[str, str]]:
     """Run SQL generation using an OpenAI-compatible Chat Completions API.
@@ -199,7 +199,9 @@ def inference_api(
         output_file: Path to write outputs (will be overwritten).
         workdir_path: Directory to store downloaded benchmark files. If omitted, a
             temporary directory is created automatically.
-        num_fewshots: Number of few-shot examples (0, 1, or 5).
+        num_fewshots: Number of few-shot examples (0, 1, or 5). ``None``
+            (default) uses 5 for version "1.0" and 0 for "2.0". LLMSQL 2.0 is
+            zero-shot only: a non-zero value raises ``ValueError``.
         batch_size: Number of questions per generation batch.
         seed: Random seed for reproducibility.
         limit: Limit the number of questions to evaluate. If an integer, evaluates
@@ -209,6 +211,7 @@ def inference_api(
     Returns:
         List of dicts containing `question_id` and generated `completion`.
     """
+    num_fewshots = resolve_num_fewshots(version, num_fewshots)
     _setup_seed(seed=seed)
     api_kwargs = api_kwargs or {}
     request_headers = request_headers or {}

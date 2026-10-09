@@ -14,11 +14,10 @@ Example
 
     results = inference_transformers(
         model_or_model_name_or_path="Qwen/Qwen2.5-1.5B-Instruct",
-        repo_id="llmsql-bench/llmsql-2.0",
+        version="2.0",  # zero-shot; num_fewshots defaults to 0
         output_file="outputs/preds_transformers.jsonl",
-        num_fewshots=5,
         batch_size=8,
-        max_new_tokens=256,
+        max_new_tokens=4096,
         temperature=0.7,
         model_kwargs={
             "torch_dtype": "bfloat16",
@@ -47,6 +46,8 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 from llmsql.config.config import (
     DEFAULT_LLMSQL_VERSION,
     get_repo_id,
+    resolve_max_new_tokens,
+    resolve_num_fewshots,
 )
 from llmsql.loggers.logging_config import log
 from llmsql.utils.inference_utils import (
@@ -55,6 +56,7 @@ from llmsql.utils.inference_utils import (
     resolve_workdir_path,
 )
 from llmsql.utils.utils import (
+    build_question_prompt,
     choose_prompt_builder,
     load_jsonl,
     overwrite_jsonl,
@@ -106,7 +108,7 @@ def inference_transformers(
     # --- Prompt & Chat Parameters ---
     chat_template: str | None = None,
     # --- Generation Parameters ---
-    max_new_tokens: int = 256,
+    max_new_tokens: int | None = None,
     temperature: float = 0.0,
     do_sample: bool = False,
     top_p: float = 1.0,
@@ -116,7 +118,7 @@ def inference_transformers(
     version: Literal["1.0", "2.0"] = DEFAULT_LLMSQL_VERSION,
     output_file: str = "llm_sql_predictions.jsonl",
     workdir_path: str | None = None,
-    num_fewshots: int = 5,
+    num_fewshots: int | None = None,
     batch_size: int = 8,
     limit: int | float | None = None,
     seed: int = 42,
@@ -149,7 +151,10 @@ def inference_transformers(
         chat_template: Optional chat template to apply before tokenization.
 
         # Generation:
-        max_new_tokens: Maximum tokens to generate per sequence.
+        max_new_tokens: Maximum tokens to generate per sequence. ``None``
+            (default) uses 256 for version "1.0" and 4096 for "2.0". The
+            reported LLMSQL 2.0 results of reasoning models were obtained with
+            up to 16k tokens; raise this for reasoning models.
         temperature: Sampling temperature (0.0 = greedy).
         do_sample: Whether to use sampling vs greedy decoding.
         top_p: Nucleus sampling parameter.
@@ -163,7 +168,9 @@ def inference_transformers(
         output_file: Output JSONL file path for completions.
         workdir_path: Directory to store downloaded benchmark files. If omitted, a
             temporary directory is created automatically.
-        num_fewshots: Number of few-shot examples (0, 1, or 5).
+        num_fewshots: Number of few-shot examples (0, 1, or 5). ``None``
+            (default) uses 5 for version "1.0" and 0 for "2.0". LLMSQL 2.0 is
+            zero-shot only: a non-zero value raises ``ValueError``.
         batch_size: Batch size for inference.
         seed: Random seed for reproducibility.
         limit: Limit the number of questions to evaluate. If an integer, evaluates
@@ -174,6 +181,8 @@ def inference_transformers(
         List of generated SQL results with metadata.
     """
     # --- Setup ---
+    num_fewshots = resolve_num_fewshots(version, num_fewshots)
+    max_new_tokens = resolve_max_new_tokens(version, max_new_tokens)
     _setup_seed(seed=seed)
 
     model_kwargs = dict(model_kwargs or {})
@@ -302,11 +311,7 @@ def inference_transformers(
         prompts = []
 
         for q in batch:
-            tbl = tables[q["table_id"]]
-            example_row = tbl["rows"][0] if tbl["rows"] else []
-            text = prompt_builder(
-                q["question"], tbl["header"], tbl["types"], example_row
-            )
+            text = build_question_prompt(q, tables, prompt_builder)
 
             # Apply chat template if available
             if use_chat_template:

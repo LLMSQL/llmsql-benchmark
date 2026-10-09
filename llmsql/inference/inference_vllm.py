@@ -14,11 +14,9 @@ Example
 
     results = inference_vllm(
         model_name="Qwen/Qwen2.5-1.5B-Instruct",
-        version="2.0",
-        tables_path="data/tables.jsonl",
-        num_fewshots=5,
+        version="2.0",  # zero-shot; num_fewshots defaults to 0
         batch_size=8,
-        max_new_tokens=256,
+        max_new_tokens=4096,
         temperature=0.7,
         tensor_parallel_size=1,
         lora_path="path/to/lora"
@@ -50,6 +48,8 @@ from vllm.lora.request import LoRARequest
 from llmsql.config.config import (
     DEFAULT_LLMSQL_VERSION,
     get_repo_id,
+    resolve_max_new_tokens,
+    resolve_num_fewshots,
 )
 from llmsql.loggers.logging_config import log
 from llmsql.utils.inference_utils import (
@@ -80,7 +80,7 @@ def inference_vllm(
     # === LoRA Parameters ===
     lora_config: dict[str, Any] | None = None,  # new optional dict
     # === Generation Parameters ===
-    max_new_tokens: int = 256,
+    max_new_tokens: int | None = None,
     temperature: float = 1.0,
     do_sample: bool = True,
     sampling_kwargs: dict[str, Any] | None = None,
@@ -89,7 +89,7 @@ def inference_vllm(
     output_file: str = "llm_sql_predictions.jsonl",
     workdir_path: str | None = None,
     limit: int | float | None = None,
-    num_fewshots: int = 5,
+    num_fewshots: int | None = None,
     batch_size: int = 8,
     seed: int = 42,
 ) -> list[dict[str, str]]:
@@ -119,7 +119,10 @@ def inference_vllm(
                 - Otherwise, an exception is raised to prevent inconsistent configuration.
 
         # Generation:
-        max_new_tokens: Maximum tokens to generate per sequence.
+        max_new_tokens: Maximum tokens to generate per sequence. ``None``
+            (default) uses 256 for version "1.0" and 4096 for "2.0". The
+            reported LLMSQL 2.0 results of reasoning models were obtained with
+            up to 16k tokens; raise this for reasoning models.
         temperature: Sampling temperature (0.0 = greedy).
         do_sample: Whether to use sampling vs greedy decoding.
         sampling_kwargs: Additional arguments for vllm.SamplingParams().
@@ -131,7 +134,9 @@ def inference_vllm(
         output_file: Path to write outputs (will be overwritten).
         workdir_path: Directory to store downloaded benchmark files. If omitted, a
             temporary directory is created automatically.
-        num_fewshots: Number of few-shot examples (0, 1, or 5).
+        num_fewshots: Number of few-shot examples (0, 1, or 5). ``None``
+            (default) uses 5 for version "1.0" and 0 for "2.0". LLMSQL 2.0 is
+            zero-shot only: a non-zero value raises ``ValueError``.
         batch_size: Number of questions per generation batch.
         seed: Random seed for reproducibility.
         limit: Limit the number of questions to evaluate. If an integer, evaluates
@@ -144,6 +149,8 @@ def inference_vllm(
         List of dicts containing `question_id` and generated `completion`.
     """
     # --- setup ---
+    num_fewshots = resolve_num_fewshots(version, num_fewshots)
+    max_new_tokens = resolve_max_new_tokens(version, max_new_tokens)
     llm_kwargs = llm_kwargs or {}
     sampling_kwargs = sampling_kwargs or {}
     _setup_seed(seed=seed)

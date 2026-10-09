@@ -7,6 +7,7 @@ from llmsql.prompts.prompts import (
     build_prompt_0shot,
     build_prompt_1shot,
     build_prompt_5shot,
+    build_prompt_v2,
 )
 
 
@@ -61,6 +62,36 @@ def choose_prompt_builder(
     raise ValueError("shots must be one of {0, 1, 5}")
 
 
+def build_question_prompt(
+    q: dict,
+    tables: dict,
+    prompt_builder: Callable[[str, list[str], list[str], list[str | float | int]], str],
+) -> str:
+    """
+    Build the raw prompt text (without chat template) for one question.
+
+    LLMSQL 2.0 questions (those with a ``tables`` field) use the zero-shot
+    :func:`llmsql.prompts.prompts.build_prompt_v2` prompt with every table in
+    ``q["tables"]`` (target plus distractors, in order); ``prompt_builder`` is
+    ignored for them. LLMSQL 1.0 questions use ``prompt_builder`` with the
+    header, types and first row of ``q["table_id"]``.
+
+    Args:
+        q: Question dict.
+        tables: Dict mapping table_id to table metadata.
+        prompt_builder: Prompt builder for LLMSQL 1.0 questions.
+
+    Returns:
+        The prompt text.
+    """
+    if "tables" in q:
+        return build_prompt_v2(q["question"], [tables[t] for t in q["tables"]])
+
+    tbl = tables[q["table_id"]]
+    example_row = tbl["rows"][0] if tbl["rows"] else []
+    return prompt_builder(q["question"], tbl["header"], tbl["types"], example_row)
+
+
 def build_all_requests(
     questions: list[dict],
     tables: dict,
@@ -73,8 +104,10 @@ def build_all_requests(
 
     Args:
         questions: List of question dicts with 'question' and 'table_id' keys.
+            LLMSQL 2.0 questions also have a 'tables' key and get the zero-shot
+            2.0 prompt (see :func:`build_question_prompt`).
         tables: Dict mapping table_id to table metadata (with 'header', 'types', 'rows').
-        prompt_builder: Function to build raw prompt text.
+        prompt_builder: Function to build raw prompt text for LLMSQL 1.0 questions.
         tokenizer: Optional tokenizer with apply_chat_template method.
         use_chat_template: Whether to apply chat template (if tokenizer provided).
 
@@ -83,12 +116,7 @@ def build_all_requests(
     """
     prompts = []
     for q in questions:
-        tbl = tables[q["table_id"]]
-        example_row = tbl["rows"][0] if tbl["rows"] else []
-
-        raw_text = prompt_builder(
-            q["question"], tbl["header"], tbl["types"], example_row
-        )
+        raw_text = build_question_prompt(q, tables, prompt_builder)
 
         if tokenizer and use_chat_template:
             messages = [{"role": "user", "content": raw_text}]

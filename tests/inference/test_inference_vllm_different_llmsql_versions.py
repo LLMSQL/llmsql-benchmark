@@ -61,7 +61,6 @@ async def test_inference_vllm_valid_versions(monkeypatch, tmp_path, version_arg)
         "model_name": "dummy-model",
         "output_file": str(out_file),
         "workdir_path": str(tmp_path),
-        "num_fewshots": 1,
         "batch_size": 1,
         "max_new_tokens": 8,
         "temperature": 0.0,

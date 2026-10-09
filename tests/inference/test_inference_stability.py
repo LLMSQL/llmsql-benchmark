@@ -63,6 +63,7 @@ async def test_inference_vllm_with_local_files(monkeypatch, tmp_path):
         model_name="dummy-model",
         output_file=str(out_file),
         workdir_path=str(tmp_path),
+        version="1.0",
         num_fewshots=1,
         batch_size=1,
         max_new_tokens=5,
