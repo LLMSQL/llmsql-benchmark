@@ -186,9 +186,11 @@ def evaluate(
     save_json_report(save_report, report)
 
     if save_leaderboard_yaml is not None:
+        # The leaderboard ranks models on the whole benchmark: unanswered
+        # questions count as wrong, so a partial run cannot rank too high.
         record = build_leaderboard_record(
-            accuracy=accuracy,
-            total=metrics["total"],
+            accuracy=report["accuracy_over_benchmark"],
+            total=coverage["expected"],
             version=version,
             model_name=model_name,
             answers_path=outputs if isinstance(outputs, str) else None,
