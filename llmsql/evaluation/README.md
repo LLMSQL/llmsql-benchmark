@@ -1,7 +1,7 @@
 # Evaluation: Benchmarking Text-to-SQL Models on LLMSQL
 
 This module provides a **pipeline for evaluating Text-to-SQL model outputs** on the **LLMSQL benchmark**.
-It checks your model’s SQL predictions against the gold-standard queries and database, logs mismatches, and generates detailed evaluation reports.
+It executes your model’s SQL predictions on the benchmark database, compares the results with the reference answers, logs mismatches, and generates detailed evaluation reports.
 
 You can now use it directly via the `evaluate()` function.
 
@@ -20,20 +20,52 @@ pip install llmsql
 ```python
 from llmsql import evaluate
 
-# Evaluate outputs from a JSONL file
-report = evaluate("path_to_your_outputs.jsonl")
-print(report)
+# Evaluate outputs from a JSONL file (LLMSQL 2.0 is the default version)
+report = evaluate("path_to_your_outputs.jsonl", version="2.0")
+print(report["accuracy"], report["category_accuracy"])
 ```
 
 ```python
 # Or evaluate from a list of prediction dicts
 predictions = [
-    {"question_id": "1", "predicted_sql": "SELECT name FROM Table WHERE age > 30"},
-    {"question_id": "2", "predicted_sql": "SELECT COUNT(*) FROM Table"},
+    {"question_id": 1, "completion": "```sql\nSELECT 1;\n```"},
+    {"question_id": 2, "completion": "```sql\nSELECT 2;\n```"},
 ]
-report = evaluate(predictions)
+report = evaluate(predictions, version="2.0")
 print(report)
 ```
+
+---
+
+## How predictions are scored
+
+### LLMSQL 2.0 (`version="2.0"`)
+
+1. **SQL extraction.** The SQL is taken from the **last** ```` ```sql ```` block of the
+   completion (also ```` ```sqlite ```` or a bare ```` ``` ```` block), falling back to the
+   first `WITH`/`SELECT` statement if there is no block. The prompt shows the real table
+   names, so no table-name substitution is done.
+2. **Execution.** The query is executed on `sqlite_tables.db` with a 10-second time limit.
+3. **Lenient execution match** against the verified `answer` of the question
+   ([`llmsql/utils/matching.py`](../utils/matching.py)). A prediction is correct if, after
+   normalisation, it returns the same rows, where:
+   * row order and duplicate rows are ignored;
+   * numbers are compared as floats rounded to 2 decimals (`42 == "42" == 42.0`);
+   * thousands separators, currency signs (`$ £ €`), units / magnitude words
+     (`million`, `%`, `km`, ...) and parentheses around a number (`(0)`) are ignored;
+   * a trailing count in parentheses is ignored (`Al Horford (15)` == `Al Horford`);
+   * a two-part answer may be split into two columns (`("KeyArena", "10,891")` ==
+     `"KeyArena 10,891"`);
+   * extra columns are accepted if one predicted column equals the single answer column.
+
+The report additionally contains `category_accuracy` for the three categories
+(`lookup`, `convention`, `text_quantity`).
+
+### LLMSQL 1.0 (`version="1.0"`)
+
+Up to 10 SQL candidates are extracted from the completion, the placeholder table name
+`"Table"` is replaced by the real one, and the prediction is correct if one candidate
+returns exactly the same (sorted) rows as the gold query.
 
 ---
 
@@ -43,6 +75,7 @@ print(report)
 evaluate(
     outputs,
     *,
+    version: str = "2.0",
     workdir_path: str | None = None,
     save_report: str | None = None,
     show_mismatches: bool = True,
@@ -56,6 +89,7 @@ evaluate(
 | Argument          | Description                                                                                                                                     |
 | ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
 | `outputs`         | **Required**. Either a path to a JSONL file or a list of dicts with predictions.                                                                |
+| `version`         | Benchmark version: `"2.0"` (default) or `"1.0"`.                                                                                                |
 | `workdir_path`    | Directory used to cache downloaded benchmark files. If omitted, a temporary directory is created automatically. |
 | `save_report`     | Optional path to save detailed JSON report. Defaults to `evaluation_results_{uuid}.json`.                                                       |
 | `show_mismatches` | Print mismatches while evaluating. Default: `True`.                                                                                             |
@@ -71,13 +105,13 @@ evaluate(
 Your model predictions must be in **JSONL format** (one JSON object per line):
 
 ```json
-{"question_id": "1", "predicted_sql": "SELECT name FROM Table WHERE age > 30"}
-{"question_id": "2", "predicted_sql": "SELECT COUNT(*) FROM Table"}
-{"question_id": "3", "predicted_sql": "SELECT * FROM Table WHERE active=1"}
+{"question_id": 1, "completion": "```sql\nSELECT \"Singer(s)\" FROM \"1-29135051-2\" WHERE \"Comedian\" = 'Joe Wilkinson';\n```"}
+{"question_id": 2, "completion": "Reasoning... ```sql\nSELECT COUNT(*) FROM \"1-10399701-2\";\n```"}
 ```
 
-* `question_id` must match IDs in `questions.jsonl`.
-* `predicted_sql` should contain your model’s SQL output (extra text is allowed; SQL is extracted automatically).
+* `question_id` (integer) must match IDs in `questions.jsonl`.
+* `completion` should contain your model’s raw output (extra text is allowed; SQL is extracted automatically, see above).
+* This is exactly the format written by the `inference_*` functions.
 
 ---
 
@@ -89,8 +123,10 @@ The evaluation returns a dictionary containing:
 * `matches` – Queries where predicted SQL results match gold results
 * `pred_none` – Queries where the model returned `NULL` or no result
 * `gold_none` – Queries where gold reference is `NULL` or no result
-* `sql_errors` – Invalid SQL or execution errors
-* `accuracy` – Overall exact match accuracy
+* `sql_errors` – Invalid SQL or execution errors (for 2.0 also completions without any SQL, and queries over the time limit)
+* `exact_string_matches` – Predictions whose SQL equals the gold SQL up to whitespace
+* `accuracy` – Overall execution accuracy
+* `category_accuracy` – (LLMSQL 2.0 only) `total`, `matches` and `accuracy` per category
 * `model_name` – Name of the evaluated model (if provided)
 * `version` – LLMSQL benchmark version used for evaluation
 * `mismatches` – List of mismatched queries with details

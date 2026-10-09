@@ -50,7 +50,7 @@ def evaluate(
     the prediction counts as correct if one of them returns exactly the same
     (sorted) rows as the gold query.
 
-    LLMSQL 2.0: the SQL is taken from the last ```sql block of the completion
+    LLMSQL 2.0: the SQL is taken from the last fenced ``sql`` code block of the completion
     (falling back to the first WITH/SELECT statement), executed, and compared
     with the verified reference ``answer`` by the lenient execution match of
     :func:`llmsql.utils.matching.results_match` (insensitive to row order,

@@ -7,7 +7,24 @@ LLMSQL provides several inference backends for **Text-to-SQL generation** with l
 * **API** — runs inference against an OpenAI-compatible Chat Completions API with configurable base URL and rate limiting.
 * **Custom Function** — runs inference with your own async callable while preserving LLMSQL prompt building and output format.
 
-All backends load benchmark questions and table schemas, build prompts (with few-shot examples), and generate SQL queries in parallel batches.
+All backends load benchmark questions and table schemas, build prompts, and generate SQL queries in parallel batches.
+
+## Prompts and benchmark versions
+
+* **LLMSQL 2.0** (`version="2.0"`, default) is **zero-shot only**. Each prompt contains the
+  `CREATE TABLE` schema (real table names), the Wikipedia page/section and the first 3 rows of
+  every table listed in the question's `tables` field — the target table plus, for some
+  questions, distractor tables from the same page — followed by the question. The model is
+  asked to return a single SQLite query in a ```` ```sql ```` block. The prompt is built by
+  `llmsql.prompts.prompts.build_prompt_v2` and is identical to the dataset's `prompt` field.
+* **LLMSQL 1.0** (`version="1.0"`) uses the 0-, 1- or 5-shot prompt with a single sample row
+  and the placeholder table name `"Table"`.
+
+`num_fewshots` defaults to `None`, which means 5 for 1.0 and 0 for 2.0; a non-zero value with
+`version="2.0"` raises `ValueError`. `max_new_tokens` (vLLM / Transformers) defaults to `None`,
+which means 256 for 1.0 and 4096 for 2.0. Models often reason before writing the ```` ```sql ````
+block: the reported LLMSQL 2.0 results of reasoning models (gpt-oss-120b) were obtained with
+up to 16k new tokens, so raise `max_new_tokens` accordingly.
 
 ---
 
@@ -36,11 +53,11 @@ from llmsql import inference_transformers
 
 results = inference_transformers(
         model_or_model_name_or_path="Qwen/Qwen2.5-1.5B-Instruct",
+        version="2.0",  # zero-shot; use version="1.0", num_fewshots=5 for LLMSQL 1.0
         output_file="outputs/preds_transformers.jsonl",
         workdir_path="./benchmark-cache",
-        num_fewshots=5,
         batch_size=8,
-        max_new_tokens=256,
+        max_new_tokens=4096,
         temperature=0.7,
         model_kwargs={
             "torch_dtype": "bfloat16",
@@ -60,6 +77,7 @@ from llmsql import inference_vllm
 
 results = inference_vllm(
     model_name="EleutherAI/pythia-14m",
+    version="2.0",
     output_file="test_output.jsonl",
     batch_size=5000,
     do_sample=False,
@@ -89,9 +107,8 @@ results = inference_api(
     requests_per_minute=100,
     output_file="test_output_api.jsonl",
     limit=50,
-    num_fewshots = 5,
     seed=42,
-    version="2.0"
+    version="2.0"  # zero-shot
 )
 ```
 
@@ -143,11 +160,14 @@ You can also run inference directly from the command line:
 ```bash
 llmsql inference vllm \
     --model-name Qwen/Qwen2.5-1.5B-Instruct \
+    --version 2.0 \
     --output-file outputs/preds.jsonl \
     --batch-size 8 \
-    --num-fewshots 5 \
+    --max-new-tokens 16384 \
     --temperature 0.0
 ```
+
+For LLMSQL 1.0 with few-shot examples add `--version 1.0 --num-fewshots 5`.
 
 Or use the Transformers backend:
 
@@ -199,7 +219,7 @@ Runs inference using the Hugging Face `transformers` backend.
 
 | Argument                        | Type           | Default | Description                                      |
 | ------------------------------- | -------------- | ------- | ------------------------------------------------ |
-| `max_new_tokens`                | `int`          | `256`   | Maximum tokens to generate per sequence.         |
+| `max_new_tokens`                | `int \| None`  | `None`  | Maximum tokens to generate per sequence. `None`: 256 for 1.0, 4096 for 2.0. |
 | `temperature`                   | `float`        | `0.0`   | Sampling temperature (0.0 = greedy).             |
 | `do_sample`                     | `bool`         | `False` | Whether to use sampling vs greedy decoding.      |
 | `top_p`                         | `float`        | `1.0`   | Nucleus sampling parameter.                      |
@@ -212,7 +232,8 @@ Runs inference using the Hugging Face `transformers` backend.
 | ------------------------------- | ------- | ------------------------- | ------------------------------------------------ |
 | `output_file`                   | `str`   | `"outputs/predictions.jsonl"` | Path to write predictions as JSONL.          |
 | `workdir_path`                  | `str \| None`   | `None`        | Directory used to cache downloaded benchmark files. If omitted, a temporary directory is created automatically.   |
-| `num_fewshots`                  | `int`   | `5`                       | Number of few-shot examples (0, 1, or 5).        |
+| `version`                       | `str`   | `"2.0"`                   | Benchmark version (`"1.0"` or `"2.0"`).          |
+| `num_fewshots`                  | `int \| None` | `None`              | Few-shot examples (0, 1, or 5). `None`: 5 for 1.0, 0 for 2.0 (zero-shot only). |
 | `batch_size`                    | `int`   | `8`                       | Batch size for inference.                        |
 | `seed`                          | `int`   | `42`                      | Random seed for reproducibility.                 |
 
@@ -241,7 +262,7 @@ Runs inference using the [vLLM](https://github.com/vllm-project/vllm) backend fo
 
 | Argument                        | Type           | Default | Description                                      |
 | ------------------------------- | -------------- | ------- | ------------------------------------------------ |
-| `max_new_tokens`                | `int`          | `256`   | Maximum tokens to generate per sequence.         |
+| `max_new_tokens`                | `int \| None`  | `None`  | Maximum tokens to generate per sequence. `None`: 256 for 1.0, 4096 for 2.0. |
 | `temperature`                   | `float`        | `1.0`   | Sampling temperature (0.0 = greedy).             |
 | `do_sample`                     | `bool`         | `True`  | Whether to use sampling vs greedy decoding.      |
 | `sampling_kwargs`               | `dict \| None` | `None`  | Additional kwargs for `vllm.SamplingParams()`.   |
@@ -252,7 +273,8 @@ Runs inference using the [vLLM](https://github.com/vllm-project/vllm) backend fo
 | ------------------------------- | -------------- | ----------------------------- | ------------------------------------------------ |
 | `output_file`                   | `str`          | `"outputs/predictions.jsonl"` | Path to write predictions as JSONL.              |
 | `workdir_path`                  | `str \| None`          | `None`            | Directory used to cache downloaded benchmark files. If omitted, a temporary directory is created automatically.          |
-| `num_fewshots`                  | `int`          | `5`                           | Number of few-shot examples (0, 1, or 5).        |
+| `version`                       | `str`          | `"2.0"`                       | Benchmark version (`"1.0"` or `"2.0"`).          |
+| `num_fewshots`                  | `int \| None`  | `None`                        | Few-shot examples (0, 1, or 5). `None`: 5 for 1.0, 0 for 2.0 (zero-shot only). |
 | `batch_size`                    | `int`          | `8`                           | Number of prompts per batch.                     |
 | `seed`                          | `int`          | `42`                          | Random seed for reproducibility.                 |
 
@@ -265,9 +287,9 @@ Runs inference using the [vLLM](https://github.com/vllm-project/vllm) backend fo
 Both inference methods return a list of dictionaries and write results to `output_file` in JSONL format:
 
 ```json
-{"question_id": "1", "completion": "SELECT name FROM students WHERE age > 18;"}
-{"question_id": "2", "completion": "SELECT COUNT(*) FROM courses;"}
-{"question_id": "3", "completion": "SELECT name FROM teachers WHERE department = 'Physics';"}
+{"question_id": 1, "completion": "SELECT name FROM students WHERE age > 18;"}
+{"question_id": 2, "completion": "SELECT COUNT(*) FROM courses;"}
+{"question_id": 3, "completion": "```sql\nSELECT name FROM teachers WHERE department = 'Physics';\n```"}
 ```
 
 ---

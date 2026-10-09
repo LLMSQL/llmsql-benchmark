@@ -18,6 +18,28 @@ Available commands:
 - `llmsql inference api ...`
 - `llmsql evaluate ...`
 
+## Benchmark version, few-shot examples and generation length
+
+All `inference` subcommands accept `--version` (`2.0`, the default, or `1.0`):
+
+- `--num-fewshots` defaults to 5 for `--version 1.0` and 0 for `--version 2.0`.
+  LLMSQL 2.0 is zero-shot only; a non-zero value is rejected.
+- `--max-new-tokens` (transformers / vllm) defaults to 256 for 1.0 and 4096 for 2.0.
+  Reasoning models need more: the reported LLMSQL 2.0 results were obtained with up to
+  16k new tokens.
+
+```bash
+# LLMSQL 2.0 (zero-shot)
+llmsql inference vllm --model-name openai/gpt-oss-20b --version 2.0 \
+  --output-file outputs.jsonl --max-new-tokens 16384
+llmsql evaluate --outputs outputs.jsonl --version 2.0
+
+# LLMSQL 1.0 (5-shot)
+llmsql inference vllm --model-name Qwen/Qwen2.5-1.5B-Instruct --version 1.0 \
+  --num-fewshots 5 --output-file outputs_v1.jsonl
+llmsql evaluate --outputs outputs_v1.jsonl --version 1.0
+```
+
 ## Inference Commands
 
 ### 1) Transformers backend
@@ -89,8 +111,10 @@ Parsing rules:
 ## Evaluation Command
 
 ```bash
-llmsql evaluate --outputs outputs/preds_transformers.jsonl
+llmsql evaluate --outputs outputs/preds_transformers.jsonl --version 2.0
 ```
+
+For LLMSQL 2.0 the report also contains the accuracy per question category.
 
 This command calls [`evaluate()`](../evaluation/evaluate.py).
 

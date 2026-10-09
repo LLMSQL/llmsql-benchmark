@@ -126,7 +126,7 @@ def evaluate_sample(
     Evaluate a single model prediction against the gold (ground-truth) SQL query.
 
     LLMSQL 2.0 questions (those with an ``answer`` field) are delegated to
-    :func:`evaluate_sample_v2` (last ```sql block, lenient comparison with the
+    :func:`evaluate_sample_v2` (last fenced ``sql`` code block, lenient comparison with the
     verified answer). For LLMSQL 1.0 questions this function:
     - Retrieves the gold SQL query and question metadata for the given `question_id`.
     - Executes the gold SQL and the model's at most 10 predicted SQL queries on the SQLite DB.
@@ -250,7 +250,7 @@ def evaluate_sample_v2(
     Evaluate one prediction with the LLMSQL 2.0 protocol.
 
     1. The SQL is extracted with :func:`llmsql.utils.matching.extract_sql`
-       (last ```sql block, falling back to the first WITH/SELECT statement).
+       (last fenced ``sql`` code block, falling back to the first WITH/SELECT statement).
        The model is shown the real table names, so no table-name fixing is done.
     2. It is executed on the benchmark database (``timeout`` seconds limit).
     3. Its rows are compared with the verified reference ``answer`` using the

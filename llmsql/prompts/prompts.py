@@ -175,7 +175,7 @@ def build_prompt_v2(question: str, tables: list[dict], n_rows: int = 3) -> str:
     distractor tables from the same Wikipedia page, in the order given by the
     question's ``tables`` field) is rendered with
     :func:`render_table_schema_v2`; the blocks are separated by a blank line.
-    The model is asked to answer with a single SQLite query in a ```sql block
+    The model is asked to answer with a single SQLite query in a fenced ``sql`` code block
     that uses the real table names.
 
     The result is byte-for-byte identical to the ``prompt`` field shipped

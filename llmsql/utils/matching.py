@@ -4,7 +4,7 @@ LLMSQL 2.0 SQL extraction and execution matching
 
 This module implements the official LLMSQL 2.0 evaluation protocol:
 
-1. :func:`extract_sql` takes the SQL from the last ```sql block of a
+1. :func:`extract_sql` takes the SQL from the last fenced ``sql`` code block of a
    completion (falling back to the first ``WITH``/``SELECT`` statement).
 2. The query is executed on ``sqlite_tables.db``.
 3. :func:`results_match` compares the result rows with the reference
@@ -46,8 +46,8 @@ _TRAILING_COUNT = re.compile(r"\s*\(\d+\)$")
 def extract_sql(text: str | None) -> str | None:
     """Extract the SQL query from a model completion.
 
-    The query is taken from the **last** fenced code block (```sql,
-    ```sqlite or a bare ```), so a model may draft queries while reasoning
+    The query is taken from the **last** fenced code block (``sql``,
+    ``sqlite`` or without a language tag), so a model may draft queries while reasoning
     and give its final answer at the end. Inside that block (or in the whole
     text if there is no block) the query starts at the first ``WITH`` or
     ``SELECT`` keyword (case-insensitive) and runs to the end of the block.

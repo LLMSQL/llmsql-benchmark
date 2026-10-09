@@ -19,6 +19,7 @@ class ParserCLI:
                 --model-or-model-name-or-path Qwen/Qwen2.5-1.5B-Instruct \
                 --output-file outputs/preds_transformers.jsonl \
                 --batch-size 8 \
+                --version 1.0 \
                 --num-fewshots 5
 
             # 2️⃣ vLLM backend
@@ -26,7 +27,8 @@ class ParserCLI:
                 --model-name Qwen/Qwen2.5-1.5B-Instruct \
                 --output-file outputs/preds_vllm.jsonl \
                 --batch-size 8 \
-                --num-fewshots 5
+                --version 2.0 \
+                --max-new-tokens 16384
 
             # 3️⃣ Transformers with model kwargs
             llmsql inference transformers \
