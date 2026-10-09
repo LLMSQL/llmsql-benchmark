@@ -1,3 +1,4 @@
+import json
 import os
 from pathlib import Path
 import re
@@ -276,7 +277,10 @@ def evaluate_sample_v2(
         completion, str
     ), f"Completion filed in outputs file must be of type string: {completion}. Type: {type(completion)}"
     gold_sql = q_info["sql"]
-    gold_results = q_info["answer"]
+    # The released ``answer`` is a JSON-encoded list of rows (a plain string column keeps
+    # Hugging Face `datasets` from coercing values such as '"Etienne"' or '1').
+    answer = q_info["answer"]
+    gold_results = json.loads(answer) if isinstance(answer, str) else answer
 
     pred_none = sql_error = exact_string_match = 0
     gold_none = int(gold_results == [[None]])

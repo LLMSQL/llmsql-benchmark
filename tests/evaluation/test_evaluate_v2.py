@@ -1,5 +1,6 @@
 """End-to-end evaluation of LLMSQL 2.0 predictions on the committed fixture."""
 
+import json
 import sqlite3
 
 import pytest
@@ -65,7 +66,7 @@ def test_answer_rows_as_literal_select_score_100(
         {
             "question_id": q["question_id"],
             "completion": "```sql\nSELECT "
-            + ", ".join(literal(v) for v in q["answer"][0])
+            + ", ".join(literal(v) for v in json.loads(q["answer"])[0])
             + ";\n```",
         }
         for q in llmsql2_questions
@@ -85,7 +86,7 @@ def test_wrong_completions_score_0(llmsql2_questions, llmsql2_workdir, tmp_path)
     assert len(report["mismatches"]) == len(llmsql2_questions)
     m = report["mismatches"][0]
     assert m["prediction_results"] == [("nope",)]
-    assert m["gold_results"] == llmsql2_questions[0]["answer"]
+    assert m["gold_results"] == json.loads(llmsql2_questions[0]["answer"])
 
 
 def test_mixed_completions_and_counters(llmsql2_questions, llmsql2_workdir, tmp_path):
