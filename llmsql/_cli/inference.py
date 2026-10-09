@@ -3,6 +3,7 @@ import json
 from typing import Any
 
 from llmsql._cli.subparsers import SubCommand
+from llmsql.config.config import get_available_versions
 
 
 def parse_limit(value: str) -> float | int:
@@ -175,7 +176,7 @@ class Inference(SubCommand):
         # COMMON BENCHMARK ARGS
         # =========================
         def add_common_benchmark_args(parser: argparse.ArgumentParser) -> None:
-            parser.add_argument("--version", default="2.0", choices=["1.0", "2.0"])
+            parser.add_argument("--version", default="2.0", choices=get_available_versions())
             parser.add_argument("--output-file", default="llm_sql_predictions.jsonl")
             parser.add_argument(
                 "--workdir-path",
