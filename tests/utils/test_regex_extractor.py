@@ -155,3 +155,93 @@ ORDER BY name;"""
         output = "SELECT * FROM users"
         result = find_sql(output, limit=0)
         assert result == []
+
+
+class TestFindSQLQuotedTerminators:
+    """A ';' only ends a query when it is outside quotes."""
+
+    def test_semicolon_inside_string_literal(self) -> None:
+        """Regression test: a ';' in a literal must not truncate the query."""
+        output = """SELECT a FROM "Table" WHERE b = 'x;y';"""
+        result = find_sql(output)
+        assert result == ["""SELECT a FROM "Table" WHERE b = 'x;y'"""]
+
+    def test_semicolon_inside_doubled_quote_escape(self) -> None:
+        """'' is an escaped quote, so the ';' after it is still inside the literal."""
+        output = "SELECT a FROM t WHERE b = 'it''s; here';"
+        result = find_sql(output)
+        assert result == ["SELECT a FROM t WHERE b = 'it''s; here'"]
+
+    def test_semicolon_inside_quoted_identifier(self) -> None:
+        output = 'SELECT "we;ird" FROM t;'
+        result = find_sql(output)
+        assert result == ['SELECT "we;ird" FROM t']
+
+    def test_semicolon_inside_backtick_identifier(self) -> None:
+        output = "SELECT `we;ird` FROM t;"
+        result = find_sql(output)
+        assert result == ["SELECT `we;ird` FROM t"]
+
+    def test_semicolon_after_the_literal_still_terminates(self) -> None:
+        """The terminating ';' must still work once the literal is closed."""
+        output = "SELECT a FROM t WHERE b = 'x'; SELECT c FROM t;"
+        result = find_sql(output)
+        assert len(result) == 2
+        assert result[0] == "SELECT a FROM t WHERE b = 'x'"
+
+
+class TestFindSQLCandidateOrder:
+    """The final answer is at the end of the output, not the start."""
+
+    _QUERY = 'SELECT "a" FROM "t" WHERE "b" = 1'
+
+    def _reasoning_then_query(self, sentences: int = 12) -> str:
+        prose = "\n".join(
+            f"I need to select the right column for question {i}."
+            for i in range(sentences)
+        )
+        return f"{prose}\n{self._QUERY};"
+
+    def test_query_after_reasoning_prose_is_kept(self) -> None:
+        """
+        Regression test: prose that starts with 'select' used to fill every
+        slot, so the real query at the end was never evaluated.
+        """
+        result = find_sql(self._reasoning_then_query())
+        assert self._QUERY in result
+
+    def test_last_candidates_survive_the_limit(self) -> None:
+        result = find_sql(self._reasoning_then_query(), limit=1)
+        assert result == [self._QUERY]
+
+    def test_first_candidates_are_the_prose(self) -> None:
+        """The prose candidates are still extracted, just no longer preferred."""
+        result = find_sql(self._reasoning_then_query())
+        assert len(result) == 10
+        assert result[-1] == self._QUERY
+
+
+class TestFindSQLFencedBlocks:
+    """A ```sql block is the clearest statement of intent."""
+
+    def test_sql_fence_is_preferred_over_prose(self) -> None:
+        output = (
+            "I need to select the right column first.\n"
+            "```sql\nSELECT a FROM t;\n```\n"
+        )
+        result = find_sql(output)
+        assert result == ["SELECT a FROM t"]
+
+    def test_last_sql_fence_wins(self) -> None:
+        output = "```sql\nSELECT 1;\n```\nsome prose\n```sql\nSELECT 2;\n```\n"
+        result = find_sql(output, limit=1)
+        assert result == ["SELECT 2"]
+
+    def test_untagged_fence_falls_back_to_scanning(self) -> None:
+        """A bare ``` block is not a sql fence, so scanning still applies."""
+        output = "```\nSELECT * FROM data\n```"
+        assert find_sql(output) == ["SELECT * FROM data"]
+
+    def test_empty_sql_fence_falls_back_to_scanning(self) -> None:
+        output = "```sql\n\n```\nSELECT a FROM t;"
+        assert find_sql(output) == ["SELECT a FROM t"]
