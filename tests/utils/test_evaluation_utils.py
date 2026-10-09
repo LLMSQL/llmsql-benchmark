@@ -8,7 +8,9 @@ from llmsql.utils.evaluation_utils import (
     evaluate_sample,
     execute_sql,
     fix_table_name,
+    normalize_question_id,
     normalize_sql,
+    resolve_prediction_coverage,
 )
 
 
@@ -279,22 +281,42 @@ class TestEvaluateSample:
         )
         assert is_match == 0
 
-    def test_invalid_question_id_type(self, eval_db, questions_dict) -> None:
-        """Test assertion when question_id is not int."""
+    def test_int_like_string_question_id_is_accepted(
+        self, eval_db, questions_dict
+    ) -> None:
+        """Other tools serialise ids as strings; int-like strings must work."""
         item = {
-            "question_id": "1",  # String instead of int
+            "question_id": "1",  # int-like string instead of int
+            "completion": "SELECT name FROM Table WHERE id = 1",
+        }
+        is_match, _, _ = evaluate_sample(item, questions_dict, eval_db)
+        assert is_match == 1
+
+    def test_invalid_question_id_type(self, eval_db, questions_dict) -> None:
+        """A non-int-like question_id is reported by name, not by a bare assert."""
+        item = {
+            "question_id": "not-an-id",
             "completion": "SELECT 1",
         }
-        with pytest.raises(AssertionError):
+        with pytest.raises(ValueError, match="not-an-id"):
+            evaluate_sample(item, questions_dict, eval_db)
+
+    def test_unknown_question_id_is_reported(self, eval_db, questions_dict) -> None:
+        """An id outside the benchmark raises ValueError instead of KeyError."""
+        item = {
+            "question_id": 99999,
+            "completion": "SELECT 1",
+        }
+        with pytest.raises(ValueError, match="99999"):
             evaluate_sample(item, questions_dict, eval_db)
 
     def test_invalid_completion_type(self, eval_db, questions_dict) -> None:
-        """Test assertion when completion is not string."""
+        """Test error when completion is not string."""
         item = {
             "question_id": 1,
             "completion": ["SELECT 1"],  # List instead of string
         }
-        with pytest.raises(AssertionError):
+        with pytest.raises(TypeError, match="completion"):
             evaluate_sample(item, questions_dict, eval_db)
 
     def test_metrics_counters(self, eval_db, questions_dict) -> None:
@@ -398,3 +420,101 @@ class TestEvaluateSample:
         assert metrics["pred_none"] == 1
         assert metrics["sql_error"] == 0
         assert metrics["exact_string_match"] == 1
+
+
+class TestNormalizeQuestionId:
+    """question_id coercion"""
+
+    def test_int_passes_through(self):
+        assert normalize_question_id(42) == 42
+
+    def test_int_like_string_is_accepted(self):
+        assert normalize_question_id("42") == 42
+        assert normalize_question_id(" 42 ") == 42
+
+    def test_non_int_string_is_rejected(self):
+        with pytest.raises(ValueError):
+            normalize_question_id("forty-two")
+
+    def test_unsupported_type_is_rejected(self):
+        with pytest.raises(TypeError):
+            normalize_question_id(None)
+        with pytest.raises(TypeError):
+            normalize_question_id([1])
+
+
+class TestResolvePredictionCoverage:
+    """Coverage accounting for partial / duplicated / malformed predictions"""
+
+    @staticmethod
+    def _questions(*ids):
+        return {
+            qid: {"table_id": qid, "sql": "SELECT 1", "question": "q"} for qid in ids
+        }
+
+    @staticmethod
+    def _item(qid):
+        return {"question_id": qid, "completion": "SELECT 1"}
+
+    def test_full_coverage(self):
+        questions = self._questions(1, 2, 3)
+        outputs = [self._item(1), self._item(2), self._item(3)]
+
+        unique, coverage = resolve_prediction_coverage(outputs, questions)
+
+        assert len(unique) == 3
+        assert coverage == {
+            "expected": 3,
+            "answered": 3,
+            "missing": 0,
+            "duplicates": 0,
+        }
+
+    def test_partial_run_is_reported_as_missing(self):
+        """Regression: 1 of 3 answered used to yield a full-looking accuracy."""
+        questions = self._questions(1, 2, 3)
+
+        unique, coverage = resolve_prediction_coverage([self._item(1)], questions)
+
+        assert len(unique) == 1
+        assert coverage["expected"] == 3
+        assert coverage["answered"] == 1
+        assert coverage["missing"] == 2
+
+    def test_duplicates_keep_first_prediction(self):
+        questions = self._questions(1, 2)
+        outputs = [self._item(1), self._item(1), self._item(2), self._item(1)]
+
+        unique, coverage = resolve_prediction_coverage(outputs, questions)
+
+        assert [item["question_id"] for item in unique] == [1, 2]
+        assert coverage["duplicates"] == 2
+
+    def test_string_ids_are_matched_against_the_benchmark(self):
+        questions = self._questions(1, 2)
+
+        unique, coverage = resolve_prediction_coverage(
+            [self._item("1"), self._item("2")], questions
+        )
+
+        assert [item["question_id"] for item in unique] == ["1", "2"]
+        assert coverage["missing"] == 0
+
+    def test_unknown_id_raises_with_the_id_in_the_message(self):
+        questions = self._questions(1)
+
+        with pytest.raises(ValueError, match="999"):
+            resolve_prediction_coverage([self._item(999)], questions)
+
+    def test_empty_predictions(self):
+        questions = self._questions(1, 2)
+
+        unique, coverage = resolve_prediction_coverage([], questions)
+
+        assert unique == []
+        assert coverage == {
+            "expected": 2,
+            "answered": 0,
+            "missing": 2,
+            "duplicates": 0,
+        }

@@ -18,9 +18,11 @@ from llmsql.config.config import (
     DEFAULT_LLMSQL_VERSION,
     get_repo_id,
 )
+from llmsql.loggers.logging_config import log
 from llmsql.utils.evaluation_utils import (
     connect_sqlite,
     evaluate_sample,
+    resolve_prediction_coverage,
 )
 from llmsql.utils.inference_utils import _maybe_download, resolve_workdir_path
 from llmsql.utils.leaderboard_utils import (
@@ -65,7 +67,14 @@ def evaluate(
             "arguments": {"num_fewshots": 5}}}``.
 
     Returns:
-        dict: Metrics and mismatches.
+        dict: Metrics and mismatches, plus coverage counters ``expected``,
+            ``answered``, ``missing`` and ``duplicates``. ``accuracy`` is
+            computed over the predictions, ``accuracy_over_benchmark`` counts
+            unanswered questions as wrong.
+
+    Raises:
+        ValueError: if a prediction references a ``question_id`` that is not
+            part of the benchmark.
     """
 
     # Determine input type
@@ -88,6 +97,23 @@ def evaluate(
     else:
         raise TypeError(
             "outputs must be file path or list of dicts in format {'question_id': int, 'completion': str}"
+        )
+
+    # --- Drop duplicates / measure coverage against the benchmark ---
+    # Scoring the predictions file directly made partial runs (crash, --limit,
+    # filtered file) look like full results, and counted duplicate ids twice.
+    outputs_list, coverage = resolve_prediction_coverage(outputs_list, questions)
+
+    if coverage["duplicates"]:
+        log.warning(
+            f"{coverage['duplicates']} duplicate question_id(s) in the predictions "
+            f"file; keeping only the first prediction for each."
+        )
+    if coverage["missing"]:
+        log.warning(
+            f"Coverage {coverage['answered']}/{coverage['expected']} question(s): "
+            f"{coverage['missing']} benchmark question(s) have no prediction, so "
+            f"accuracy is computed over {coverage['answered']} answer(s) only."
         )
 
     # --- Connect to DB ---
@@ -127,6 +153,7 @@ def evaluate(
         metrics["gold_none"],
         metrics["sql_errors"],
         metrics["exact_string_matches"],
+        coverage,
     )
 
     # --- Build report structure ---
@@ -135,7 +162,13 @@ def evaluate(
         "model_name": model_name,
         "version": version,
         **metrics,
+        **coverage,
         "accuracy": accuracy,
+        # Missing answers count as wrong, so a partial run cannot silently
+        # report a full-looking accuracy.
+        "accuracy_over_benchmark": (
+            metrics["matches"] / coverage["expected"] if coverage["expected"] else 0.0
+        ),
         "exact_string_match_accuracy": (
             metrics["exact_string_matches"] / metrics["total"]
             if metrics["total"]

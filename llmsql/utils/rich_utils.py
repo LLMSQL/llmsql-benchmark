@@ -37,20 +37,57 @@ def print_summary(
     gold_none: int,
     sql_errors: int,
     exact_string_matches: int,
+    coverage: dict[str, int] | None = None,
 ) -> None:
-    """Pretty-print summary with Rich."""
+    """
+    Pretty-print summary with Rich.
+
+    Args:
+        total, matches, pred_none, gold_none, sql_errors, exact_string_matches:
+            per-prediction counters.
+        coverage: optional ``{"expected", "answered", "missing", "duplicates"}``
+            mapping as returned by
+            :func:`~llmsql.utils.evaluation_utils.resolve_prediction_coverage`.
+            When given, answered/missing coverage and accuracy over the whole
+            benchmark are added to the table.
+    """
     table = Table(title="[green]Evaluation Summary[/green]", show_lines=True)
     table.add_column("Metric", style="bold green")
     table.add_column("Value", style="bold yellow")
 
     table.add_row("Total Samples", str(total))
-    table.add_row("Correct Results", f"{matches} ({matches / total:.2%})")
+
+    if coverage:
+        expected = coverage["expected"]
+        answered = coverage["answered"]
+        coverage_text = (
+            f"{answered}/{expected} ({answered / expected:.2%})" if expected else "n/a"
+        )
+        table.add_row("Coverage", coverage_text)
+
+        if coverage["missing"]:
+            table.add_row("Missing Predictions", str(coverage["missing"]))
+        if coverage["duplicates"]:
+            table.add_row("Duplicate Predictions", str(coverage["duplicates"]))
+
+    table.add_row(
+        "Correct Results",
+        f"{matches} ({matches / total:.2%})" if total else "n/a",
+    )
     table.add_row(
         "Exact String Match",
-        f"{exact_string_matches} ({exact_string_matches / total:.2%})",
+        f"{exact_string_matches} ({exact_string_matches / total:.2%})"
+        if total
+        else "n/a",
     )
     table.add_row("Prediction None", f"{pred_none}/{total}")
     table.add_row("Ground Truth None", f"{gold_none}/{total}")
     table.add_row("SQL Errors", str(sql_errors))
+
+    if coverage and coverage["expected"]:
+        table.add_row(
+            "Accuracy over Benchmark",
+            f"{matches} ({matches / coverage['expected']:.2%})",
+        )
 
     console.print(table)
