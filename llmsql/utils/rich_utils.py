@@ -37,6 +37,7 @@ def print_summary(
     gold_none: int,
     sql_errors: int,
     exact_string_matches: int,
+    category_accuracy: dict[str, dict[str, int]] | None = None,
 ) -> None:
     """Pretty-print summary with Rich."""
     table = Table(title="[green]Evaluation Summary[/green]", show_lines=True)
@@ -52,5 +53,10 @@ def print_summary(
     table.add_row("Prediction None", f"{pred_none}/{total}")
     table.add_row("Ground Truth None", f"{gold_none}/{total}")
     table.add_row("SQL Errors", str(sql_errors))
+    for name, c in sorted((category_accuracy or {}).items()):
+        table.add_row(
+            f"Category: {name}",
+            f"{c['matches']}/{c['total']} ({c['matches'] / c['total']:.2%})",
+        )
 
     console.print(table)

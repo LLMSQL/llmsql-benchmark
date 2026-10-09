@@ -1,3 +1,6 @@
+import json
+
+
 def build_prompt_5shot(
     question: str,
     headers: list[str],
@@ -110,3 +113,81 @@ Columns: {headers}
 Types: {types}
 Sample row: {sample_row}
 SQL:"""
+
+
+# ---------------------------------------------------------------------------
+# LLMSQL 2.0
+# ---------------------------------------------------------------------------
+
+PROMPT_V2_TEMPLATE = """You are an expert SQLite query writer. Given the database schema with a few sample rows and a question,
+write a single SQLite query that answers the question. Use the exact table names. Return only the SQL in a ```sql block.
+
+{tables}
+
+Question: {question}"""
+
+
+def render_table_schema_v2(table: dict, n_rows: int | None = 3) -> str:
+    """Render one table for the LLMSQL 2.0 prompt.
+
+    The block consists of a ``CREATE TABLE`` statement with the real table id
+    (columns typed ``REAL`` if their type is ``"real"`` and ``TEXT`` otherwise),
+    the Wikipedia page / section the table comes from and the first ``n_rows``
+    rows, one JSON array per line::
+
+        CREATE TABLE "1-123-1" ("Week" REAL, "Result" TEXT);
+        -- Wikipedia: 1990 Team season / Schedule
+        -- first 3 of 16 rows:
+        [1, "W 21–7"]
+        ...
+
+    Args:
+        table: Table record with ``table_id``, ``page_title``,
+            ``section_title``, ``header``, ``types`` and ``rows``.
+        n_rows: Number of sample rows to show (``None`` shows all rows).
+
+    Returns:
+        The rendered table block.
+    """
+    cols = ", ".join(
+        f'"{h}" {"REAL" if ty == "real" else "TEXT"}'
+        for h, ty in zip(table["header"], table["types"], strict=False)
+    )
+    all_rows = table["rows"]
+    rows = all_rows if n_rows is None else all_rows[:n_rows]
+    body = "\n".join(json.dumps(r, ensure_ascii=False) for r in rows)
+    shown = (
+        "all rows"
+        if n_rows is None or n_rows >= len(all_rows)
+        else f"first {len(rows)} of {len(all_rows)} rows"
+    )
+    return (
+        f'CREATE TABLE "{table["table_id"]}" ({cols});\n'
+        f"-- Wikipedia: {table['page_title']} / {table['section_title']}\n"
+        f"-- {shown}:\n{body}"
+    )
+
+
+def build_prompt_v2(question: str, tables: list[dict], n_rows: int = 3) -> str:
+    """Build the official zero-shot LLMSQL 2.0 prompt.
+
+    Every table in ``tables`` (the target table plus, for some questions,
+    distractor tables from the same Wikipedia page, in the order given by the
+    question's ``tables`` field) is rendered with
+    :func:`render_table_schema_v2`; the blocks are separated by a blank line.
+    The model is asked to answer with a single SQLite query in a ```sql block
+    that uses the real table names.
+
+    The result is byte-for-byte identical to the ``prompt`` field shipped
+    with the dataset.
+
+    Args:
+        question: Natural-language question.
+        tables: Table records shown to the model, in order.
+        n_rows: Number of sample rows per table (3 in the official protocol).
+
+    Returns:
+        The prompt string.
+    """
+    rendered = "\n\n".join(render_table_schema_v2(t, n_rows) for t in tables)
+    return PROMPT_V2_TEMPLATE.format(tables=rendered, question=question)

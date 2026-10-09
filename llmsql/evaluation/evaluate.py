@@ -46,6 +46,18 @@ def evaluate(
     """
     Evaluate predicted SQL queries against the LLMSQL benchmark.
 
+    LLMSQL 1.0: up to 10 SQL candidates are extracted from each completion and
+    the prediction counts as correct if one of them returns exactly the same
+    (sorted) rows as the gold query.
+
+    LLMSQL 2.0: the SQL is taken from the last ```sql block of the completion
+    (falling back to the first WITH/SELECT statement), executed, and compared
+    with the verified reference ``answer`` by the lenient execution match of
+    :func:`llmsql.utils.matching.results_match` (insensitive to row order,
+    duplicates, number formatting and extra columns). The report additionally
+    contains ``category_accuracy`` (``lookup``, ``convention``,
+    ``text_quantity``).
+
     Args:
         version: LLMSQL version
         outputs: Either a JSONL file path or a list of dicts.
@@ -103,11 +115,19 @@ def evaluate(
         "sql_errors": 0,
     }
     mismatches: list[dict] = []
+    # Per-category counts (LLMSQL 2.0 questions have a ``category`` field)
+    per_category: dict[str, dict[str, int]] = {}
 
     for item in track(outputs_list, description="Evaluating"):
         metrics["total"] += 1
 
         is_match, mismatch_info, m = evaluate_sample(item, questions, conn)
+
+        category = questions.get(item.get("question_id"), {}).get("category")
+        if category is not None:
+            cat = per_category.setdefault(category, {"total": 0, "matches": 0})
+            cat["total"] += 1
+            cat["matches"] += is_match
 
         metrics["matches"] += is_match
         metrics["pred_none"] += m["pred_none"]
@@ -127,6 +147,7 @@ def evaluate(
         metrics["gold_none"],
         metrics["sql_errors"],
         metrics["exact_string_matches"],
+        category_accuracy=per_category or None,
     )
 
     # --- Build report structure ---
@@ -140,6 +161,16 @@ def evaluate(
             metrics["exact_string_matches"] / metrics["total"]
             if metrics["total"]
             else 0.0
+        ),
+        **(
+            {
+                "category_accuracy": {
+                    name: {**c, "accuracy": c["matches"] / c["total"]}
+                    for name, c in sorted(per_category.items())
+                }
+            }
+            if per_category
+            else {}
         ),
         "mismatches": mismatches,
         "timestamp": datetime.now(timezone.utc).isoformat(),
