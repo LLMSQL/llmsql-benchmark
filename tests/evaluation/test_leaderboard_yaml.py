@@ -136,7 +136,28 @@ def test_evaluate_dict_outputs_yaml_has_no_answers_path(temp_dir, benchmark_file
     data = yaml.safe_load(yaml_path.read_text())
     assert data["model"]["name"] is None
     assert data["results"]["answers_path"] is None
-    assert data["results"]["execution_accuracy"] == 1.0
+    # 1 of the 2 benchmark questions answered (correctly).
+    assert data["results"]["execution_accuracy"] == 0.5
+
+
+def test_leaderboard_yaml_scores_partial_run_over_benchmark(temp_dir, benchmark_files):
+    """Unanswered questions count as wrong in the leaderboard record."""
+    partial_path = temp_dir / "partial.jsonl"
+    partial_path.write_text(json.dumps({"question_id": 1, "completion": "SELECT 1"}))
+    yaml_path = temp_dir / "run.yaml"
+
+    report = evaluate(
+        outputs=str(partial_path),
+        workdir_path=str(temp_dir),
+        save_report=str(temp_dir / "report.json"),
+        show_mismatches=False,
+        save_leaderboard_yaml=str(yaml_path),
+    )
+
+    assert report["accuracy"] == 1.0
+    data = yaml.safe_load(yaml_path.read_text())
+    assert data["results"]["execution_accuracy"] == 0.5
+    assert data["results"]["num_samples"] == 2
 
 
 def test_build_leaderboard_record_matches_existing_leaderboard_layout():
