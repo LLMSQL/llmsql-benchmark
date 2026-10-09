@@ -2,6 +2,7 @@ import glob
 import json
 import os
 from pathlib import Path
+import shutil
 import sqlite3
 from unittest.mock import MagicMock
 
@@ -106,3 +107,36 @@ def mock_utils(mocker, tmp_path):
     mocker.patch("llmsql.evaluation.evaluate.save_json_report")
 
     return tmp_path
+
+
+# --- LLMSQL 2.0 fixture -----------------------------------------------------
+# 21 questions of the LLMSQL 2.0 release with their tables and a tiny SQLite DB,
+# built by tests/fixtures/llmsql2/build_fixture.py.
+LLMSQL2_FIXTURE_DIR = Path(__file__).parent / "fixtures" / "llmsql2"
+LLMSQL2_FILES = ("questions.jsonl", "tables.jsonl", "sqlite_tables.db")
+
+
+def _read_jsonl(path: Path) -> list[dict]:
+    with open(path, encoding="utf-8") as f:
+        return [json.loads(line) for line in f if line.strip()]
+
+
+@pytest.fixture
+def llmsql2_questions() -> list[dict]:
+    return _read_jsonl(LLMSQL2_FIXTURE_DIR / "questions.jsonl")
+
+
+@pytest.fixture
+def llmsql2_tables() -> dict[str, dict]:
+    return {t["table_id"]: t for t in _read_jsonl(LLMSQL2_FIXTURE_DIR / "tables.jsonl")}
+
+
+@pytest.fixture
+def llmsql2_workdir(tmp_path) -> Path:
+    """A workdir pre-populated with the LLMSQL 2.0 fixture files, so that
+    ``_maybe_download`` finds them cached and never touches the network."""
+    workdir = tmp_path / "llmsql2_workdir"
+    workdir.mkdir()
+    for name in LLMSQL2_FILES:
+        shutil.copy(LLMSQL2_FIXTURE_DIR / name, workdir / name)
+    return workdir

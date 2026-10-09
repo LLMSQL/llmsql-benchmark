@@ -128,7 +128,9 @@ def test_boolean_options():
     for args, attribute, default, flag in cases:
         assert getattr(parser.parse_args(args), attribute) is default
         assert getattr(parser.parse_args([*args, flag]), attribute) is True
-        assert getattr(parser.parse_args([*args, f"--no-{flag[2:]}"]), attribute) is False
+        assert (
+            getattr(parser.parse_args([*args, f"--no-{flag[2:]}"]), attribute) is False
+        )
 
 
 @pytest.mark.asyncio
@@ -226,7 +228,6 @@ async def test_help_shows_without_crashing(monkeypatch, capsys):
     assert "usage:" in captured.err.lower() or "usage:" in captured.out.lower()
 
 
-
 @pytest.mark.asyncio
 async def test_evaluate_command_called(monkeypatch):
     """
@@ -238,7 +239,7 @@ async def test_evaluate_command_called(monkeypatch):
         "llmsql._cli.evaluate.evaluate",
         mock_evaluate,
     )
-    
+
     test_args = [
         "llmsql",
         "evaluate",
@@ -246,19 +247,38 @@ async def test_evaluate_command_called(monkeypatch):
         "dummy_file.jsonl",
         "--show-mismatches",
         "--max-mismatches",
-        "10"
+        "10",
     ]
 
     monkeypatch.setattr(sys, "argv", test_args)
 
-    
     cli = ParserCLI()
     args = cli.parse_args()
     cli.execute(args)
-    
-    mock_evaluate.assert_called_once() 
+
+    mock_evaluate.assert_called_once()
 
     call_kwargs = mock_evaluate.call_args.kwargs
     assert call_kwargs["outputs"] == "dummy_file.jsonl"
-    assert call_kwargs["show_mismatches"] is True 
+    assert call_kwargs["show_mismatches"] is True
     assert call_kwargs["max_mismatches"] == 10
+
+
+@pytest.mark.parametrize("backend", ["transformers", "api"])
+def test_num_fewshots_and_max_new_tokens_default_to_none(backend):
+    """None lets the library pick the version default (5/256 for 1.0, 0/4096 for 2.0)."""
+    argv = {
+        "transformers": [
+            "inference",
+            "transformers",
+            "--model-or-model-name-or-path",
+            "m",
+        ],
+        "api": ["inference", "api", "--model-name", "m", "--base-url", "http://x"],
+    }[backend]
+    args = ParserCLI()._parser.parse_args(argv)
+    assert args.num_fewshots is None
+    if backend == "transformers":
+        assert args.max_new_tokens is None
+    args = ParserCLI()._parser.parse_args(argv + ["--num-fewshots", "1"])
+    assert args.num_fewshots == 1
