@@ -232,7 +232,7 @@ def inference_transformers(
 
     if tok_name:
         load_tok_args = {
-            "trust_remote_code": False,
+            "trust_remote_code": trust_remote_code,
             "token": hf_token,
             "padding_side": tokenizer_kwargs.get("padding_side", "left"),
             **tokenizer_kwargs,

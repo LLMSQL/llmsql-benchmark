@@ -61,8 +61,11 @@ def test_default_dtype_is_auto(monkeypatch):
     assert captured["trust_remote_code"] is False
 
 
-def test_tokenizer_remote_code_is_disabled_by_default(monkeypatch, tmp_path):
-    captured = {}
+@pytest.mark.parametrize("trust_remote_code", [False, True])
+def test_remote_code_setting_is_passed_to_model_and_tokenizer(
+    monkeypatch, tmp_path, trust_remote_code
+):
+    captured = {"model": {}, "tokenizer": {}}
 
     class FakeModel:
         def eval(self):
@@ -73,14 +76,16 @@ def test_tokenizer_remote_code_is_disabled_by_default(monkeypatch, tmp_path):
         eos_token = "eos"
         pad_token_id = 0
 
+    def fake_model_from_pretrained(name, **kwargs):
+        captured["model"].update(kwargs)
+        return FakeModel()
+
     monkeypatch.setattr(
-        it.AutoModelForCausalLM,
-        "from_pretrained",
-        lambda name, **kwargs: FakeModel(),
+        it.AutoModelForCausalLM, "from_pretrained", fake_model_from_pretrained
     )
 
     def fake_tokenizer_from_pretrained(name, **kwargs):
-        captured.update(kwargs)
+        captured["tokenizer"].update(kwargs)
         return FakeTokenizer()
 
     monkeypatch.setattr(
@@ -92,11 +97,13 @@ def test_tokenizer_remote_code_is_disabled_by_default(monkeypatch, tmp_path):
 
     it.inference_transformers(
         "some/model",
+        trust_remote_code=trust_remote_code,
         output_file=str(tmp_path / "predictions.jsonl"),
         workdir_path=str(tmp_path),
     )
 
-    assert captured["trust_remote_code"] is False
+    assert captured["model"]["trust_remote_code"] is trust_remote_code
+    assert captured["tokenizer"]["trust_remote_code"] is trust_remote_code
 
 
 @pytest.mark.parametrize("key", ["dtype", "torch_dtype"])
