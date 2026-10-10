@@ -176,7 +176,9 @@ class Inference(SubCommand):
         # COMMON BENCHMARK ARGS
         # =========================
         def add_common_benchmark_args(parser: argparse.ArgumentParser) -> None:
-            parser.add_argument("--version", default="2.0", choices=get_available_versions())
+            parser.add_argument(
+                "--version", default="2.0", choices=get_available_versions()
+            )
             parser.add_argument("--output-file", default="llm_sql_predictions.jsonl")
             parser.add_argument(
                 "--workdir-path",
@@ -284,10 +286,14 @@ class Inference(SubCommand):
             help="JSON string for SamplingParams kwargs",
         )
         # LoRA args
-        self._parser_vllm.add_argument("--enable-lora", action="store_true", help="Enable LoRA adapters")
+        self._parser_vllm.add_argument(
+            "--enable-lora", action="store_true", help="Enable LoRA adapters"
+        )
         self._parser_vllm.add_argument("--lora-path", help="Path to LoRA adapter")
         self._parser_vllm.add_argument("--lora-name", help="Name of LoRA adapter")
-        self._parser_vllm.add_argument("--lora-scale", type=float, default=1.0, help="LoRA scaling factor")
+        self._parser_vllm.add_argument(
+            "--lora-scale", type=float, default=1.0, help="LoRA scaling factor"
+        )
         self._parser_vllm.add_argument(
             "--lora-config",
             type=json.loads,
@@ -374,7 +380,8 @@ class Inference(SubCommand):
                 "lora_name": args.lora_name if args.lora_name else "default",
                 "lora_scale": args.lora_scale,
             }
-        if args.enable_lora:
+        # Providing a LoRA config implies `enable_lora=True`.
+        if args.enable_lora or lora_config is not None:
             if llm_kwargs is None:
                 llm_kwargs = {}
             llm_kwargs["enable_lora"] = True

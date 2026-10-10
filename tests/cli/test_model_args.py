@@ -202,6 +202,102 @@ def test_vllm_model_args_reach_llm_kwargs(monkeypatch, flag):
     }
 
 
+def test_vllm_lora_path_produces_lora_config(monkeypatch):
+    mock_inference = MagicMock(return_value=[])
+    import llmsql
+
+    monkeypatch.setitem(llmsql.__dict__, "inference_vllm", mock_inference)
+
+    _run_cli(
+        monkeypatch,
+        [
+            "inference",
+            "vllm",
+            "--model-name",
+            "m",
+            "--lora-path",
+            "/path/to/adapter",
+        ],
+    )
+
+    mock_inference.assert_called_once()
+    kwargs = mock_inference.call_args.kwargs
+    assert kwargs["lora_config"] == {
+        "lora_path": "/path/to/adapter",
+        "lora_name": "default",
+        "lora_scale": 1.0,
+    }
+    # `--lora-path` implies `enable_lora=True`
+    assert kwargs["llm_kwargs"]["enable_lora"] is True
+
+
+def test_vllm_lora_name_and_scale_are_forwarded(monkeypatch):
+    mock_inference = MagicMock(return_value=[])
+    import llmsql
+
+    monkeypatch.setitem(llmsql.__dict__, "inference_vllm", mock_inference)
+
+    _run_cli(
+        monkeypatch,
+        [
+            "inference",
+            "vllm",
+            "--model-name",
+            "m",
+            "--lora-path",
+            "/path/to/adapter",
+            "--lora-name",
+            "my-adapter",
+            "--lora-scale",
+            "0.5",
+        ],
+    )
+
+    kwargs = mock_inference.call_args.kwargs
+    assert kwargs["lora_config"] == {
+        "lora_path": "/path/to/adapter",
+        "lora_name": "my-adapter",
+        "lora_scale": 0.5,
+    }
+
+
+def test_vllm_lora_config_json_implies_enable_lora(monkeypatch):
+    mock_inference = MagicMock(return_value=[])
+    import llmsql
+
+    monkeypatch.setitem(llmsql.__dict__, "inference_vllm", mock_inference)
+
+    lora_config = {"lora_path": "/path/to/adapter", "lora_name": "n"}
+    _run_cli(
+        monkeypatch,
+        [
+            "inference",
+            "vllm",
+            "--model-name",
+            "m",
+            "--lora-config",
+            json.dumps(lora_config),
+        ],
+    )
+
+    kwargs = mock_inference.call_args.kwargs
+    assert kwargs["lora_config"] == lora_config
+    assert kwargs["llm_kwargs"]["enable_lora"] is True
+
+
+def test_vllm_without_lora_keeps_none(monkeypatch):
+    mock_inference = MagicMock(return_value=[])
+    import llmsql
+
+    monkeypatch.setitem(llmsql.__dict__, "inference_vllm", mock_inference)
+
+    _run_cli(monkeypatch, ["inference", "vllm", "--model-name", "m"])
+
+    kwargs = mock_inference.call_args.kwargs
+    assert kwargs["lora_config"] is None
+    assert kwargs["llm_kwargs"] is None
+
+
 @pytest.mark.parametrize(
     "argv",
     [

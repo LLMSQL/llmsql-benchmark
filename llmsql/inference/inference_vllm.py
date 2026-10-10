@@ -105,7 +105,7 @@ def inference_vllm(
         hf_token: Hugging Face authentication token.
         llm_kwargs: Additional arguments for vllm.LLM().
                    Note: 'model', 'tokenizer', 'tensor_parallel_size',
-                   'trust_remote_code', 'token'/'hf_token' are handled separately;
+                   'trust_remote_code', 'hf_token' are handled separately;
                    values in llm_kwargs take precedence on conflicts.
 
         lora_config: Optional dict with LoRA parameters:
