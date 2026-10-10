@@ -72,7 +72,7 @@ def inference_vllm(
     model_name: str,
     *,
     # === Model Loading Parameters ===
-    trust_remote_code: bool = True,
+    trust_remote_code: bool = False,
     tensor_parallel_size: int = 1,
     hf_token: str | None = None,
     llm_kwargs: dict[str, Any] | None = None,
@@ -100,7 +100,7 @@ def inference_vllm(
         model_name: Hugging Face model name or path.
 
         # Model Loading:
-        trust_remote_code: Whether to trust remote code (default: True).
+        trust_remote_code: Whether to trust remote code (default: False).
         tensor_parallel_size: Number of GPUs for tensor parallelism (default: 1).
         hf_token: Hugging Face authentication token.
         llm_kwargs: Additional arguments for vllm.LLM().

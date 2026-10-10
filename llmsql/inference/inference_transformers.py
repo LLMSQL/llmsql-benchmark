@@ -96,8 +96,8 @@ def inference_transformers(
     tokenizer_or_name: str | Any | None = None,
     *,
     # --- Model Loading Parameters ---
-    trust_remote_code: bool = True,
-    dtype: torch.dtype | str = torch.float16,
+    trust_remote_code: bool = False,
+    dtype: torch.dtype | str = "auto",
     device_map: str | dict[str, int] | None = "auto",
     hf_token: str | None = None,
     model_kwargs: dict[str, Any] | None = None,
@@ -129,8 +129,9 @@ def inference_transformers(
         tokenizer_or_name: Tokenizer object or HF tokenizer name/path.
 
         # Model Loading:
-        trust_remote_code: Whether to trust remote code (default: True).
-        dtype: Torch dtype for model (default: float16). Strings such as
+        trust_remote_code: Whether to trust remote code (default: False).
+        dtype: Torch dtype for model (default: "auto", using the model config).
+               Strings such as
                "bfloat16" or "auto" are accepted as well.
         device_map: Device placement strategy (default: "auto").
         hf_token: Hugging Face authentication token.
@@ -231,7 +232,7 @@ def inference_transformers(
 
     if tok_name:
         load_tok_args = {
-            "trust_remote_code": True,
+            "trust_remote_code": trust_remote_code,
             "token": hf_token,
             "padding_side": tokenizer_kwargs.get("padding_side", "left"),
             **tokenizer_kwargs,

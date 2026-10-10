@@ -78,7 +78,7 @@ def test_resolve_workdir_path_creates_temp(monkeypatch):
     path = mod.resolve_workdir_path(None)
 
     assert isinstance(path, Path)
-    assert str(path) == fake_dir
+    assert path == Path(fake_dir)
 
 
 def test_resolve_workdir_logs(monkeypatch):
