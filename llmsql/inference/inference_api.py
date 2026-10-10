@@ -39,6 +39,69 @@ from llmsql.utils.utils import (
 load_dotenv()
 
 
+# Retry policy for transient API failures (see ``inference_api``).
+DEFAULT_MAX_RETRIES = 3
+DEFAULT_RETRY_BASE_DELAY = 1.0
+DEFAULT_RETRY_MAX_DELAY = 30.0
+
+# Statuses worth retrying: request timeouts, conflicts, rate limiting.
+# Anything >= 500 is retried as well; 4xx client errors are not (they will
+# fail identically on every attempt).
+RETRYABLE_STATUS_CODES = frozenset({408, 409, 425, 429})
+
+# Same default as ``inference_function`` so both backends behave alike.
+DEFAULT_MAX_CONCURRENCY = 32
+
+
+class _HTTPStatusError(RuntimeError):
+    """Raised when the API answers with an HTTP error status.
+
+    ``aiohttp``'s ``raise_for_status()`` does not expose the response headers,
+    so the status is checked explicitly and the ``Retry-After`` hint (when the
+    server sends one) is carried along for the retry loop to honour.
+    """
+
+    def __init__(self, status: int, retry_after: float | None = None,
+                 message: str = "") -> None:
+        super().__init__(message or f"API returned HTTP {status}")
+        self.status = status
+        self.retry_after = retry_after
+
+
+def _retry_after_seconds(headers: Any) -> float | None:
+    """Parse the ``Retry-After`` header (seconds form), if present."""
+    try:
+        value = headers.get("Retry-After")
+    except (AttributeError, TypeError):
+        return None
+    if value is None:
+        return None
+    try:
+        seconds = float(str(value).strip())
+    except (TypeError, ValueError):
+        # HTTP-date form — not parsed; the exponential backoff is used instead.
+        return None
+    return seconds if seconds >= 0 else None
+
+
+def _is_retryable_error(exc: BaseException) -> bool:
+    """Whether a failed request is worth another attempt."""
+    status = getattr(exc, "status", None)
+    if isinstance(status, int):
+        return status in RETRYABLE_STATUS_CODES or status >= 500
+    # Connection resets, DNS hiccups and read timeouts.
+    return isinstance(exc, (asyncio.TimeoutError, aiohttp.ClientConnectionError))
+
+
+def _retry_delay(exc: BaseException, attempt: int, base_delay: float,
+                 max_delay: float) -> float:
+    """Seconds to wait before retry ``attempt + 1`` (``attempt`` is 0-based)."""
+    hint = getattr(exc, "retry_after", None)
+    if hint is None:
+        hint = base_delay * (2 ** attempt)
+    return max(0.0, min(float(hint), max_delay))
+
+
 class _AsyncRateLimiter:
     """
     Token-bucket style async rate limiter.
@@ -88,12 +151,61 @@ async def _post_chat_completion_async(
     async with session.post(
         url, json=payload, timeout=aiohttp.ClientTimeout(total=timeout)
     ) as resp:
+        status = getattr(resp, "status", None)
+        if isinstance(status, int) and status >= 400:
+            retry_after = _retry_after_seconds(getattr(resp, "headers", None))
+            try:
+                detail = (await resp.text())[:200]
+            except Exception:  # pragma: no cover - body may be unreadable
+                detail = ""
+            raise _HTTPStatusError(status, retry_after, detail)
         resp.raise_for_status()
         parsed: dict[str, Any] = await resp.json()
 
     if "choices" not in parsed:
         raise ValueError("API response does not contain `choices`.")
     return parsed
+
+
+async def _post_with_retries(
+    *,
+    session: aiohttp.ClientSession,
+    base_url: str,
+    endpoint: str,
+    payload: dict[str, Any],
+    timeout: float,
+    max_retries: int,
+    retry_base_delay: float,
+    retry_max_delay: float,
+) -> dict[str, Any]:
+    """Send one chat completion request, retrying transient failures.
+
+    A single HTTP 429 / 5xx or a timeout used to propagate out of
+    ``asyncio.as_completed`` and abort the entire run — with the output file
+    already wiped, one transient error cost a whole benchmark. Transient
+    failures are therefore retried with exponential backoff (honouring
+    ``Retry-After``); permanent ones (400, 401, ...) are raised immediately.
+    """
+    attempt = 0
+    while True:
+        try:
+            return await _post_chat_completion_async(
+                session=session,
+                base_url=base_url,
+                endpoint=endpoint,
+                payload=payload,
+                timeout=timeout,
+            )
+        except Exception as exc:  # noqa: BLE001 - re-raised below when final
+            if attempt >= max_retries or not _is_retryable_error(exc):
+                raise
+            delay = _retry_delay(exc, attempt, retry_base_delay, retry_max_delay)
+            log.warning(
+                f"API request failed ({type(exc).__name__}: {exc}); retrying in "
+                f"{delay:.2f}s ({attempt + 1}/{max_retries})."
+            )
+            attempt += 1
+            await asyncio.sleep(delay)
 
 
 async def _inference_api_async(
@@ -104,6 +216,11 @@ async def _inference_api_async(
     headers: dict[str, str],
     timeout: float,
     requests_per_minute: float | None,
+    max_concurrency: int | None,
+    raise_on_error: bool,
+    max_retries: int,
+    retry_base_delay: float,
+    retry_max_delay: float,
     api_kwargs: dict[str, Any],
     questions: list[dict[str, Any]],
     tables: dict[str, Any],
@@ -111,16 +228,20 @@ async def _inference_api_async(
     output_file: str,
 ) -> list[dict[str, str]]:
     limiter = _AsyncRateLimiter(requests_per_minute)
+    semaphore = (
+        asyncio.Semaphore(max_concurrency) if max_concurrency is not None else None
+    )
     all_results: list[dict[str, str]] = []
     # Lock to serialise file writes while allowing concurrent HTTP calls.
     write_lock = asyncio.Lock()
+    n_failed = 0
 
     async with aiohttp.ClientSession(headers=headers) as session:
 
         # Pre-build all prompts using the shared function
         prompts = build_all_requests(questions, tables, prompt_builder)
 
-        async def process_question(q: dict[str, Any], prompt: str) -> dict[str, str]:
+        async def request_completion(q: dict[str, Any], prompt: str) -> str:
             payload = {
                 "model": model_name,
                 "messages": [
@@ -133,14 +254,48 @@ async def _inference_api_async(
             # the HTTP round-trip time doesn't count against the interval.
             await limiter.acquire()
 
-            response = await _post_chat_completion_async(
+            response = await _post_with_retries(
                 session=session,
                 base_url=base_url,
                 endpoint=endpoint,
                 payload=payload,
                 timeout=timeout,
+                max_retries=max_retries,
+                retry_base_delay=retry_base_delay,
+                retry_max_delay=retry_max_delay,
             )
-            completion = response["choices"][0]["message"]["content"]
+
+            choices = response.get("choices") or []
+            if not choices:
+                raise ValueError("API response contains no choices.")
+
+            content = choices[0].get("message", {}).get("content")
+            # Some APIs answer with "content": null (refusals, reasoning and
+            # tool-call responses). Written out as-is it makes `evaluate()`
+            # fail the `completion must be str` assertion for the whole file.
+            return "" if content is None else content
+
+        async def call_with_policy(q: dict[str, Any], prompt: str) -> str:
+            try:
+                return await request_completion(q, prompt)
+            except Exception as e:  # noqa: BLE001 - policy applied below
+                if raise_on_error:
+                    raise
+                nonlocal n_failed
+                n_failed += 1
+                qid = q.get("question_id", q.get("id", ""))
+                log.error(
+                    f"API request failed for question_id={qid!r}: "
+                    f"{type(e).__name__}: {e}. Recording an empty completion."
+                )
+                return ""
+
+        async def process_question(q: dict[str, Any], prompt: str) -> dict[str, str]:
+            if semaphore is not None:
+                async with semaphore:
+                    completion = await call_with_policy(q, prompt)
+            else:
+                completion = await call_with_policy(q, prompt)
 
             result = {
                 "question_id": q.get("question_id", q.get("id", "")),
@@ -152,14 +307,30 @@ async def _inference_api_async(
 
             return result
 
-        tasks = [process_question(q, p) for q, p in zip(questions, prompts)]
-        for coro in tqdm(
-            asyncio.as_completed(tasks),
-            total=len(tasks),
-            desc="Generating",
-        ):
-            result = await coro
-            all_results.append(result)
+        tasks = [
+            asyncio.ensure_future(process_question(q, p))
+            for q, p in zip(questions, prompts, strict=False)
+        ]
+        try:
+            for coro in tqdm(
+                asyncio.as_completed(tasks),
+                total=len(tasks),
+                desc="Generating",
+            ):
+                result = await coro
+                all_results.append(result)
+        except BaseException:
+            # Stop all in-flight / pending requests before propagating.
+            for t in tasks:
+                t.cancel()
+            await asyncio.gather(*tasks, return_exceptions=True)
+            raise
+
+    if n_failed:
+        log.warning(
+            f"{n_failed}/{len(tasks)} API requests failed; their completions "
+            "were recorded as empty strings."
+        )
 
     return all_results
 
@@ -172,6 +343,11 @@ def inference_api(
     api_key: str | None = None,
     timeout: float = 120.0,
     requests_per_minute: float | None = None,
+    max_concurrency: int | None = DEFAULT_MAX_CONCURRENCY,
+    raise_on_error: bool = False,
+    max_retries: int = DEFAULT_MAX_RETRIES,
+    retry_base_delay: float = DEFAULT_RETRY_BASE_DELAY,
+    retry_max_delay: float = DEFAULT_RETRY_MAX_DELAY,
     api_kwargs: dict[str, Any] | None = None,
     request_headers: dict[str, str] | None = None,
     version: Literal["1.0", "2.0"] = DEFAULT_LLMSQL_VERSION,
@@ -194,6 +370,21 @@ def inference_api(
         base_url: e.g. "https://api.openai.com/v1/"
         endpoint: e.g. "chat/completions"
 
+        max_concurrency: Maximum number of HTTP requests in flight at the same
+            time, or ``None`` to leave it unbounded (aiohttp's connector limit
+            then applies). Defaults to 32, like ``inference_function``.
+        raise_on_error: If ``True``, re-raise the first error and cancel the
+            remaining requests. If ``False`` (default), log the error and
+            record an empty completion for that question so a single failure
+            cannot abort the whole run.
+        max_retries: How many times a *transient* failure (HTTP 429/5xx,
+            timeout, connection reset) is retried before giving up. ``0``
+            disables retries. Permanent errors (e.g. 400, 401) are never
+            retried.
+        retry_base_delay: First retry delay in seconds; doubled on every
+            further attempt, unless the server sends ``Retry-After``.
+        retry_max_delay: Upper bound for a single retry delay.
+
         # Benchmark:
         version: LLMSQL version
         output_file: Path to write outputs (will be overwritten).
@@ -212,6 +403,23 @@ def inference_api(
     _setup_seed(seed=seed)
     api_kwargs = api_kwargs or {}
     request_headers = request_headers or {}
+
+    if max_concurrency is not None and (
+        isinstance(max_concurrency, bool)
+        or not isinstance(max_concurrency, int)
+        or max_concurrency <= 0
+    ):
+        raise ValueError(
+            f"`max_concurrency` must be a positive integer or None, got {max_concurrency!r}."
+        )
+    if (
+        isinstance(max_retries, bool)
+        or not isinstance(max_retries, int)
+        or max_retries < 0
+    ):
+        raise ValueError(
+            f"`max_retries` must be a non-negative integer, got {max_retries!r}."
+        )
 
     workdir = resolve_workdir_path(workdir_path)
 
@@ -255,6 +463,11 @@ def inference_api(
         headers=headers,
         timeout=timeout,
         requests_per_minute=requests_per_minute,
+        max_concurrency=max_concurrency,
+        raise_on_error=raise_on_error,
+        max_retries=max_retries,
+        retry_base_delay=retry_base_delay,
+        retry_max_delay=retry_max_delay,
         api_kwargs=api_kwargs,
         questions=questions,
         tables=tables,

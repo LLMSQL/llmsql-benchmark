@@ -11,7 +11,12 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 
 import llmsql.inference.inference_api as api_mod
-from llmsql.inference.inference_api import _AsyncRateLimiter, inference_api
+from llmsql.inference.inference_api import (
+    _AsyncRateLimiter,
+    _HTTPStatusError,
+    _retry_delay,
+    inference_api,
+)
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -161,6 +166,177 @@ class TestPostChatCompletionAsync:
 
         with pytest.raises(ValueError, match="does not contain `choices`"):
             asyncio.run(_run())
+
+    def test_http_error_status_raises_with_retry_after(self):
+        """A 4xx/5xx answer becomes ``_HTTPStatusError`` carrying ``Retry-After``."""
+        resp = _FakeHttpResponse(
+            status=429, payload=None, headers={"Retry-After": "2"}, text="slow down"
+        )
+        session = MagicMock()
+        session.post = MagicMock(return_value=resp)
+
+        async def _run():
+            return await api_mod._post_chat_completion_async(
+                session=session,
+                base_url="http://fake/v1",
+                endpoint="chat/completions",
+                payload={},
+                timeout=5.0,
+            )
+
+        with pytest.raises(_HTTPStatusError) as exc_info:
+            asyncio.run(_run())
+
+        assert exc_info.value.status == 429
+        assert exc_info.value.retry_after == 2.0
+
+
+class _FakeHttpResponse:
+    """Minimal stand-in for an ``aiohttp`` response with a real status code."""
+
+    def __init__(self, status=200, payload=None, headers=None, text=""):
+        self.status = status
+        self.headers = headers or {}
+        self._payload = payload if payload is not None else {}
+        self._text = text
+
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, *args):
+        return False
+
+    def raise_for_status(self):
+        return None
+
+    async def json(self):
+        return self._payload
+
+    async def text(self):
+        return self._text
+
+
+# ---------------------------------------------------------------------------
+# Retry policy
+# ---------------------------------------------------------------------------
+
+
+class TestRetryPolicy:
+    def test_retry_delay_prefers_retry_after(self):
+        """A server-supplied ``Retry-After`` wins over the exponential backoff."""
+        assert _retry_delay(_HTTPStatusError(429, retry_after=2.5), 0, 1.0, 30.0) == 2.5
+
+    def test_retry_delay_doubles_and_is_capped(self):
+        assert _retry_delay(ValueError("boom"), 0, 1.0, 30.0) == 1.0
+        assert _retry_delay(ValueError("boom"), 1, 1.0, 30.0) == 2.0
+        assert _retry_delay(ValueError("boom"), 4, 1.0, 5.0) == 5.0
+
+    def test_retry_delay_is_never_negative(self):
+        assert _retry_delay(_HTTPStatusError(429, retry_after=-1), 0, 1.0, 30.0) == 0.0
+
+    def test_transient_error_is_retried_then_succeeds(self, monkeypatch):
+        """429 -> 200: the run must continue with the retried response."""
+        calls = {"n": 0}
+
+        async def fake_post(**_kwargs):
+            calls["n"] += 1
+            if calls["n"] == 1:
+                raise _HTTPStatusError(429)
+            return {"choices": [{"message": {"content": "SELECT 1"}}]}
+
+        monkeypatch.setattr(api_mod, "_post_chat_completion_async", fake_post)
+
+        result = asyncio.run(
+            api_mod._post_with_retries(
+                session=None,
+                base_url="http://fake/v1",
+                endpoint="chat/completions",
+                payload={},
+                timeout=5.0,
+                max_retries=3,
+                retry_base_delay=0.0,
+                retry_max_delay=0.0,
+            )
+        )
+
+        assert result["choices"][0]["message"]["content"] == "SELECT 1"
+        assert calls["n"] == 2
+
+    def test_permanent_error_is_not_retried(self, monkeypatch):
+        """A 400 will fail identically every time — don't waste attempts."""
+        calls = {"n": 0}
+
+        async def fake_post(**_kwargs):
+            calls["n"] += 1
+            raise _HTTPStatusError(400)
+
+        monkeypatch.setattr(api_mod, "_post_chat_completion_async", fake_post)
+
+        with pytest.raises(_HTTPStatusError):
+            asyncio.run(
+                api_mod._post_with_retries(
+                    session=None,
+                    base_url="http://fake/v1",
+                    endpoint="chat/completions",
+                    payload={},
+                    timeout=5.0,
+                    max_retries=3,
+                    retry_base_delay=0.0,
+                    retry_max_delay=0.0,
+                )
+            )
+
+        assert calls["n"] == 1
+
+    def test_retries_are_bounded_by_max_retries(self, monkeypatch):
+        calls = {"n": 0}
+
+        async def fake_post(**_kwargs):
+            calls["n"] += 1
+            raise _HTTPStatusError(503)
+
+        monkeypatch.setattr(api_mod, "_post_chat_completion_async", fake_post)
+
+        with pytest.raises(_HTTPStatusError):
+            asyncio.run(
+                api_mod._post_with_retries(
+                    session=None,
+                    base_url="http://fake/v1",
+                    endpoint="chat/completions",
+                    payload={},
+                    timeout=5.0,
+                    max_retries=2,
+                    retry_base_delay=0.0,
+                    retry_max_delay=0.0,
+                )
+            )
+
+        assert calls["n"] == 3  # 1 initial attempt + 2 retries
+
+    def test_connection_errors_are_retried(self, monkeypatch):
+        calls = {"n": 0}
+
+        async def fake_post(**_kwargs):
+            calls["n"] += 1
+            if calls["n"] == 1:
+                raise api_mod.aiohttp.ClientConnectionError("connection reset")
+            return {"choices": [{"message": {"content": "SELECT 1"}}]}
+
+        monkeypatch.setattr(api_mod, "_post_chat_completion_async", fake_post)
+
+        asyncio.run(
+            api_mod._post_with_retries(
+                session=None,
+                base_url="http://fake/v1",
+                endpoint="chat/completions",
+                payload={},
+                timeout=5.0,
+                max_retries=1,
+                retry_base_delay=0.0,
+                retry_max_delay=0.0,
+            )
+        )
+        assert calls["n"] == 2
 
 
 # ---------------------------------------------------------------------------
@@ -345,3 +521,188 @@ class TestInferenceApi:
 
         assert apply_called["n"] >= 1, "nest_asyncio.apply() should have been called"
         assert len(results) == 2
+
+
+# ---------------------------------------------------------------------------
+# Failure handling (issue #123)
+# ---------------------------------------------------------------------------
+
+
+class TestInferenceApiFailureHandling:
+    """One bad request must not cost the whole run."""
+
+    @staticmethod
+    def _patch_post(monkeypatch, handler):
+        monkeypatch.setattr(api_mod, "_post_chat_completion_async", handler)
+
+    def test_null_content_becomes_empty_string(self, monkeypatch, tmp_path):
+        """
+        Regression: ``"content": null`` used to be written out as-is, and
+        ``evaluate()`` then failed the ``completion must be str`` assertion
+        for the entire predictions file.
+        """
+
+        async def handler(**_kwargs):
+            return {"choices": [{"message": {"content": None}}]}
+
+        self._patch_post(monkeypatch, handler)
+        _, _, outpath = _make_fixtures(tmp_path)
+
+        results = inference_api(
+            model_name="dummy",
+            base_url="http://localhost:9999/v1",
+            output_file=str(outpath),
+            workdir_path=str(tmp_path),
+        )
+
+        assert [r["completion"] for r in results] == ["", ""]
+        for line in outpath.read_text().strip().splitlines():
+            assert json.loads(line)["completion"] == ""
+
+    def test_permanent_failure_records_empty_completion(self, monkeypatch, tmp_path):
+        """With ``raise_on_error=False`` a dead request yields an empty completion."""
+
+        async def handler(**_kwargs):
+            raise _HTTPStatusError(400)
+
+        self._patch_post(monkeypatch, handler)
+        _, _, outpath = _make_fixtures(tmp_path)
+
+        results = inference_api(
+            model_name="dummy",
+            base_url="http://localhost:9999/v1",
+            output_file=str(outpath),
+            workdir_path=str(tmp_path),
+            limit=1,
+            max_retries=0,
+        )
+
+        assert results == [{"question_id": "q1", "completion": ""}]
+
+    def test_raise_on_error_propagates(self, monkeypatch, tmp_path):
+        """With ``raise_on_error=True`` the failure aborts the run, as before."""
+
+        async def handler(**_kwargs):
+            raise _HTTPStatusError(400)
+
+        self._patch_post(monkeypatch, handler)
+        _, _, outpath = _make_fixtures(tmp_path)
+
+        with pytest.raises(_HTTPStatusError):
+            inference_api(
+                model_name="dummy",
+                base_url="http://localhost:9999/v1",
+                output_file=str(outpath),
+                workdir_path=str(tmp_path),
+                limit=1,
+                max_retries=0,
+                raise_on_error=True,
+            )
+
+    def test_transient_failure_is_retried_and_run_completes(
+        self, monkeypatch, tmp_path
+    ):
+        """A single 500 is retried, so the run still produces real completions."""
+        calls = {"n": 0}
+
+        async def handler(**_kwargs):
+            calls["n"] += 1
+            if calls["n"] == 1:
+                raise _HTTPStatusError(500)
+            return {"choices": [{"message": {"content": "SELECT 1"}}]}
+
+        self._patch_post(monkeypatch, handler)
+        _, _, outpath = _make_fixtures(tmp_path)
+
+        results = inference_api(
+            model_name="dummy",
+            base_url="http://localhost:9999/v1",
+            output_file=str(outpath),
+            workdir_path=str(tmp_path),
+            limit=1,
+            max_retries=2,
+            retry_base_delay=0.0,
+            retry_max_delay=0.0,
+        )
+
+        assert results == [{"question_id": "q1", "completion": "SELECT 1"}]
+        assert calls["n"] == 2
+
+    def test_empty_choices_are_treated_as_failure(self, monkeypatch, tmp_path):
+        """``choices: []`` must not raise IndexError out of the run."""
+
+        async def handler(**_kwargs):
+            return {"choices": []}
+
+        self._patch_post(monkeypatch, handler)
+        _, _, outpath = _make_fixtures(tmp_path)
+
+        results = inference_api(
+            model_name="dummy",
+            base_url="http://localhost:9999/v1",
+            output_file=str(outpath),
+            workdir_path=str(tmp_path),
+            limit=1,
+            max_retries=0,
+        )
+
+        assert results == [{"question_id": "q1", "completion": ""}]
+
+    def test_invalid_max_concurrency_raises(self, monkeypatch, tmp_path):
+        self._patch_post(monkeypatch, _fake_post_success())
+        _, _, outpath = _make_fixtures(tmp_path)
+
+        with pytest.raises(ValueError, match="max_concurrency"):
+            inference_api(
+                model_name="dummy",
+                base_url="http://localhost:9999/v1",
+                output_file=str(outpath),
+                workdir_path=str(tmp_path),
+                max_concurrency=0,
+            )
+
+    def test_invalid_max_retries_raises(self, monkeypatch, tmp_path):
+        self._patch_post(monkeypatch, _fake_post_success())
+        _, _, outpath = _make_fixtures(tmp_path)
+
+        with pytest.raises(ValueError, match="max_retries"):
+            inference_api(
+                model_name="dummy",
+                base_url="http://localhost:9999/v1",
+                output_file=str(outpath),
+                workdir_path=str(tmp_path),
+                max_retries=-1,
+            )
+
+    def test_concurrency_cap_is_respected(self, monkeypatch, tmp_path):
+        """``max_concurrency`` must bound how many requests run at once."""
+        in_flight = {"now": 0, "peak": 0}
+
+        async def handler(**_kwargs):
+            in_flight["now"] += 1
+            in_flight["peak"] = max(in_flight["peak"], in_flight["now"])
+            await asyncio.sleep(0.01)
+            in_flight["now"] -= 1
+            return {"choices": [{"message": {"content": "SELECT 1"}}]}
+
+        self._patch_post(monkeypatch, handler)
+        _, _, outpath = _make_fixtures(tmp_path)
+
+        inference_api(
+            model_name="dummy",
+            base_url="http://localhost:9999/v1",
+            output_file=str(outpath),
+            workdir_path=str(tmp_path),
+            max_concurrency=1,
+        )
+
+        assert in_flight["peak"] == 1
+
+
+def _fake_post_success():
+    """Return a handler that always answers with a valid completion."""
+
+    async def handler(**_kwargs):
+        return {"choices": [{"message": {"content": "SELECT 1"}}]}
+
+    return handler
