@@ -176,7 +176,9 @@ class Inference(SubCommand):
         # COMMON BENCHMARK ARGS
         # =========================
         def add_common_benchmark_args(parser: argparse.ArgumentParser) -> None:
-            parser.add_argument("--version", default="2.0", choices=get_available_versions())
+            parser.add_argument(
+                "--version", default="2.0", choices=get_available_versions()
+            )
             parser.add_argument("--output-file", default="llm_sql_predictions.jsonl")
             parser.add_argument(
                 "--workdir-path",
@@ -283,6 +285,20 @@ class Inference(SubCommand):
             type=json.loads,
             help="JSON string for SamplingParams kwargs",
         )
+        # LoRA args
+        self._parser_vllm.add_argument(
+            "--enable-lora", action="store_true", help="Enable LoRA adapters"
+        )
+        self._parser_vllm.add_argument("--lora-path", help="Path to LoRA adapter")
+        self._parser_vllm.add_argument("--lora-name", help="Name of LoRA adapter")
+        self._parser_vllm.add_argument(
+            "--lora-scale", type=float, default=1.0, help="LoRA scaling factor"
+        )
+        self._parser_vllm.add_argument(
+            "--lora-config",
+            type=json.loads,
+            help="JSON string for LoRA config dict",
+        )
 
         add_common_benchmark_args(self._parser_vllm)
 
@@ -356,17 +372,32 @@ class Inference(SubCommand):
     def _execute_vllm(args: argparse.Namespace) -> None:
         from llmsql import inference_vllm
 
+        llm_kwargs = merge_model_args(args.model_args, args.llm_kwargs)
+        lora_config = args.lora_config
+        if lora_config is None and args.lora_path:
+            lora_config = {
+                "lora_path": args.lora_path,
+                "lora_name": args.lora_name if args.lora_name else "default",
+                "lora_scale": args.lora_scale,
+            }
+        # Providing a LoRA config implies `enable_lora=True`.
+        if args.enable_lora or lora_config is not None:
+            if llm_kwargs is None:
+                llm_kwargs = {}
+            llm_kwargs["enable_lora"] = True
+
         inference_vllm(
             model_name=args.model_name,
             trust_remote_code=args.trust_remote_code,
             tensor_parallel_size=args.tensor_parallel_size,
             hf_token=args.hf_token,
-            llm_kwargs=merge_model_args(args.model_args, args.llm_kwargs),
+            llm_kwargs=llm_kwargs,
             use_chat_template=args.use_chat_template,
             max_new_tokens=args.max_new_tokens,
             temperature=args.temperature,
             do_sample=args.do_sample,
             sampling_kwargs=args.sampling_kwargs,
+            lora_config=lora_config,
             version=args.version,
             output_file=args.output_file,
             workdir_path=args.workdir_path,

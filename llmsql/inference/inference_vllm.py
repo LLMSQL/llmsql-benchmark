@@ -21,11 +21,11 @@ Example
         max_new_tokens=256,
         temperature=0.7,
         tensor_parallel_size=1,
-        lora_path="path/to/lora"
+        lora_path="path/to/lora",
     )
 
 Notes
-~~~~~
+-----
 
 This function uses the vLLM backend. Outputs may differ from the Transformers
 backend due to differences in implementation, batching, and numerical precision.
@@ -105,8 +105,8 @@ def inference_vllm(
         hf_token: Hugging Face authentication token.
         llm_kwargs: Additional arguments for vllm.LLM().
                    Note: 'model', 'tokenizer', 'tensor_parallel_size',
-                   'trust_remote_code' are handled separately and will
-                   override values here.
+                   'trust_remote_code', 'hf_token' are handled separately;
+                   values in llm_kwargs take precedence on conflicts.
 
         lora_config: Optional dict with LoRA parameters:
             - lora_path: Path to the pretrained LoRA adapter (required if enable_lora)
@@ -124,7 +124,7 @@ def inference_vllm(
         do_sample: Whether to use sampling vs greedy decoding.
         sampling_kwargs: Additional arguments for vllm.SamplingParams().
                         Note: 'temperature', 'max_tokens' are handled
-                        separately and will override values here.
+                        separately; values in sampling_kwargs take precedence.
 
         # Benchmark:
         version: LLMSQL version
@@ -188,10 +188,6 @@ def inference_vllm(
         )
     if enable_lora and lora_config is None:
         raise ValueError("`enable_lora` is True but no `lora_config` was provided.")
-    if lora_config is not None and not enable_lora:
-        raise ValueError(
-            "`lora_config` provided but `enable_lora` is not True in llm_kwargs."
-        )
 
     # --- init model ---
     llm_init_args = {
@@ -199,8 +195,10 @@ def inference_vllm(
         "tokenizer": model_name,
         "tensor_parallel_size": tensor_parallel_size,
         "trust_remote_code": trust_remote_code,
-        **llm_kwargs,  # user overrides
     }
+    if hf_token:
+        llm_init_args["hf_token"] = hf_token
+    llm_init_args.update(llm_kwargs)
 
     log.info(f"Loading vLLM model '{model_name}' (tp={tensor_parallel_size})...")
     llm = LLM(**llm_init_args)

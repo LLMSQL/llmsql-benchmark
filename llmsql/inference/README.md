@@ -235,7 +235,7 @@ Runs inference using the [vLLM](https://github.com/vllm-project/vllm) backend fo
 | `tensor_parallel_size`          | `int`          | `1`     | Number of GPUs for tensor parallelism.           |
 | `hf_token`                      | `str \| None`  | `None`  | Hugging Face authentication token.               |
 | `llm_kwargs`                    | `dict \| None` | `None`  | Additional kwargs for `vllm.LLM()`.              |
-| `llm_kwargs`                    | `bool` | `True`  | Whether to use chat template of the tokenizer              |
+| `use_chat_template`             | `bool`         | `True`  | Whether to use chat template of the tokenizer   |
 
 #### Generation
 
