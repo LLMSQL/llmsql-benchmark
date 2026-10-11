@@ -236,7 +236,12 @@ def test_download_occurs_if_files_missing(mock_utils, mocker):
     assert dl.call_count == 2  # questions + sqlite
 
 
-def test_saves_report_with_auto_filename(mock_utils, mocker):
+def test_no_report_file_is_written_when_save_report_is_none(mock_utils, mocker):
+    """save_report=None 时不能再往当前目录丢一个随机名的报告文件
+
+    报告字典本来就会作为返回值交回调用方，没必要每次调用都落盘一份
+    （里面带全部 mismatch 的模型输出，完整跑一次能到几十 MB）。
+    """
     save = mocker.patch("llmsql.evaluation.evaluate.save_json_report")
 
     report = evaluate(
@@ -245,13 +250,23 @@ def test_saves_report_with_auto_filename(mock_utils, mocker):
         save_report=None,
     )
 
-    # automatic UUID-based filename
-    args, kwargs = save.call_args
-    auto_filename = args[0]
-    assert auto_filename.startswith("evaluation_results_")
-    assert auto_filename.endswith(".json")
-
+    save.assert_not_called()
     assert report["total"] == 1
+
+
+def test_report_is_written_to_the_given_path(mock_utils, mocker, tmp_path):
+    """显式给了 save_report 时才落盘，且写到指定的路径"""
+    save = mocker.patch("llmsql.evaluation.evaluate.save_json_report")
+    report_path = tmp_path / "report.json"
+
+    evaluate(
+        [{"question_id": 1, "completion": "SELECT 1"}],
+        workdir_path=str(mock_utils),
+        save_report=str(report_path),
+    )
+
+    args, kwargs = save.call_args
+    assert args[0] == str(report_path)
 
 
 def test_mismatch_handling(mock_utils, mocker):

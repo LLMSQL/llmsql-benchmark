@@ -8,9 +8,9 @@ on the LLMSQL benchmark.
 See the documentation for full usage details.
 """
 
+from contextlib import closing
 from datetime import datetime, timezone
 from typing import Any
-import uuid
 
 from rich.progress import track
 
@@ -53,7 +53,8 @@ def evaluate(
         outputs: Either a JSONL file path or a list of dicts.
         workdir_path: Directory to store downloaded benchmark files. If omitted, a
             temporary directory is created automatically.
-        save_report: Optional manual save path. If None → auto-generated.
+        save_report: Optional manual save path. If None → no report file is
+            written (the report dict is still returned).
         show_mismatches: Print mismatches while evaluating.
         max_mismatches: Max mismatches to print.
         model_name: Name of the evaluated model (e.g. ``Qwen/Qwen3-0.6B``).
@@ -116,9 +117,6 @@ def evaluate(
             f"accuracy is computed over {coverage['answered']} answer(s) only."
         )
 
-    # --- Connect to DB ---
-    conn = connect_sqlite(db_path)
-
     # --- Evaluation loop ---
     metrics = {
         "total": 0,
@@ -130,21 +128,25 @@ def evaluate(
     }
     mismatches: list[dict] = []
 
-    for item in track(outputs_list, description="Evaluating"):
-        metrics["total"] += 1
+    # --- Connect to DB ---
+    # closing() 保证 evaluate_sample 抛异常时连接也会被关掉：原来只有函数末尾
+    # 一句 conn.close()，中途报错就把连接漏在那儿。
+    with closing(connect_sqlite(db_path)) as conn:
+        for item in track(outputs_list, description="Evaluating"):
+            metrics["total"] += 1
 
-        is_match, mismatch_info, m = evaluate_sample(item, questions, conn)
+            is_match, mismatch_info, m = evaluate_sample(item, questions, conn)
 
-        metrics["matches"] += is_match
-        metrics["pred_none"] += m["pred_none"]
-        metrics["gold_none"] += m["gold_none"]
-        metrics["sql_errors"] += m["sql_error"]
-        metrics["exact_string_matches"] += m["exact_string_match"]
+            metrics["matches"] += is_match
+            metrics["pred_none"] += m["pred_none"]
+            metrics["gold_none"] += m["gold_none"]
+            metrics["sql_errors"] += m["sql_error"]
+            metrics["exact_string_matches"] += m["exact_string_match"]
 
-        if mismatch_info:
-            mismatches.append(mismatch_info)
-            if show_mismatches and len(mismatches) <= max_mismatches:
-                log_mismatch(**mismatch_info)
+            if mismatch_info:
+                mismatches.append(mismatch_info)
+                if show_mismatches and len(mismatches) <= max_mismatches:
+                    log_mismatch(**mismatch_info)
 
     print_summary(
         metrics["total"],
@@ -179,11 +181,11 @@ def evaluate(
         "input_mode": input_mode,
     }
 
-    # --- Auto-generate report filename (if not provided) ---
-    if save_report is None:
-        save_report = f"evaluation_results_{uuid.uuid4()}.json"
-
-    save_json_report(save_report, report)
+    # 只有显式传入路径才落盘。以前 None 会生成一个随机名的文件写在当前目录，
+    # 每次 notebook / 测试 / 循环调用都会多留一个可能几十 MB 的报告；
+    # 报告字典本来就会作为返回值交回调用方，CLI 侧自己会补一个确定性的路径。
+    if save_report is not None:
+        save_json_report(save_report, report)
 
     if save_leaderboard_yaml is not None:
         # The leaderboard ranks models on the whole benchmark: unanswered
@@ -198,5 +200,4 @@ def evaluate(
         )
         write_leaderboard_yaml(save_leaderboard_yaml, record)
 
-    conn.close()
     return report

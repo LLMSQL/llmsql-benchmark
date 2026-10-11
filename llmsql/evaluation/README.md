@@ -57,7 +57,7 @@ evaluate(
 | ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
 | `outputs`         | **Required**. Either a path to a JSONL file or a list of dicts with predictions.                                                                |
 | `workdir_path`    | Directory used to cache downloaded benchmark files. If omitted, a temporary directory is created automatically. |
-| `save_report`     | Optional path to save detailed JSON report. Defaults to `evaluation_results_{uuid}.json`.                                                       |
+| `save_report`     | Optional path to save a detailed JSON report. Default: `None` (no file written — the report is returned as a dict).                              |
 | `show_mismatches` | Print mismatches while evaluating. Default: `True`.                                                                                             |
 | `max_mismatches`  | Maximum number of mismatches to print. Default: `5`.                                                                                            |
 | `model_name`      | Name of the evaluated model (e.g. `Qwen/Qwen3-0.6B`). Stored in the JSON report and the leaderboard YAML. Default: `None`.                      |
@@ -106,7 +106,8 @@ Total: 100 | Matches: 82 | Pred None: 5 | Gold None: 3 | SQL Errors: 2
 
 **Report Saving**
 
-* By default, the report is saved as `evaluation_results_{uuid}.json` in the current directory.
+* No file is written unless you pass `save_report`; `evaluate()` always returns the report as a dict.
+* The CLI (`llmsql evaluate`) still writes a report by default, to `outputs.eval.json` next to `--outputs` (override with `--save-report`).
 * Includes timestamp and input mode (JSONL path or dict list).
 * You can override the save path via the `save_report` argument.
 
