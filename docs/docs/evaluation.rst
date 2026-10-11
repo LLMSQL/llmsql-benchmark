@@ -100,6 +100,20 @@ The function returns a dictionary with the following keys:
 - timestamp – Evaluation timestamp
 - input_mode – How results were provided ("jsonl_path" or "dict_list")
 
+How a Prediction Is Scored
+--------------------------
+
+The evaluator extracts up to 10 SQL candidates from each model completion and
+executes them in turn. A sample counts as correct when **any** candidate returns
+the same result as the gold query, so a model that emits several queries is
+scored on its best one. Candidates that fail to execute count toward
+``sql_errors``.
+
+Candidates are taken from the end of the completion. When a model reasons in
+prose before answering, its final query is the answer, so trailing candidates
+win over leading ones. A Markdown block tagged ``sql`` wins over any query found
+in the surrounding prose.
+
 Report Saving
 -------------
 
