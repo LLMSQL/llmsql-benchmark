@@ -108,11 +108,19 @@ class Evaluate(SubCommand):
                 if not isinstance(run_metadata, dict):
                     raise ValueError("--run-metadata file must contain a mapping")
 
+            save_report = args.save_report
+            if save_report is None:
+                # evaluate() 本身不再默认落盘，但 CLI 一行命令跑完总得留下报告。
+                # 这里用与 --outputs 对应的确定性文件名，而不是随机名，
+                # 重跑同一份预测会覆盖旧报告而不是堆一地文件。
+                save_report = f"{args.outputs}.eval.json"
+                log.info("No --save-report given; writing report to %s", save_report)
+
             evaluate(
                 outputs=args.outputs,
                 version=args.version,
                 workdir_path=args.workdir_path,
-                save_report=args.save_report,
+                save_report=save_report,
                 show_mismatches=args.show_mismatches,
                 max_mismatches=args.max_mismatches,
                 model_name=args.model_name,

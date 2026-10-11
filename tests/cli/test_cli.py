@@ -262,3 +262,51 @@ async def test_evaluate_command_called(monkeypatch):
     assert call_kwargs["outputs"] == "dummy_file.jsonl"
     assert call_kwargs["show_mismatches"] is True 
     assert call_kwargs["max_mismatches"] == 10
+
+
+@pytest.mark.asyncio
+async def test_evaluate_default_report_path_is_deterministic(monkeypatch):
+    """
+    CLI 没传 --save-report 时仍然要出报告，但文件名要可预测。
+
+    evaluate() 本身不再默认落盘，CLI 这里补一个由 --outputs 推导出来的
+    确定性路径，重跑同一份预测会覆盖旧报告，而不是每次多一个随机文件。
+    """
+    mock_evaluate = MagicMock(return_value={})
+    monkeypatch.setattr("llmsql._cli.evaluate.evaluate", mock_evaluate)
+
+    monkeypatch.setattr(
+        sys, "argv", ["llmsql", "evaluate", "--outputs", "dummy_file.jsonl"]
+    )
+
+    cli = ParserCLI()
+    args = cli.parse_args()
+    cli.execute(args)
+
+    assert mock_evaluate.call_args.kwargs["save_report"] == "dummy_file.jsonl.eval.json"
+
+
+@pytest.mark.asyncio
+async def test_evaluate_explicit_report_path_is_preserved(monkeypatch):
+    """显式传了 --save-report 时用调用方给的路径，不覆盖成默认名"""
+    mock_evaluate = MagicMock(return_value={})
+    monkeypatch.setattr("llmsql._cli.evaluate.evaluate", mock_evaluate)
+
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "llmsql",
+            "evaluate",
+            "--outputs",
+            "dummy_file.jsonl",
+            "--save-report",
+            "custom/report.json",
+        ],
+    )
+
+    cli = ParserCLI()
+    args = cli.parse_args()
+    cli.execute(args)
+
+    assert mock_evaluate.call_args.kwargs["save_report"] == "custom/report.json"
