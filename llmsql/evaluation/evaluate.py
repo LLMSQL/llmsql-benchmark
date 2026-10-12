@@ -20,6 +20,7 @@ from llmsql.config.config import (
 )
 from llmsql.loggers.logging_config import log
 from llmsql.utils.evaluation_utils import (
+    DEFAULT_QUERY_TIMEOUT,
     connect_sqlite,
     evaluate_sample,
     resolve_prediction_coverage,
@@ -44,6 +45,7 @@ def evaluate(
     model_name: str | None = None,
     save_leaderboard_yaml: str | None = None,
     run_metadata: dict[str, Any] | None = None,
+    query_timeout: float = DEFAULT_QUERY_TIMEOUT,
 ) -> dict:
     """
     Evaluate predicted SQL queries against the LLMSQL benchmark.
@@ -63,8 +65,11 @@ def evaluate(
             ``leaderboard/`` folder). If None, no YAML is written.
         run_metadata: Optional dict deep-merged into the leaderboard YAML to
             fill fields that cannot be detected automatically, e.g.
-            ``{"type": "open-source", "inference": {"backend": "vllm",
+            ``            {"type": "open-source", "inference": {"backend": "vllm",
             "arguments": {"num_fewshots": 5}}}``.
+        query_timeout: Per-statement time budget in seconds. A prediction (or
+            gold query) that runs longer is aborted and counted as a SQL error
+            instead of hanging the run. ``<= 0`` disables the budget.
 
     Returns:
         dict: Metrics and mismatches, plus coverage counters ``expected``,
@@ -133,7 +138,9 @@ def evaluate(
     for item in track(outputs_list, description="Evaluating"):
         metrics["total"] += 1
 
-        is_match, mismatch_info, m = evaluate_sample(item, questions, conn)
+        is_match, mismatch_info, m = evaluate_sample(
+            item, questions, conn, query_timeout=query_timeout
+        )
 
         metrics["matches"] += is_match
         metrics["pred_none"] += m["pred_none"]
