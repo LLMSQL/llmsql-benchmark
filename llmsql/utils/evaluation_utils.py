@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 import re
 import sqlite3
+import time
 from typing import Any
 
 from huggingface_hub import hf_hub_download
@@ -9,8 +10,32 @@ from huggingface_hub import hf_hub_download
 from llmsql.loggers.logging_config import log
 from llmsql.utils.regex_extractor import find_sql
 
+# Time budget for a single SQL statement, in seconds.
+#
+# The statements handed to `execute_sql` are extracted from model output, so a
+# pathological one (a self-join, an unbounded recursive CTE) can run forever and
+# hang the whole evaluation. Without a budget there is no way to get control
+# back short of killing the process.
+DEFAULT_QUERY_TIMEOUT = 5.0
 
-def execute_sql(conn: sqlite3.Connection, sql: str) -> list[tuple] | None:
+# Granularity of the SQLite progress callback: the deadline is checked once
+# every this many VM instructions. Small enough to catch runaway queries
+# quickly, large enough not to slow normal ones down.
+PROGRESS_HANDLER_OPS = 1000
+
+
+def _clear_progress_handler(conn: sqlite3.Connection) -> None:
+    """Remove any progress handler installed on `conn`."""
+    clear = getattr(conn, "set_progress_handler", None)
+    if callable(clear):
+        clear(None, 0)
+
+
+def execute_sql(
+    conn: sqlite3.Connection,
+    sql: str,
+    query_timeout: float = DEFAULT_QUERY_TIMEOUT,
+) -> list[tuple] | None:
     """
     Execute a SQL query on the given SQLite connection and return its results.
 
@@ -20,6 +45,10 @@ def execute_sql(conn: sqlite3.Connection, sql: str) -> list[tuple] | None:
     Args:
         conn (sqlite3.Connection): An active SQLite database connection.
         sql (str): SQL query string to execute.
+        query_timeout (float): Time budget for this one statement, in seconds.
+            A statement that runs longer is aborted and reported as a failure
+            (``None``), which callers count as a SQL error. ``<= 0`` disables
+            the budget, restoring the previous unbounded behaviour.
 
     Returns:
         Optional[List[Tuple]]:
@@ -27,13 +56,31 @@ def execute_sql(conn: sqlite3.Connection, sql: str) -> list[tuple] | None:
             - [(None,)] if the query executed but returned NULL values.
             - None if the SQL execution failed due to an exception.
     """
+    use_timeout = query_timeout is not None and query_timeout > 0
+
     try:
+        if use_timeout:
+            # SQLite calls this back while the statement runs; returning a
+            # non-zero value aborts it with an "interrupted" error, which the
+            # except branch below already turns into None.
+            deadline = time.monotonic() + query_timeout
+
+            def _abort_when_over_budget() -> int:
+                return 1 if time.monotonic() > deadline else 0
+
+            conn.set_progress_handler(_abort_when_over_budget, PROGRESS_HANDLER_OPS)
+
         cur = conn.cursor()
         cur.execute(sql)
         results = cur.fetchall()
         return sorted(results)
     except Exception:
         return None
+    finally:
+        # The handler lives on the connection, so it has to be removed again or
+        # the next statement on this connection inherits an expired deadline.
+        if use_timeout:
+            _clear_progress_handler(conn)
 
 
 def fix_table_name(sql: str, table_id: str) -> str:
@@ -171,6 +218,7 @@ def evaluate_sample(
     item: dict[str, int | str],
     questions: dict[int, dict[str, str]],
     conn: sqlite3.Connection,
+    query_timeout: float = DEFAULT_QUERY_TIMEOUT,
 ) -> tuple[int, dict[str, Any] | None, dict[Any, Any]]:
     """
     Evaluate a single model prediction against the gold (ground-truth) SQL query.
@@ -189,6 +237,9 @@ def evaluate_sample(
         questions (dict): Dictionary mapping `question_id` → question metadata:
                           {"sql": ..., "table_id": ..., "question": ...}.
         conn (sqlite3.Connection): Active SQLite connection used to run queries.
+        query_timeout (float): Per-statement time budget in seconds; a statement
+            that overruns it is aborted and counted as a SQL error. ``<= 0``
+            disables the budget.
 
     Returns:
         tuple:
@@ -222,7 +273,7 @@ def evaluate_sample(
     )
 
     # Execute the gold (ground-truth) SQL
-    gold_results = execute_sql(conn, gold_sql)
+    gold_results = execute_sql(conn, gold_sql, query_timeout=query_timeout)
 
     # Initialize counters for this sample
     pred_none = gold_none = sql_error = exact_string_match = 0
@@ -247,7 +298,7 @@ def evaluate_sample(
         pred_sql_fixed = fix_table_name(pred_sql, table_id)
 
         # Execute predicted SQL
-        pred_res = execute_sql(conn, pred_sql_fixed)
+        pred_res = execute_sql(conn, pred_sql_fixed, query_timeout=query_timeout)
         last_pred_res = pred_res
 
         # Exact string match after whitespace / trailing semicolon normalization.
@@ -307,7 +358,32 @@ def download_benchmark_file(repo_id: str, filename: str, local_dir: Path) -> str
 
 
 def connect_sqlite(db_path: str) -> sqlite3.Connection:
-    """Create SQLite connection."""
+    """
+    Open the benchmark SQLite database read-only.
+
+    The statements that :func:`execute_sql` runs are extracted from model
+    output, and the database is cached under ``workdir_path`` and reused by
+    every later run. A writable connection therefore means one destructive
+    candidate (``DROP TABLE``, ``DELETE FROM``, ...) silently corrupts the
+    benchmark for good. Opening with ``mode=ro`` plus ``PRAGMA query_only``
+    makes those statements fail instead, which :func:`execute_sql` already
+    reports as a SQL error.
+
+    Args:
+        db_path (str): Path to the SQLite database file.
+
+    Returns:
+        sqlite3.Connection: A read-only connection.
+
+    Raises:
+        FileNotFoundError: if `db_path` does not exist.
+    """
     if not os.path.exists(db_path):
         raise FileNotFoundError(f"Database not found at: {db_path}")
-    return sqlite3.connect(db_path)
+
+    # as_uri() needs an absolute path and takes care of escaping, so paths with
+    # spaces or '#' don't break the URI.
+    uri = Path(db_path).resolve().as_uri() + "?mode=ro"
+    conn = sqlite3.connect(uri, uri=True)
+    conn.execute("PRAGMA query_only = ON")
+    return conn
