@@ -44,20 +44,16 @@ import torch
 from tqdm import tqdm
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
-from llmsql.config.config import (
-    DEFAULT_LLMSQL_VERSION,
-    get_repo_id,
-)
+from llmsql.config.config import DEFAULT_LLMSQL_VERSION
 from llmsql.loggers.logging_config import log
 from llmsql.utils.inference_utils import (
-    _maybe_download,
     _setup_seed,
-    resolve_workdir_path,
+    prepare_benchmark,
+    prepare_output_file,
+    skip_completed,
 )
 from llmsql.utils.utils import (
     choose_prompt_builder,
-    load_jsonl,
-    overwrite_jsonl,
     save_jsonl_lines,
 )
 
@@ -120,6 +116,7 @@ def inference_transformers(
     batch_size: int = 8,
     limit: int | float | None = None,
     seed: int = 42,
+    resume: bool = False,
 ) -> list[dict[str, str]]:
     """
     Inference a causal model (Transformers) on the LLMSQL benchmark.
@@ -169,6 +166,9 @@ def inference_transformers(
         limit: Limit the number of questions to evaluate. If an integer, evaluates
                the first N samples. If a float between 0.0 and 1.0, evaluates the
                first X*100% of samples. If None, evaluates all samples (default).
+        resume: If True and `output_file` already exists, keep the completions it
+               contains and only generate the missing questions. If False
+               (default), the file is truncated first.
 
     Returns:
         List of generated SQL results with metadata.
@@ -254,32 +254,11 @@ def inference_transformers(
     model.eval()
 
     # --- Load necessary files ---
-    workdir = resolve_workdir_path(workdir_path)
-    repo_id = get_repo_id(version)
-
-    questions_path = _maybe_download(repo_id, "questions.jsonl", workdir)
-    tables_path = _maybe_download(repo_id, "tables.jsonl", workdir)
-
-    questions = load_jsonl(questions_path)
-    tables_list = load_jsonl(tables_path)
-    tables = {t["table_id"]: t for t in tables_list}
-
-    # --- Apply limit ---
-    if limit is not None:
-        if isinstance(limit, float):
-            if not (0.0 < limit <= 1.0):
-                raise ValueError(
-                    f"When a float, `limit` must be between 0.0 and 1.0, got {limit}."
-                )
-            limit = max(1, int(len(questions) * limit))
-        if not isinstance(limit, int) or limit < 1:
-            raise ValueError(
-                f"`limit` must be a positive integer or a float in (0.0, 1.0], got {limit!r}."
-            )
-        log.info(
-            f"Limiting evaluation to first {limit} questions out of {len(questions)}"
-        )
-        questions = questions[:limit]
+    run = prepare_benchmark(
+        version=version,
+        workdir_path=workdir_path,
+        limit=limit,
+    )
 
     # --- Chat template setup ---
     use_chat_template = chat_template or getattr(tokenizer, "chat_template", None)
@@ -287,7 +266,9 @@ def inference_transformers(
         log.info("Using chat template for prompt formatting.")
 
     # --- Output setup ---
-    overwrite_jsonl(output_file)
+    questions = skip_completed(
+        run.questions, prepare_output_file(output_file, resume=resume)
+    )
     log.info(f"Writing results to {output_file}")
 
     prompt_builder = choose_prompt_builder(num_fewshots)
@@ -302,7 +283,7 @@ def inference_transformers(
         prompts = []
 
         for q in batch:
-            tbl = tables[q["table_id"]]
+            tbl = run.tables[q["table_id"]]
             example_row = tbl["rows"][0] if tbl["rows"] else []
             text = prompt_builder(
                 q["question"], tbl["header"], tbl["types"], example_row
