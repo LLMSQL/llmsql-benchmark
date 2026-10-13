@@ -18,21 +18,17 @@ from dotenv import load_dotenv
 import nest_asyncio
 from tqdm.asyncio import tqdm
 
-from llmsql.config.config import (
-    DEFAULT_LLMSQL_VERSION,
-    get_repo_id,
-)
+from llmsql.config.config import DEFAULT_LLMSQL_VERSION
 from llmsql.loggers.logging_config import log
 from llmsql.utils.inference_utils import (
-    _maybe_download,
     _setup_seed,
-    resolve_workdir_path,
+    prepare_benchmark,
+    prepare_output_file,
+    skip_completed,
 )
 from llmsql.utils.utils import (
     build_all_requests,
     choose_prompt_builder,
-    load_jsonl,
-    overwrite_jsonl,
     save_jsonl_lines,
 )
 
@@ -180,6 +176,7 @@ def inference_api(
     limit: int | float | None = None,
     num_fewshots: int = 5,
     seed: int = 42,
+    resume: bool = False,
 ) -> list[dict[str, str]]:
     """Run SQL generation using an OpenAI-compatible Chat Completions API.
 
@@ -205,6 +202,9 @@ def inference_api(
         limit: Limit the number of questions to evaluate. If an integer, evaluates
                the first N samples. If a float between 0.0 and 1.0, evaluates the
                first X*100% of samples. If None, evaluates all samples (default).
+        resume: If True and `output_file` already exists, keep the completions it
+               contains and only generate the missing questions. If False
+               (default), the file is truncated first.
 
     Returns:
         List of dicts containing `question_id` and generated `completion`.
@@ -213,28 +213,11 @@ def inference_api(
     api_kwargs = api_kwargs or {}
     request_headers = request_headers or {}
 
-    workdir = resolve_workdir_path(workdir_path)
-
-    repo_id = get_repo_id(version)
-    questions_path = _maybe_download(repo_id, "questions.jsonl", workdir)
-    tables_path = _maybe_download(repo_id, "tables.jsonl", workdir)
-
-    questions = load_jsonl(questions_path)
-    tables_list = load_jsonl(tables_path)
-    tables = {t["table_id"]: t for t in tables_list}
-
-    if limit is not None:
-        if isinstance(limit, float):
-            if not (0.0 < limit <= 1.0):
-                raise ValueError(
-                    f"When a float, `limit` must be between 0.0 and 1.0, got {limit}."
-                )
-            limit = max(1, int(len(questions) * limit))
-        if not isinstance(limit, int) or limit < 1:
-            raise ValueError(
-                f"`limit` must be a positive integer or a float in (0.0, 1.0], got {limit!r}."
-            )
-        questions = questions[:limit]
+    run = prepare_benchmark(
+        version=version,
+        workdir_path=workdir_path,
+        limit=limit,
+    )
 
     key = api_key or os.environ.get("OPENAI_API_KEY")
     headers: dict[str, str] = {
@@ -246,7 +229,9 @@ def inference_api(
 
     prompt_builder = choose_prompt_builder(num_fewshots)
 
-    overwrite_jsonl(output_file)
+    questions = skip_completed(
+        run.questions, prepare_output_file(output_file, resume=resume)
+    )
 
     coro = _inference_api_async(
         model_name,
@@ -257,7 +242,7 @@ def inference_api(
         requests_per_minute=requests_per_minute,
         api_kwargs=api_kwargs,
         questions=questions,
-        tables=tables,
+        tables=run.tables,
         prompt_builder=prompt_builder,
         output_file=output_file,
     )

@@ -187,6 +187,16 @@ class Inference(SubCommand):
             parser.add_argument("--batch-size", type=int, default=8)
             parser.add_argument("--seed", type=int, default=42)
             parser.add_argument("--limit", type=parse_limit)
+            parser.add_argument(
+                "--resume",
+                action=argparse.BooleanOptionalAction,
+                default=False,
+                help=(
+                    "Keep the completions already present in --output-file and "
+                    "only generate the missing questions (use --no-resume to "
+                    "always start from an empty file, which is the default)."
+                ),
+            )
 
         # =========================
         # COMMON GENERATION ARGS
@@ -350,6 +360,7 @@ class Inference(SubCommand):
             batch_size=args.batch_size,
             limit=args.limit,
             seed=args.seed,
+            resume=args.resume,
         )
 
     @staticmethod
@@ -374,6 +385,7 @@ class Inference(SubCommand):
             num_fewshots=args.num_fewshots,
             batch_size=args.batch_size,
             seed=args.seed,
+            resume=args.resume,
         )
 
     @staticmethod
@@ -395,4 +407,5 @@ class Inference(SubCommand):
             limit=args.limit,
             num_fewshots=args.num_fewshots,
             seed=args.seed,
+            resume=args.resume,
         )

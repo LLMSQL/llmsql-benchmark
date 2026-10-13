@@ -47,21 +47,17 @@ from tqdm import tqdm
 from vllm import LLM, SamplingParams
 from vllm.lora.request import LoRARequest
 
-from llmsql.config.config import (
-    DEFAULT_LLMSQL_VERSION,
-    get_repo_id,
-)
+from llmsql.config.config import DEFAULT_LLMSQL_VERSION
 from llmsql.loggers.logging_config import log
 from llmsql.utils.inference_utils import (
-    _maybe_download,
     _setup_seed,
-    resolve_workdir_path,
+    prepare_benchmark,
+    prepare_output_file,
+    skip_completed,
 )
 from llmsql.utils.utils import (
     build_all_requests,
     choose_prompt_builder,
-    load_jsonl,
-    overwrite_jsonl,
     save_jsonl_lines,
 )
 
@@ -92,6 +88,7 @@ def inference_vllm(
     num_fewshots: int = 5,
     batch_size: int = 8,
     seed: int = 42,
+    resume: bool = False,
 ) -> list[dict[str, str]]:
     """
     Run SQL generation using vLLM.
@@ -137,6 +134,9 @@ def inference_vllm(
         limit: Limit the number of questions to evaluate. If an integer, evaluates
                the first N samples. If a float between 0.0 and 1.0, evaluates the
                first X*100% of samples. If None, evaluates all samples (default).
+        resume: If True and `output_file` already exists, keep the completions it
+               contains and only generate the missing questions. If False
+               (default), the file is truncated first.
 
 
 
@@ -153,32 +153,11 @@ def inference_vllm(
     # --- load input data ---
     log.info("Preparing questions and tables...")
 
-    workdir = resolve_workdir_path(workdir_path)
-    repo_id = get_repo_id(version)
-
-    questions_path = _maybe_download(repo_id, "questions.jsonl", workdir)
-    tables_path = _maybe_download(repo_id, "tables.jsonl", workdir)
-
-    questions = load_jsonl(questions_path)
-    tables_list = load_jsonl(tables_path)
-    tables = {t["table_id"]: t for t in tables_list}
-
-    # --- Apply limit ---
-    if limit is not None:
-        if isinstance(limit, float):
-            if not (0.0 < limit <= 1.0):
-                raise ValueError(
-                    f"When a float, `limit` must be between 0.0 and 1.0, got {limit}."
-                )
-            limit = max(1, int(len(questions) * limit))
-        if not isinstance(limit, int) or limit < 1:
-            raise ValueError(
-                f"`limit` must be a positive integer or a float in (0.0, 1.0], got {limit!r}."
-            )
-        log.info(
-            f"Limiting evaluation to first {limit} questions out of {len(questions)}"
-        )
-        questions = questions[:limit]
+    run = prepare_benchmark(
+        version=version,
+        workdir_path=workdir_path,
+        limit=limit,
+    )
 
     # --- Validate LoRA usage ---
     enable_lora = llm_kwargs.get("enable_lora", False)
@@ -220,7 +199,9 @@ def inference_vllm(
         use_chat_template = getattr(tokenizer, "chat_template", None)  # type: ignore
 
     # --- prepare output file ---
-    overwrite_jsonl(output_file)
+    questions = skip_completed(
+        run.questions, prepare_output_file(output_file, resume=resume)
+    )
     log.info(f"Output will be written to {output_file}")
 
     # --- prompt builder and sampling params ---
@@ -239,7 +220,7 @@ def inference_vllm(
     # --- build all requests ---
     prompts = build_all_requests(
         questions,
-        tables,
+        run.tables,
         prompt_builder,
         tokenizer=tokenizer if use_chat_template else None,
         use_chat_template=bool(use_chat_template),
