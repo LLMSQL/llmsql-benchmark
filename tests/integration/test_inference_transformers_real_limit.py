@@ -13,7 +13,21 @@ def _write_jsonl(data, path: Path):
             f.write(json.dumps(row) + "\n")
 
 
+@pytest.fixture(autouse=True)
+def hide_cuda(monkeypatch):
+    """
+    把 CUDA 藏起来，保证这条测试真的跑在 CPU 上
+
+    ``inference_transformers`` 默认 ``device_map="auto"``，在有可见 GPU 的
+    机器上模型会被搬到显卡上，随后 Triton 尝试 JIT 编译辅助 kernel，在缺少
+    Python 开发头文件的环境里编不过（``Python.h: No such file or directory``），
+    于是这条本该跑 CPU 的集成测试会直接失败。
+    """
+    monkeypatch.setenv("CUDA_VISIBLE_DEVICES", "")
+
+
 @pytest.mark.integration
+@pytest.mark.slow
 def test_real_inference_limit():
     """
     Real integration test:
@@ -67,6 +81,9 @@ def test_real_inference_limit():
                 max_new_tokens=16,
                 temperature=0.0,
                 do_sample=False,
+                # 固定放 CPU：device_map="auto" 会把模型扔到可见的 GPU 上
+                device_map="cpu",
+                dtype="float32",
             )
         except (OSError, RuntimeError) as exc:
             pytest.skip(f"Unable to load/run model in CI: {exc}")
