@@ -165,6 +165,46 @@ class TestFixTableName:
         # All Table placeholders should be replaced
         assert "'Table'" not in result
 
+    def test_lowercase_from_keyword(self) -> None:
+        """Issue #125: lowercase 'from' keyword should match."""
+        result = fix_table_name('select * from "Table" where 1', "t")
+        assert 'FROM "t"' in result
+
+    def test_lowercase_table_placeholder(self) -> None:
+        """Issue #125: FROM 'table' (lowercase name) should match."""
+        assert fix_table_name('SELECT * FROM "table" WHERE 1', "t") == 'SELECT * FROM "t" WHERE 1'
+
+    def test_backtick_quoted_table(self) -> None:
+        """Issue #125: FROM `Table` (backtick quotes) should match."""
+        assert fix_table_name("SELECT * FROM `Table` WHERE 1", "t") == 'SELECT * FROM "t" WHERE 1'
+
+    def test_extra_whitespace_between_from_and_table(self) -> None:
+        """Issue #125: extra spaces between FROM and Table should match."""
+        assert fix_table_name('SELECT * FROM  "Table" WHERE 1', "t") == 'SELECT * FROM "t" WHERE 1'
+
+    def test_newline_between_from_and_table(self) -> None:
+        """Issue #125: newline between FROM and Table should match."""
+        assert fix_table_name('SELECT *\nFROM\n"Table"\nWHERE 1', "t") == 'SELECT *\nFROM "t"\nWHERE 1'
+
+    def test_column_named_table_not_replaced(self) -> None:
+        """Issue #125: a column or value containing 'Table' should not be touched."""
+        sql = "SELECT * FROM \"Table\" WHERE name = 'Table'"
+        result = fix_table_name(sql, "t")
+        assert "name = 'Table'" in result
+
+    def test_placeholder_followed_directly_by_semicolon(self) -> None:
+        """Issue #125: placeholder followed directly by semicolon should be replaced."""
+        assert fix_table_name('SELECT a FROM "Table";', "t") == 'SELECT a FROM "t";'
+
+    def test_placeholder_followed_directly_by_keyword(self) -> None:
+        """Issue #125: quoted placeholder followed directly by keyword without space should be replaced."""
+        assert fix_table_name('SELECT a FROM "Table"WHERE b=1', "t") == 'SELECT a FROM "t"WHERE b=1'
+
+    def test_table_prefix_not_replaced(self) -> None:
+        """Issue #125: table names like Table1 or 'Tables' starting with Table should not match."""
+        assert fix_table_name('SELECT a FROM Table1', "t") == 'SELECT a FROM Table1'
+        assert fix_table_name('SELECT a FROM "Tables"', "t") == 'SELECT a FROM "Tables"'
+
 
 class TestEvaluateSample:
     """Test cases for evaluate_sample function."""
