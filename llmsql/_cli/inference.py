@@ -176,7 +176,9 @@ class Inference(SubCommand):
         # COMMON BENCHMARK ARGS
         # =========================
         def add_common_benchmark_args(parser: argparse.ArgumentParser) -> None:
-            parser.add_argument("--version", default="2.0", choices=get_available_versions())
+            parser.add_argument(
+                "--version", default="2.0", choices=get_available_versions()
+            )
             parser.add_argument("--output-file", default="llm_sql_predictions.jsonl")
             parser.add_argument(
                 "--workdir-path",
