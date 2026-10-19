@@ -1,8 +1,9 @@
 import argparse
 import textwrap
 
-from llmsql._cli.inference import Inference
 from llmsql._cli.evaluate import Evaluate
+from llmsql._cli.inference import Inference
+
 
 class ParserCLI:
     """Main CLI parser that manages all subcommands."""

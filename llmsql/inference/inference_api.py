@@ -116,7 +116,6 @@ async def _inference_api_async(
     write_lock = asyncio.Lock()
 
     async with aiohttp.ClientSession(headers=headers) as session:
-
         # Pre-build all prompts using the shared function
         prompts = build_all_requests(questions, tables, prompt_builder)
 
@@ -152,7 +151,9 @@ async def _inference_api_async(
 
             return result
 
-        tasks = [process_question(q, p) for q, p in zip(questions, prompts)]
+        tasks = [
+            process_question(q, p) for q, p in zip(questions, prompts, strict=True)
+        ]
         for coro in tqdm(
             asyncio.as_completed(tasks),
             total=len(tasks),
